@@ -13,7 +13,7 @@ export default function PortalLayout({ children, title = "Page Title" }: Props) 
     <div className="min-h-screen flex bg-[#F0F0F0]">
       <PortalSidebar />
 
-      <main className="flex-1 ml-[250px] p-8">
+      <main className="flex-1 ml-[250px] p-4">
         <div className="max-w-[1100px] mx-auto">
           <header className="mb-6">
             <h1 className="text-2xl font-semibold">{title}</h1>

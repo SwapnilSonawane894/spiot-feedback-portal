@@ -48,8 +48,8 @@ export default function ManageYearsPage(): React.ReactElement {
   }
 
   return (
-    <main className="p-8 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <main className="max-w-4xl mx-auto">
+      <div className="flex items-start flex-col gap-3 justify-between mb-6">
         <h1 className="text-2xl font-semibold">Manage Academic Years</h1>
         <button onClick={() => setShowModal(true)} className="px-3 py-2 bg-blue-600 text-white rounded">New Year</button>
       </div>

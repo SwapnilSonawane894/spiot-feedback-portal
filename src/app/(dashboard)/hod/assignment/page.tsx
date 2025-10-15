@@ -93,7 +93,7 @@ export default function AssignmentPage(): React.ReactElement {
   }
 
   return (
-    <main className="p-8 max-w-7xl mx-auto">
+    <main className="max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Assign Faculty for {CURRENT_SEMESTER}</h1>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

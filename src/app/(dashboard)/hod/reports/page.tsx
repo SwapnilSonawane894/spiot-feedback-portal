@@ -82,12 +82,12 @@ export default function HodReportsPage() {
   
 
   return (
-    <main className="p-8 max-w-7xl mx-auto">
+    <main className="max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Feedback Analytics & Reports</h1>
       {/* Generate Comparative Report */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-lg font-medium mb-3">Generate Comparative Report</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-start flex-col gap-3">
           <label className="text-sm">Select Academic Year:</label>
           <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="px-2 py-1 border rounded">
             {years.map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}

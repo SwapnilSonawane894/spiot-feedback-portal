@@ -143,10 +143,10 @@ export default function StudentsPage(): React.ReactElement {
   }
 
   return (
-    <main className="p-8 max-w-7xl mx-auto">
+    <main className="max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Manage Students</h1>
 
-  <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="font-medium mb-2">Upload Students (CSV)</h2>
         <p className="text-sm text-gray-500 mb-4">Upload a CSV file with columns: enrollmentNumber, fullName, department</p>
         <div className="mb-4">
@@ -179,24 +179,32 @@ export default function StudentsPage(): React.ReactElement {
         </form>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white rounded-lg shadow p-6 mb-6 ">
         <h2 className="font-medium mb-2">Promote Students</h2>
-        <form onSubmit={handlePromote} className="flex items-center gap-3">
-          <label className="text-sm">Promote from:</label>
-          <select value={fromYearId} onChange={(e) => setFromYearId(e.target.value)} className="px-2 py-1 border rounded">
-            <option value="">Select year</option>
-            {years.map((y) => (
-              <option key={y.id} value={y.id}>{y.abbreviation ?? y.name}</option>
-            ))}
-          </select>
-          <label className="text-sm">Promote to:</label>
-          <select value={toYearId} onChange={(e) => setToYearId(e.target.value)} className="px-2 py-1 border rounded">
-            <option value="">Select year</option>
-            {years.map((y) => (
-              <option key={y.id} value={y.id}>{y.abbreviation ?? y.name}</option>
-            ))}
-          </select>
-          <button type="submit" className="px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-800" disabled={isPromoting}>{isPromoting ? "Promoting..." : "Promote All"}</button>
+        <form onSubmit={handlePromote} className="flex flex-col gap-3">
+          <div className="flex gap-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm">Promote from:</label>
+              <select value={fromYearId} onChange={(e) => setFromYearId(e.target.value)} className="px-2 py-1 border rounded">
+                <option value="">Select year</option>
+                {years.map((y) => (
+                  <option key={y.id} value={y.id}>{y.abbreviation ?? y.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm">Promote to:</label>
+              <select value={toYearId} onChange={(e) => setToYearId(e.target.value)} className="px-2 py-1 border rounded">
+                <option value="">Select year</option>
+                {years.map((y) => (
+                  <option key={y.id} value={y.id}>{y.abbreviation ?? y.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <button type="submit" className="px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-800 block" disabled={isPromoting}>{isPromoting ? "Promoting..." : "Promote All"}</button>
+          </div>
         </form>
       </div>
 
@@ -223,13 +231,13 @@ export default function StudentsPage(): React.ReactElement {
             {(() => {
               const filteredStudents = selectedYearId ? students.filter((st) => st.academicYearId === selectedYearId) : students;
               return filteredStudents.map((s) => (
-              <tr key={s.id} className="hover:bg-gray-50">
-                <td className="px-6 py-3">{s.name}</td>
-                <td className="px-6 py-3">{s.email}</td>
-                <td className="px-6 py-3">
-                  <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Delete</button>
-                </td>
-              </tr>
+                <tr key={s.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-3">{s.name}</td>
+                  <td className="px-6 py-3">{s.email}</td>
+                  <td className="px-6 py-3">
+                    <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Delete</button>
+                  </td>
+                </tr>
               ));
             })()}
           </tbody>

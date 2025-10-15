@@ -10,7 +10,7 @@ export default async function AdminHomePage(): Promise<React.ReactElement> {
 
   return (
     <div className="min-h-screen">
-      <main className="p-8 max-w-7xl mx-auto">
+      <main className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">Institute Overview</h1>
         </div>

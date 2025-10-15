@@ -117,7 +117,7 @@ export default function FeedbackForm(): React.ReactElement {
   }
 
   return (
-    <main className="p-8 max-w-3xl mx-auto">
+    <main className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold mb-2">Feedback Form</h1>
       <div className="mb-6 text-sm text-gray-600">Assignment: {assignmentId}</div>
 

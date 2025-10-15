@@ -85,8 +85,8 @@ export default function ManageStaffPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen p-8 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen max-w-6xl mx-auto">
+      <div className="flex items-start flex-col gap-3 justify-between mb-6">
         <h1 className="text-2xl font-semibold">Manage Department Staff</h1>
         <button onClick={() => {
           setEditingStaff(null);

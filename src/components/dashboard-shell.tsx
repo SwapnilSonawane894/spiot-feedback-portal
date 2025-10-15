@@ -18,7 +18,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
       <Sidebar isOpen={open} onClose={() => setOpen(false)} />
 
-      <div className="flex-1 ml-0 md:ml-64 bg-gray-100 p-8">
+      <div className="flex-1 ml-0 md:ml-64 bg-gray-100 p-4">
         <main className="max-w-7xl mx-auto">{children}</main>
       </div>
     </div>

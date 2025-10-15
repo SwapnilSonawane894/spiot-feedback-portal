@@ -47,11 +47,11 @@ export default function FacultyReportPage() {
 
   // Download is handled server-side via the new pdf endpoint
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-4">Loading...</div>;
 
   return (
-    <main className="p-4 sm:p-8 max-w-7xl mx-auto">
-      <div className="text-center mb-6">
+    <main className="max-w-7xl mx-auto">
+      <div className="text-left mb-6">
         <h1 className="text-3xl font-bold">Student Feedback Analysis</h1>
         <div className="text-sm text-gray-500 mt-2">Subjects: {data?.reports?.map((r: any) => r.subject?.name).filter(Boolean).join(', ')}</div>
       </div>
@@ -107,7 +107,7 @@ export default function FacultyReportPage() {
           ))
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-[640px] w-full border-collapse text-sm">
+            <table className="w-full border-collapse text-sm">
               <thead>
                 <tr>
                   <th className="border px-3 py-2 text-left">Parameter</th>

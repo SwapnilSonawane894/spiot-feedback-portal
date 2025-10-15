@@ -33,7 +33,7 @@ export default function StudentDashboard(): React.ReactElement {
   }
 
   return (
-    <main className="p-8 max-w-7xl mx-auto">
+    <main className="max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold mb-2">My Feedback Tasks</h1>
       <h2 className="text-sm text-gray-500 mb-6">Odd 2025-26</h2>
 

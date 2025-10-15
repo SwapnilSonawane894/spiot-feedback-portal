@@ -25,7 +25,7 @@ export default function UIReference() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 p-8">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-4">
       <div className="max-w-6xl mx-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-semibold" style={{ fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto' }}>

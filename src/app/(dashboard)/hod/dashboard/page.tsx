@@ -110,17 +110,17 @@ export default function HODDashboardPage(): React.ReactElement {
     }
   }
 
-  if (status === 'loading' || isFeedbackActive === null || reportsReleased === null) return <div className="p-8">Loading...</div>;
-  if (!session) return <div className="p-8">Unauthorized</div>;
+  if (status === 'loading' || isFeedbackActive === null || reportsReleased === null) return <div className="p-4">Loading...</div>;
+  if (!session) return <div className="p-4">Unauthorized</div>;
 
   return (
-    <main className="p-8 max-w-7xl mx-auto">
+    <main className="max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Department Overview</h1>
 
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-4">
           <div className="text-sm text-gray-500">Feedback Control</div>
-          <div className="mt-2 flex items-center justify-between">
+          <div className="mt-2 flex items-start gap-3 flex-col justify-between">
             <div>
               <div className={`font-medium ${isFeedbackActive ? 'text-green-600' : 'text-red-600'}`}>
                 Feedback Period is Currently: {isFeedbackActive ? 'OPEN' : 'CLOSED'}
@@ -141,16 +141,16 @@ export default function HODDashboardPage(): React.ReactElement {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-4">
           <div className="text-sm text-gray-500">Other Department Metrics</div>
           <div className="text-sm text-gray-500 mt-2">(Summary cards for staff/subjects, etc.)</div>
         </div>
       </div>
 
       {/* Faculty Reports Control Card */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="text-sm text-gray-500">Faculty Report Control</div>
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2 flex items-start flex-col gap-3 justify-between">
           <div>
             <div className={`font-medium ${reportsReleased ? 'text-green-600' : 'text-red-600'}`}>
               Faculty Reports are Currently: {reportsReleased ? 'RELEASED' : 'NOT RELEASED'}
@@ -171,7 +171,7 @@ export default function HODDashboardPage(): React.ReactElement {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-lg font-medium mb-2">Feedback Trend</h2>
         <div className="h-48 bg-gray-50 rounded-md flex items-center justify-center text-gray-400">Chart placeholder</div>
       </div>

@@ -46,8 +46,8 @@ export default function SubmissionStatusPage() {
   }
 
   return (
-    <main className="p-8 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
+    <main className="max-w-5xl mx-auto">
+      <div className="flex items-start flex-col gap-1 justify-between mb-4">
         <h1 className="text-2xl font-semibold">Feedback Submission Status {semester ? `— ${semester}` : ''}</h1>
         <div className="flex items-center gap-3">
           <label className="text-sm text-gray-600">Filter by Year</label>

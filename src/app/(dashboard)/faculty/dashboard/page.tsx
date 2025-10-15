@@ -61,13 +61,13 @@ export default function FacultyDashboardPage(): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status]);
 
-  if (status === "loading" || loading) return <div className="p-8 max-w-7xl mx-auto">Loading...</div>;
-  if (!session) return <div className="p-8 max-w-7xl mx-auto">Unauthorized</div>;
+  if (status === "loading" || loading) return <div className="max-w-7xl mx-auto">Loading...</div>;
+  if (!session) return <div className="max-w-7xl mx-auto">Unauthorized</div>;
 
   return (
-    <main className="p-8 max-w-7xl mx-auto">
+    <main className="max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">My Feedback Report</h1>
-      {error && <div className="bg-red-50 text-red-700 p-4 rounded">{error}</div>}
+      {error && <div className="bg-red-50 text-red-700 rounded">{error}</div>}
       <div className="mb-4">
         {staffId ? (
           <a href={`/api/faculty/${staffId}/report.pdf`} className="px-3 py-2 bg-blue-600 text-white rounded">Download as PDF</a>

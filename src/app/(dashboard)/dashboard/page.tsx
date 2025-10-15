@@ -17,7 +17,7 @@ function StatCard({ title, value, icon }: { title: string; value: string; icon: 
 export default function DashboardPage(): React.JSX.Element {
   return (
     <div className="min-h-screen">
-      <main className="p-8 max-w-7xl mx-auto">
+      <main className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Institute Overview</h1>
 
         {/* Summary Cards Grid */}

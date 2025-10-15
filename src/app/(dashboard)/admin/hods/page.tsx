@@ -115,8 +115,8 @@ export default function ManageHodsPage(): React.ReactElement {
 
 	return (
 		<div className="min-h-screen">
-			<main className="p-8 max-w-7xl mx-auto">
-				<div className="flex items-center justify-between mb-6">
+			<main className="max-w-7xl mx-auto">
+				<div className="flex items-start flex-col gap-3 justify-between mb-6">
 					<h1 className="text-2xl font-semibold">Manage HOD Accounts</h1>
 					<button
 						onClick={() => {
