@@ -1,0 +1,75 @@
+name: Seed Admin (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: 'Run prisma migrate deploy before seeding? (true/false)'
+        required: false
+        default: 'true'
+      seed_admin:
+        description: 'Run the admin seeder? (true/false)'
+        required: false
+        default: 'true'
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prisma migrations (optional)
+        if: ${{ github.event.inputs.run_migrations == 'true' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Running migrations against $DATABASE_URL"
+          npx prisma migrate deploy
+
+      - name: Run admin seed (optional)
+        if: ${{ github.event.inputs.seed_admin == 'true' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Seeding admin using $DATABASE_URL"
+          node prisma/seed-admin.js
+name: Seed Admin (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      runMigrations:
+        description: 'Run Prisma migrations before seeding (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Run migrations (optional)
+        if: ${{ github.event.inputs.runMigrations == 'true' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Running prisma migrate deploy"
+          npx prisma migrate deploy
+      - name: Run admin seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node prisma/seed-admin.js
