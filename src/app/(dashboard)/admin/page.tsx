@@ -1,6 +1,9 @@
 import React from "react";
 import { Building2, Users, MessageSquare, Calendar } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
+import { ContentCard, ContentCardHeader, ContentCardBody } from "@/components/content-card";
 
 export default async function AdminHomePage(): Promise<React.ReactElement> {
   // Fetch real counts from the database
@@ -9,59 +12,51 @@ export default async function AdminHomePage(): Promise<React.ReactElement> {
   const feedbackCount = await prisma.feedback.count();
 
   return (
-    <div className="min-h-screen">
-      <main className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Institute Overview</h1>
-        </div>
+    <div>
+      <PageHeader 
+        title="Institute Overview" 
+        description="Monitor key metrics and performance across the institution"
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-4 rounded-lg shadow flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-md">
-              <Building2 size={20} className="text-blue-700" />
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Total Departments</div>
-              <div className="text-2xl font-semibold">{departmentCount}</div>
-            </div>
+      <div className="stats-grid section-spacing">
+        <StatCard
+          title="Total Departments"
+          value={departmentCount}
+          icon={<Building2 size={24} />}
+          iconBgColor="#EFF6FF"
+          iconColor="#1E40AF"
+        />
+        <StatCard
+          title="Total Staff"
+          value={staffCount}
+          icon={<Users size={24} />}
+          iconBgColor="#F0FDF4"
+          iconColor="#15803D"
+        />
+        <StatCard
+          title="Feedback Submitted"
+          value={feedbackCount}
+          icon={<MessageSquare size={24} />}
+          iconBgColor="#FEF3C7"
+          iconColor="#B45309"
+        />
+        <StatCard
+          title="Active Semester"
+          value="Fall 2025"
+          icon={<Calendar size={24} />}
+          iconBgColor="#F3E8FF"
+          iconColor="#7C3AED"
+        />
+      </div>
+
+      <ContentCard>
+        <ContentCardHeader title="Feedback Trend" description="Overview of feedback submissions over time" />
+        <ContentCardBody>
+          <div className="h-64 flex items-center justify-center" style={{ color: "var(--text-muted)" }}>
+            [Chart placeholder]
           </div>
-
-          <div className="bg-white p-4 rounded-lg shadow flex items-center gap-4">
-            <div className="p-3 bg-green-100 rounded-md">
-              <Users size={20} className="text-green-700" />
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Total Staff</div>
-              <div className="text-2xl font-semibold">{staffCount}</div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow flex items-center gap-4">
-            <div className="p-3 bg-yellow-100 rounded-md">
-              <MessageSquare size={20} className="text-yellow-700" />
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Feedback Submitted</div>
-              <div className="text-2xl font-semibold">{feedbackCount}</div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-md">
-              <Calendar size={20} className="text-purple-700" />
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Active Semester</div>
-              <div className="text-2xl font-semibold">Fall 2025</div>
-            </div>
-          </div>
-        </div>
-
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-medium mb-4">Feedback Trend</h2>
-          <div className="h-64 flex items-center justify-center text-gray-400">[Chart placeholder]</div>
-        </section>
-      </main>
+        </ContentCardBody>
+      </ContentCard>
     </div>
   );
 }

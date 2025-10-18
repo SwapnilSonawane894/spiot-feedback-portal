@@ -88,20 +88,24 @@ export default function LoginPage(): React.JSX.Element {
   }, [signedIn, status, session]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "var(--background)" }}>
-      <div className="w-full max-w-md">
-        <div className="card p-8">
-          <div className="flex flex-col items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "var(--primary-light)" }}>
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ background: "var(--background)" }}>
+      <div className="w-full max-w-md fade-in">
+        <div className="card p-6 sm:p-8">
+          <div className="flex flex-col items-center gap-3 sm:gap-4 mb-8">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-transform hover:scale-105" style={{ background: "var(--primary-light)" }}>
               <Image src="/logo.png" alt="SPIOT logo" width={64} height={64} style={{ height: "auto" }} />
             </div>
-            <h1 className="text-center text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+            <h1 className="text-center text-base sm:text-lg font-bold" style={{ color: "var(--text-primary)" }}>
               Sharadchandra Pawar Institute of Technology, Someshwarnagar
             </h1>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
-            {error && <div className="px-4 py-3 rounded-lg text-sm" style={{ background: "var(--danger-light)", color: "var(--danger)" }}>{error}</div>}
+            {error && (
+              <div className="px-4 py-3 rounded-lg text-sm slide-in-right" style={{ background: "var(--danger-light)", color: "var(--danger)" }}>
+                {error}
+              </div>
+            )}
 
             <div>
               <label className="sr-only">Enrollment No. / Email</label>
@@ -143,14 +147,14 @@ export default function LoginPage(): React.JSX.Element {
             </div>
 
             <div className="pt-2">
-              <button type="submit" disabled={isLoading} className="btn-primary w-full">
+              <button type="submit" disabled={isLoading} className="btn-primary w-full text-base font-semibold">
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="loading-spinner" />
                     Logging in...
                   </span>
                 ) : (
-                  "LOGIN"
+                  "Login"
                 )}
               </button>
             </div>
