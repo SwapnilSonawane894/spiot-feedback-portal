@@ -14,10 +14,8 @@ const nextConfig: NextConfig = {
     // Be careful: this hides real type problems — prefer fixing them long term.
     ignoreBuildErrors: true,
   },
-  experimental: {
-    // Allow cross-origin requests in development for Replit iframe compatibility
-    allowedDevOrigins: ["*.replit.dev"],
-  },
+  // Allow cross-origin requests in development for Replit iframe compatibility
+  allowedDevOrigins: ["*.repl.co", "*.replit.dev", "*.replit.app"],
 };
 
 export default nextConfig;
