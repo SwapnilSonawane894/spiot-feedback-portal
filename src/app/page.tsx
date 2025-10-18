@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export default async function Page() {
-  const session = (await getServerSession()) as Session | null;
+  const session = (await getServerSession(authOptions as any)) as Session | null;
 
   // Not logged in -> send to login
   if (!session) {
