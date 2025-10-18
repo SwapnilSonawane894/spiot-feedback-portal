@@ -1,0 +1,48 @@
+Revamp the current frontend to be modern, clean, and fully responsive—similar to WhatsApp's polished UI—without modifying any backend logic, data flow, or functional logic. Focus strictly on styling, structure, and responsiveness.
+🔧 Tech Stack
+Framework: Next.js
+Styling: Tailwind CSS
+No changes to: Database/API/backend logic or data-fetching methods.
+🧩 Refactor Requirements
+1. Modernize the UI
+Make the overall design polished and modern (inspired by apps like WhatsApp).
+Use subtle shadows, spacing, borders, rounded corners, and consistent typography.
+Introduce smooth transitions and hover/focus animations where appropriate.
+2. Sidebar Behavior (Responsive & Contextual)
+Desktop (≥768px width):
+Left-positioned vertical sidebar.
+Collapsed view: show only icons.
+Expanded view: show icons + text labels.
+Toggle behavior between collapsed and expanded.
+Mobile/Small Screens (<768px width):
+Move sidebar to the bottom as a tab bar.
+Only display icons (no text).
+Group similar items into contextual menus to reduce clutter.
+Example: Merge Student Status & Staff Status into a "Status" tab with internal toggle/dropdown.
+Ensure navigation is accessible and intuitive on smaller screens.
+3. Utility Class Architecture
+Create custom utility classes/components using Tailwind's @apply directive for reusable elements like:
+Buttons (primary, secondary, danger)
+Borders, padding/margins, font sizes, etc.
+Ensure any change in one utility reflects project-wide for consistency.
+Example: Updating btn-primary border applies everywhere it's used.
+4. Remove Inconsistencies
+Audit and fix inconsistencies in:
+Spacing (padding, margin)
+Alignment
+Font sizes and weights
+Border radius and shadow usage
+Replace unnecessary grid layouts with flex where more suitable.
+Apply responsive utility classes consistently for a smooth mobile experience.
+5. Layout Modularity
+Refactor layout files for clean structure and maintainability:
+Modularize into components: Header, Sidebar, Content, Footer, etc.
+Avoid hardcoded layouts in pages.
+Use consistent layout wrappers.
+6. Dark Mode + Light Mode Support
+Implement and test dark mode using Tailwind’s dark: variant.
+Ensure custom utility classes also adapt to theme changes.
+Maintain readability, contrast, and visual balance across both themes.
+📌 Notes
+Do not alter any API routes, database connections, or backend code.
+Focus solely on frontend styling, layout refactor, and responsive behavior.

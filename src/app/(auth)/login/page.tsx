@@ -88,31 +88,31 @@ export default function LoginPage(): React.JSX.Element {
   }, [signedIn, status, session]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "var(--background)" }}>
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow p-8">
-          <div className="flex flex-col items-center gap-4 mb-4">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-              {/* Image placeholder */}
-              <Image src="/logo.png" alt="SPIOT logo" width={64} height={64} />
+        <div className="card p-8">
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "var(--primary-light)" }}>
+              <Image src="/logo.png" alt="SPIOT logo" width={64} height={64} style={{ height: "auto" }} />
             </div>
-            <h1 className="text-center text-lg font-semibold">Sharadchandra Pawar Institute of Technology, Someshwarnagar</h1>
+            <h1 className="text-center text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+              Sharadchandra Pawar Institute of Technology, Someshwarnagar
+            </h1>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <div className="px-4 py-3 rounded-lg text-sm" style={{ background: "var(--danger-light)", color: "var(--danger)" }}>{error}</div>}
 
             <div>
               <label className="sr-only">Enrollment No. / Email</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <Mail size={16} />
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center" style={{ color: "var(--text-muted)" }}>
+                  <Mail size={18} />
                 </span>
-                <TextInput
-                  label=""
-                  placeholder="Enter your credentials"
+                <input
                   type="text"
-                  className="pl-10"
+                  placeholder="Enter your credentials"
+                  className="input-field pl-11"
                   aria-label="Enrollment No. or Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -123,33 +123,43 @@ export default function LoginPage(): React.JSX.Element {
             <div>
               <label className="sr-only">Password</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <Lock size={16} />
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center" style={{ color: "var(--text-muted)" }}>
+                  <Lock size={18} />
                 </span>
-                <TextInput
-                  label=""
-                  placeholder="Password"
+                <input
                   type="password"
-                  className="pl-10"
+                  placeholder="Password"
+                  className="input-field pl-11"
                   aria-label="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <div className="text-right mt-2">
-                <a href="#" className="text-sm text-blue-700 hover:underline">Forgot password?</a>
+                <a href="#" className="text-sm hover:underline transition-colors" style={{ color: "var(--primary)" }}>
+                  Forgot password?
+                </a>
               </div>
             </div>
 
-            <div>
-              <PrimaryButton type="submit" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "LOGIN"}
-              </PrimaryButton>
+            <div className="pt-2">
+              <button type="submit" disabled={isLoading} className="btn-primary w-full">
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="loading-spinner" />
+                    Logging in...
+                  </span>
+                ) : (
+                  "LOGIN"
+                )}
+              </button>
             </div>
           </form>
         </div>
 
-        <div className="text-center text-sm text-gray-500 mt-4">© 2025-26 | Student Feedback Portal</div>
+        <div className="text-center text-sm mt-4" style={{ color: "var(--text-muted)" }}>
+          © 2025-26 | Student Feedback Portal
+        </div>
       </div>
     </div>
   );

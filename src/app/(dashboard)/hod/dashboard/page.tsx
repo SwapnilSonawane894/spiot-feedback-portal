@@ -110,71 +110,148 @@ export default function HODDashboardPage(): React.ReactElement {
     }
   }
 
-  if (status === 'loading' || isFeedbackActive === null || reportsReleased === null) return <div className="p-4">Loading...</div>;
-  if (!session) return <div className="p-4">Unauthorized</div>;
+  if (status === 'loading' || isFeedbackActive === null || reportsReleased === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <div className="loading-spinner" style={{ width: "2rem", height: "2rem" }} />
+          <p style={{ color: "var(--text-secondary)" }}>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="card p-6 text-center">
+          <p style={{ color: "var(--danger)" }} className="font-medium">Unauthorized Access</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <main className="max-w-7xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Department Overview</h1>
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Department Overview</h1>
+        <p className="page-description">Manage feedback collection and view department analytics</p>
+      </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-500">Feedback Control</div>
-          <div className="mt-2 flex items-start gap-3 flex-col justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Feedback Control Card */}
+        <div className="card card-body">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="section-title mb-0">Feedback Control</h3>
+            <span className={isFeedbackActive ? "badge-success" : "badge-danger"}>
+              {isFeedbackActive ? 'OPEN' : 'CLOSED'}
+            </span>
+          </div>
+          <div className="space-y-4">
             <div>
-              <div className={`font-medium ${isFeedbackActive ? 'text-green-600' : 'text-red-600'}`}>
-                Feedback Period is Currently: {isFeedbackActive ? 'OPEN' : 'CLOSED'}
-              </div>
-              <div className="text-sm text-gray-500 mt-1">Toggle to allow or disallow students from seeing and submitting feedback.</div>
+              <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
+                Feedback Period: {isFeedbackActive ? 'Currently Open' : 'Currently Closed'}
+              </p>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                Toggle to allow or restrict students from submitting feedback.
+              </p>
             </div>
             <div>
               {isFeedbackActive ? (
-                <button onClick={handleToggleFeedback} disabled={loadingFeedbackToggle} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
-                  {loadingFeedbackToggle ? 'Stopping...' : 'Stop Feedback Period'}
+                <button onClick={handleToggleFeedback} disabled={loadingFeedbackToggle} className="btn-danger w-full">
+                  {loadingFeedbackToggle ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="loading-spinner" />
+                      Closing...
+                    </span>
+                  ) : 'Stop Feedback Period'}
                 </button>
               ) : (
-                <button onClick={handleToggleFeedback} disabled={loadingFeedbackToggle} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
-                  {loadingFeedbackToggle ? 'Starting...' : 'Start Feedback Period'}
+                <button onClick={handleToggleFeedback} disabled={loadingFeedbackToggle} className="btn-primary w-full">
+                  {loadingFeedbackToggle ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="loading-spinner" />
+                      Opening...
+                    </span>
+                  ) : 'Start Feedback Period'}
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-500">Other Department Metrics</div>
-          <div className="text-sm text-gray-500 mt-2">(Summary cards for staff/subjects, etc.)</div>
+        {/* Department Metrics Card */}
+        <div className="card card-body">
+          <h3 className="section-title">Department Metrics</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--primary-light)" }}>
+              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Staff</span>
+              <span className="text-lg font-bold" style={{ color: "var(--primary)" }}>-</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--success-light)" }}>
+              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Subjects</span>
+              <span className="text-lg font-bold" style={{ color: "var(--success)" }}>-</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--secondary-light)", backgroundColor: "#f1f5f9" }}>
+              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Students</span>
+              <span className="text-lg font-bold" style={{ color: "var(--secondary)" }}>-</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Faculty Reports Control Card */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="text-sm text-gray-500">Faculty Report Control</div>
-        <div className="mt-2 flex items-start flex-col gap-3 justify-between">
+      <div className="card card-body mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="section-title mb-0">Faculty Report Control</h3>
+          <span className={reportsReleased ? "badge-success" : "badge-danger"}>
+            {reportsReleased ? 'RELEASED' : 'NOT RELEASED'}
+          </span>
+        </div>
+        <div className="space-y-4">
           <div>
-            <div className={`font-medium ${reportsReleased ? 'text-green-600' : 'text-red-600'}`}>
-              Faculty Reports are Currently: {reportsReleased ? 'RELEASED' : 'NOT RELEASED'}
-            </div>
-            <div className="text-sm text-gray-500 mt-1">Release or retract final feedback reports for faculty members in your department.</div>
+            <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
+              Reports Status: {reportsReleased ? 'Visible to Faculty' : 'Hidden from Faculty'}
+            </p>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              Release or retract final feedback reports for faculty members in your department.
+            </p>
           </div>
-          <div>
+          <div className="flex gap-3">
             {reportsReleased ? (
-              <button onClick={handleToggleReleaseStatus} disabled={loadingReportsToggle} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
-                {loadingReportsToggle ? 'Retracting...' : 'Retract Reports from Faculty'}
+              <button onClick={handleToggleReleaseStatus} disabled={loadingReportsToggle} className="btn-danger">
+                {loadingReportsToggle ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="loading-spinner" />
+                    Retracting...
+                  </span>
+                ) : 'Retract Reports from Faculty'}
               </button>
             ) : (
-              <button onClick={handleToggleReleaseStatus} disabled={loadingReportsToggle} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
-                {loadingReportsToggle ? 'Releasing...' : 'Release Reports to Faculty'}
+              <button onClick={handleToggleReleaseStatus} disabled={loadingReportsToggle} className="btn-success">
+                {loadingReportsToggle ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="loading-spinner" />
+                    Releasing...
+                  </span>
+                ) : 'Release Reports to Faculty'}
               </button>
             )}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-lg font-medium mb-2">Feedback Trend</h2>
-        <div className="h-48 bg-gray-50 rounded-md flex items-center justify-center text-gray-400">Chart placeholder</div>
+      {/* Feedback Trend Chart */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="section-title mb-0">Feedback Analytics</h3>
+        </div>
+        <div className="card-body">
+          <div className="h-48 rounded-lg flex items-center justify-center" style={{ background: "var(--background)" }}>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Chart visualization will appear here</p>
+          </div>
+        </div>
       </div>
-    </main>
+    </>
   );
 }
