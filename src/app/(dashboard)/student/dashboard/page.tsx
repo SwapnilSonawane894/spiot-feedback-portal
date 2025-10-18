@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { ClipboardList, CheckCircle2, FileText } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
 
 type Task = { assignmentId: string; facultyName: string; subjectName: string; status: string };
 
@@ -32,50 +35,78 @@ export default function StudentDashboard(): React.ReactElement {
     }
   }
 
-  return (
-    <main className="max-w-7xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-2">My Feedback Tasks</h1>
-      <h2 className="text-sm text-gray-500 mb-6">Odd 2025-26</h2>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="loading-spinner" style={{ width: "2rem", height: "2rem" }} />
+          <p style={{ color: "var(--text-secondary)" }}>Loading your tasks...</p>
+        </div>
+      </div>
+    );
+  }
 
-      {loading ? (
-        <div className="text-gray-600">Loading your tasks…</div>
-      ) : error ? (
-        <div className="text-red-600">{error}</div>
+  return (
+    <div>
+      <PageHeader 
+        title="My Feedback Tasks" 
+        description="Odd Semester 2025-26" 
+      />
+
+      {error ? (
+        <div className="card content-spacing">
+          <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+            <div className="flex-shrink-0">⚠</div>
+            <div>{error}</div>
+          </div>
+        </div>
       ) : tasks.length === 0 ? (
-        <div className="text-gray-700">You have no pending feedback tasks at the moment.</div>
+        <EmptyState
+          icon={<ClipboardList size={48} />}
+          title="No feedback tasks"
+          description="You have no pending feedback tasks at the moment. Check back later when tasks are assigned."
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {tasks.map((t) => (
-            <article key={t.assignmentId} className="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
-              <div>
-                <div className="text-sm text-gray-500">Faculty</div>
-                <div className="text-lg font-semibold text-gray-900">{t.facultyName}</div>
-                <div className="mt-2 text-sm text-gray-600">Subject: <span className="font-medium text-gray-800">{t.subjectName}</span></div>
+            <article key={t.assignmentId} className="card content-spacing flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg" style={{ background: "var(--primary-light)" }}>
+                  <FileText size={20} style={{ color: "var(--primary)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+                    Faculty
+                  </div>
+                  <div className="font-semibold text-base truncate" style={{ color: "var(--text-primary)" }}>
+                    {t.facultyName}
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                Subject: <span className="font-medium" style={{ color: "var(--text-primary)" }}>{t.subjectName}</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-auto pt-3 border-t" style={{ borderColor: "var(--card-border)" }}>
                 {t.status === "Pending" ? (
                   <Link
                     href={`/student/feedback/${t.assignmentId}`}
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="btn-primary w-full sm:w-auto"
                   >
                     Start Feedback
                   </Link>
                 ) : (
-                  <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clipRule="evenodd" />
-                    </svg>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+                    <CheckCircle2 size={16} />
                     <span className="text-sm font-medium">Completed</span>
                   </div>
                 )}
-
-                <div className="text-sm text-gray-400">Status: <span className="font-medium text-gray-700">{t.status}</span></div>
               </div>
             </article>
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

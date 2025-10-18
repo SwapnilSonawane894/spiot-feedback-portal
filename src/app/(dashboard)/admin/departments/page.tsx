@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import ConfirmationModal from "@/components/confirmation-modal";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Building2, Plus } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
 
 type Department = {
   id: string;
@@ -94,10 +96,11 @@ export default function ManageDepartmentsPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="max-w-7xl mx-auto">
-        <div className="flex items-start flex-col gap-3 justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Manage Departments</h1>
+    <div>
+      <PageHeader 
+        title="Manage Departments" 
+        description="Add, edit, and manage academic departments"
+        action={
           <button
             onClick={() => {
               setEditingDepartment(null);
@@ -105,27 +108,51 @@ export default function ManageDepartmentsPage(): React.ReactElement {
               setDepartmentAbbreviation("");
               setIsModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="btn-primary gap-2"
           >
-            + Add New Department
+            <Plus size={18} />
+            <span className="hidden sm:inline">Add Department</span>
+            <span className="sm:hidden">Add</span>
           </button>
-        </div>
+        }
+      />
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
+      {departments.length === 0 ? (
+        <EmptyState
+          icon={<Building2 size={48} />}
+          title="No departments yet"
+          description="Get started by adding your first department"
+          action={
+            <button
+              onClick={() => {
+                setEditingDepartment(null);
+                setDepartmentName("");
+                setDepartmentAbbreviation("");
+                setIsModalOpen(true);
+              }}
+              className="btn-primary"
+            >
+              <Plus size={18} />
+              Add Department
+            </button>
+          }
+        />
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-gray-700">Department Name</th>
-                <th className="px-6 py-3 text-left text-gray-700">Abbreviation</th>
-                <th className="px-6 py-3 text-left text-gray-700">Actions</th>
+                <th>Department Name</th>
+                <th>Abbreviation</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
+            <tbody>
               {departments.map((d) => (
-                <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3">{d.name}</td>
-                  <td className="px-6 py-3">{d.abbreviation}</td>
-                  <td className="px-6 py-3">
+                <tr key={d.id}>
+                  <td className="font-medium">{d.name}</td>
+                  <td>{d.abbreviation}</td>
+                  <td>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
@@ -134,7 +161,8 @@ export default function ManageDepartmentsPage(): React.ReactElement {
                           setDepartmentAbbreviation(d.abbreviation);
                           setIsModalOpen(true);
                         }}
-                        className="p-2 rounded hover:bg-gray-100 text-gray-600"
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        style={{ color: "var(--text-secondary)" }}
                         aria-label="Edit"
                       >
                         <Edit2 size={16} />
@@ -145,7 +173,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
                           setShowDeleteModal(true);
                         }}
                         type="button"
-                        className="p-2 rounded hover:bg-gray-100 text-red-600"
+                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
                         aria-label="Delete"
                       >
                         <Trash2 size={16} />
@@ -157,31 +185,59 @@ export default function ManageDepartmentsPage(): React.ReactElement {
             </tbody>
           </table>
         </div>
-      </main>
+      )}
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsModalOpen(false)} aria-hidden />
-          <div role="dialog" aria-modal="true" className="relative bg-white rounded-lg shadow-xl w-full max-w-xl mx-4 p-6">
-            <div className="flex items-start justify-between">
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div role="dialog" aria-modal="true" className="modal-content w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold">{editingDepartment ? "Edit Department" : "Add New Department"}</h3>
-                <p className="text-sm text-gray-500 mt-1">Enter department details below.</p>
+                <h3 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {editingDepartment ? "Edit Department" : "Add New Department"}
+                </h3>
+                <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+                  Enter department details below.
+                </p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-gray-700 ml-4" aria-label="Close modal">✕</button>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" 
+                style={{ color: "var(--text-secondary)" }}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 gap-3">
-              <label className="text-sm font-medium text-gray-700">Department Name</label>
-              <input value={departmentName} onChange={(e) => setDepartmentName(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700" />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="form-label">Department Name</label>
+                <input 
+                  value={departmentName} 
+                  onChange={(e) => setDepartmentName(e.target.value)} 
+                  className="input-field" 
+                  required
+                />
+              </div>
 
-              <label className="text-sm font-medium text-gray-700">Abbreviation</label>
-              <input value={departmentAbbreviation} onChange={(e) => setDepartmentAbbreviation(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700" />
+              <div>
+                <label className="form-label">Abbreviation</label>
+                <input 
+                  value={departmentAbbreviation} 
+                  onChange={(e) => setDepartmentAbbreviation(e.target.value)} 
+                  className="input-field"
+                  required 
+                />
+              </div>
 
-              <div className="mt-6 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-md text-gray-700 border">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{isSubmitting ? "Saving..." : "Save"}</button>
+              <div className="flex justify-end gap-3 pt-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-outline">
+                  Cancel
+                </button>
+                <button type="submit" disabled={isSubmitting} className="btn-primary">
+                  {isSubmitting ? "Saving..." : "Save"}
+                </button>
               </div>
             </form>
           </div>
