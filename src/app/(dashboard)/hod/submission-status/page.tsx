@@ -22,10 +22,10 @@ export default function SubmissionStatusPage() {
       if (!res.ok) throw new Error('Failed to load');
       const json = await res.json();
       setSemester(json.semester || null);
-      const years = json.academicYears || [];
+      const years = Array.isArray(json.academicYears) ? json.academicYears : [];
       setAcademicYears(years);
       // If no year was requested and the API returned available years, auto-select the first one so totals reflect that year
-      if (!yearId && years.length > 0 && years[0]?.id) {
+      if (!yearId && years.length > 0 && years[0] && years[0].id) {
         const defaultId = years[0].id;
         setSelectedYearId(defaultId);
         // fetch again with selected year to get correct totals
@@ -74,17 +74,27 @@ export default function SubmissionStatusPage() {
               <tr>
                 <th className="px-4 py-2 text-left">Student Name</th>
                 <th className="px-4 py-2 text-left">Enrollment No.</th>
+                <th className="px-4 py-2 text-left">Year</th>
                 <th className="px-4 py-2 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((s: any) => (
-                <tr key={s.email} className="border-t">
-                  <td className="px-4 py-2">{s.name}</td>
-                  <td className="px-4 py-2">{s.email}</td>
-                  <td className="px-4 py-2">{s.completedTasks} / {s.totalTasks} Submitted</td>
+              {data.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                    No students found
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                data.map((s: any) => (
+                  <tr key={s.email} className="border-t">
+                    <td className="px-4 py-2">{s.name}</td>
+                    <td className="px-4 py-2">{s.email}</td>
+                    <td className="px-4 py-2">{s.year || '—'}</td>
+                    <td className="px-4 py-2">{s.completedTasks} / {s.totalTasks} Submitted</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

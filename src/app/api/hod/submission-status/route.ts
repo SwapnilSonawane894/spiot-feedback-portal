@@ -62,7 +62,21 @@ export async function GET(request: Request) {
     const results = [] as any[];
     for (const s of students) {
       const completed = allFeedback.filter((f: any) => f.studentId === s.id && assignmentIds.includes(f.assignmentId)).length;
-      results.push({ name: s.name || s.email || 'Unknown', email: s.email || '', totalTasks: assignmentIds.length, completedTasks: completed });
+      
+      // Get the academic year info for display
+      let yearInfo = '';
+      if (s.academicYearId) {
+        const year = await academicYearService.findUnique({ id: s.academicYearId });
+        yearInfo = year ? (year.abbreviation || year.name) : '';
+      }
+      
+      results.push({ 
+        name: s.name || s.email || 'Unknown', 
+        email: s.email || '', 
+        year: yearInfo,
+        totalTasks: assignmentIds.length, 
+        completedTasks: completed 
+      });
     }
 
     return NextResponse.json({ semester: semesterToUse, academicYears, selectedYearId: yearId || null, students: results });
