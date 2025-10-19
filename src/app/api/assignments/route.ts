@@ -22,7 +22,7 @@ export async function GET() {
 
     // Manually fetch user and assignments for each staff member
     const result = await Promise.all(
-      staff.map(async (s) => {
+      staff.map(async (s: any) => {
         const user = await userService.findUnique({ id: s.userId });
         const assignments = await assignmentService.findMany({
           where: { staffId: s.id, semester: CURRENT_SEMESTER },

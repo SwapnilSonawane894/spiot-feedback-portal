@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { Trash2, Pencil, Plus, X } from "lucide-react";
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui-controls";
 
 type Department = {
   id: string;
