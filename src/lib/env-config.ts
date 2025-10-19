@@ -11,7 +11,7 @@ if (!process.env.NEXTAUTH_SECRET) {
 }
 
 if (!process.env.NEXTAUTH_URL) {
-  process.env.NEXTAUTH_URL = "https://962b02b5-2ae7-475a-8adc-a8e7fdd2c6cf-00-19ygqud1ri8qy.sisko.replit.dev";
+  process.env.NEXTAUTH_URL = "https://ff8be4eb-87bd-42e4-b9ca-0e1844f9010b-00-iw02txcjz11a.pike.replit.dev";
 }
 
 export const config = {
