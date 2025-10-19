@@ -123,11 +123,14 @@ export default function ManageStaffPage(): React.ReactElement {
   }, []);
 
   return (
-    <div className="min-h-screen max-w-6xl mx-auto">
-      <div className="flex items-start flex-col gap-3 justify-between mb-6">
-        <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+    <div className="page-container">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
           Manage Department Staff
         </h1>
+        <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+          Click on any staff member to edit their details
+        </p>
         <Button onClick={openCreateModal} className="gap-2">
           <UserPlus size={16} />
           <span>Add New Staff Member</span>
@@ -140,42 +143,52 @@ export default function ManageStaffPage(): React.ReactElement {
             <tr>
               <th>Name</th>
               <th>Email</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {staffList.map((s) => (
-              <tr key={s.id}>
-                <td>{s.user?.name ?? "-"}</td>
-                <td>{s.user?.email ?? "-"}</td>
-                <td className="flex gap-2">
-                  {s.user?.id === currentUserId ? (
-                    <span style={{ color: "var(--text-muted)" }}>Cannot edit self</span>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => openEditModal(s)}
-                        className="p-2 rounded-lg transition-colors hover:bg-[var(--hover-overlay)]"
-                        style={{ color: "var(--text-secondary)" }}
-                        title="Edit"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(s)}
-                        className={`p-2 rounded-lg transition-colors ${deletingId === s.id ? "opacity-50 pointer-events-none" : ""}`}
-                        style={{ color: "var(--danger)" }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
-                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                        title="Delete"
-                      >
-                        <Trash size={16} />
-                      </button>
-                    </>
-                  )}
+            {staffList.length === 0 ? (
+              <tr>
+                <td colSpan={2} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
+                  No staff members found. Add one to get started.
                 </td>
               </tr>
-            ))}
+            ) : (
+              staffList.map((s) => (
+                <tr 
+                  key={s.id}
+                  onClick={() => {
+                    if (s.user?.id !== currentUserId) {
+                      openEditModal(s);
+                    }
+                  }}
+                  className={s.user?.id === currentUserId ? "opacity-60" : "cursor-pointer hover:bg-[var(--hover-overlay)]"}
+                  style={{ transition: "background-color 0.2s" }}
+                  title={s.user?.id === currentUserId ? "Cannot edit yourself" : "Click to edit"}
+                >
+                  <td>{s.user?.name ?? "-"}</td>
+                  <td>
+                    <div className="flex items-center justify-between">
+                      <span>{s.user?.email ?? "-"}</span>
+                      {s.user?.id !== currentUserId && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(s);
+                          }}
+                          className={`p-2 rounded-lg transition-colors ml-2 ${deletingId === s.id ? "opacity-50 pointer-events-none" : ""}`}
+                          style={{ color: "var(--danger)" }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                          title="Delete"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
