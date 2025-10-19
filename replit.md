@@ -39,13 +39,16 @@ Preferred communication style: Simple, everyday language.
 ## Key Architectural Decisions:
 
 - **Current Semester Hardcoding:** Semester is hardcoded for simplicity, awaiting dynamic implementation.
-- **HOD Department Scoping:** HOD access is restricted to their assigned department, enforced at the API level.
+- **HOD Department Scoping:** HOD access is restricted to their assigned department for subject management and reports. However, HODs can assign faculty from any department to their subjects to support cross-departmental teaching.
+- **Staff Management:** Only Admin users can manage staff (add/edit/delete). Staff can be assigned to any department. HODs no longer have access to staff management; they can only view and assign existing staff to subjects.
+- **Cross-Departmental Faculty Assignments:** HODs can assign any staff member from any department to their subjects, allowing flexibility for inter-departmental teaching arrangements.
 - **Feedback Window Control:** HODs manage feedback submission and report visibility.
 - **Assignment Sync Pattern:** Assignments are managed by atomically replacing existing entries for a semester.
 - **Student Auto-Password:** Initial student passwords are their enrollment numbers.
 - **Middleware Authentication:** Custom middleware using `getToken` from next-auth/jwt for route protection and role-based access control. Protected routes automatically redirect unauthenticated users to login page.
 - **Signout Handling:** Uses `signOut({ redirect: false })` with manual redirect to prevent crashes and ensure smooth logout experience.
 - **Dynamic NEXTAUTH_URL:** Automatically detects Replit domain from environment variables or falls back to localhost for development.
+- **Submission Status Year Filtering:** The submission status page displays students filtered by academic year (SYCO, TYCO, FYCO) with proper year information displayed in the table. Year filtering handles empty results gracefully.
 
 # External Dependencies
 
