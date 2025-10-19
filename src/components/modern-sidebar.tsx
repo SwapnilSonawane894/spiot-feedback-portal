@@ -20,8 +20,6 @@ import {
   MoreHorizontal,
   Briefcase,
   FileText,
-  Menu,
-  X,
 } from "lucide-react";
 import ThemeToggle from "./theme-toggle";
 
@@ -63,12 +61,17 @@ const staffLinks: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: <User size={20} /> },
 ];
 
-export default function ModernSidebar() {
+export default function ModernSidebar({ 
+  collapsed, 
+  setCollapsed 
+}: { 
+  collapsed: boolean; 
+  setCollapsed: (value: boolean) => void;
+}) {
   const pathname = usePathname() || "/";
   const { data: session } = useSession();
   const role = (session as any)?.user?.role;
   const userName = (session as any)?.user?.name;
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileGroupOpen, setMobileGroupOpen] = useState<string | null>(null);
 
