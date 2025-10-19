@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AlertTriangle } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -9,23 +10,78 @@ type Props = {
   confirmLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
+  variant?: "danger" | "primary";
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-export default function ConfirmationModal({ open, title = "Are you sure?", description, confirmLabel = "Yes", cancelLabel = "Cancel", loading = false, onConfirm, onCancel }: Props) {
+export default function ConfirmationModal({ 
+  open, 
+  title = "Are you sure?", 
+  description, 
+  confirmLabel = "Confirm", 
+  cancelLabel = "Cancel", 
+  loading = false, 
+  variant = "danger",
+  onConfirm, 
+  onCancel 
+}: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        {description && <p className="text-sm text-gray-600 mt-2">{description}</p>}
+    <div className="modal-overlay" onClick={onCancel}>
+      <div 
+        className="modal-content w-full max-w-md mx-4 p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-4 mb-4">
+          <div 
+            className="p-3 rounded-full shrink-0"
+            style={{
+              background: variant === "danger" ? "var(--danger-light)" : "var(--primary-light)",
+            }}
+          >
+            <AlertTriangle 
+              size={24} 
+              style={{
+                color: variant === "danger" ? "var(--danger)" : "var(--primary)",
+              }}
+            />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+              {title}
+            </h3>
+            {description && (
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
 
-        <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onCancel} className="px-4 py-2 rounded-md border text-gray-700">{cancelLabel}</button>
-          <button onClick={onConfirm} disabled={loading} className="px-4 py-2 rounded-md bg-red-600 text-white disabled:opacity-50">{loading ? "Working..." : confirmLabel}</button>
+        <div className="flex justify-end gap-3 mt-6">
+          <button 
+            onClick={onCancel} 
+            className="btn-outline"
+            disabled={loading}
+          >
+            {cancelLabel}
+          </button>
+          <button 
+            onClick={onConfirm} 
+            disabled={loading} 
+            className={variant === "danger" ? "btn-danger" : "btn-primary"}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="loading-spinner"></span>
+                <span>Processing...</span>
+              </span>
+            ) : (
+              confirmLabel
+            )}
+          </button>
         </div>
       </div>
     </div>

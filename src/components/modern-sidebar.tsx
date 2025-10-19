@@ -20,6 +20,8 @@ import {
   MoreHorizontal,
   Briefcase,
   FileText,
+  Menu,
+  X,
 } from "lucide-react";
 import ThemeToggle from "./theme-toggle";
 
@@ -102,11 +104,18 @@ export default function ModernSidebar() {
     return links.some(link => link.group === groupKey && bestMatch === link.href);
   };
 
+  const getRoleTitle = () => {
+    if (role === "HOD") return "HOD Portal";
+    if (role === "STUDENT") return "Student Portal";
+    if (role === "STAFF") return "Faculty Portal";
+    return "Admin Portal";
+  };
+
   return (
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden md:flex flex-col fixed left-0 top-0 h-screen border-r transition-all duration-300 ${
+        className={`hidden md:flex flex-col fixed left-0 top-0 h-screen border-r transition-all duration-300 ease-out z-40 ${
           collapsed ? "w-20" : "w-64"
         }`}
         style={{
@@ -115,20 +124,20 @@ export default function ModernSidebar() {
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 h-16 border-b" style={{ borderColor: "var(--sidebar-border)" }}>
+        <div className="flex items-center justify-between px-4 h-16 border-b shrink-0" style={{ borderColor: "var(--sidebar-border)" }}>
           {!collapsed && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 overflow-hidden">
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0"
                 style={{ background: "var(--primary)" }}
               >
                 SP
               </div>
-              <div>
-                <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                  {role === "HOD" ? "HOD Portal" : role === "STUDENT" ? "Student Portal" : role === "STAFF" ? "Faculty Portal" : "Admin Portal"}
+              <div className="overflow-hidden">
+                <div className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                  {getRoleTitle()}
                 </div>
-                <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                <div className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
                   {userName || "SPIOT"}
                 </div>
               </div>
@@ -136,7 +145,7 @@ export default function ModernSidebar() {
           )}
           {collapsed && (
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm mx-auto"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm mx-auto shadow-sm"
               style={{ background: "var(--primary)" }}
             >
               SP
@@ -150,7 +159,12 @@ export default function ModernSidebar() {
             {links.filter(link => !link.group || link.group === "management" || link.group === "reports").map((item) => {
               const isActive = !!bestMatch && item.href === bestMatch;
               return (
-                <Link key={item.href} href={item.href} className={isActive ? "nav-link-active" : "nav-link"} title={collapsed ? item.label : ""}>
+                <Link 
+                  key={item.href} 
+                  href={item.href} 
+                  className={isActive ? "nav-link-active" : "nav-link"} 
+                  title={collapsed ? item.label : ""}
+                >
                   <span className="shrink-0">{item.icon}</span>
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
@@ -160,11 +174,15 @@ export default function ModernSidebar() {
         </nav>
 
         {/* Footer */}
-        <div className={`border-t p-3 space-y-2`} style={{ borderColor: "var(--sidebar-border)" }}>
+        <div className={`border-t p-3 space-y-2 shrink-0`} style={{ borderColor: "var(--sidebar-border)" }}>
           <div className="flex items-center justify-center">
             <ThemeToggle />
           </div>
-          <button onClick={() => signOut({ callbackUrl: "/login" })} className="nav-link w-full" title={collapsed ? "Logout" : ""}>
+          <button 
+            onClick={() => signOut({ callbackUrl: "/login" })} 
+            className="nav-link w-full justify-center" 
+            title={collapsed ? "Logout" : ""}
+          >
             <span className="shrink-0">
               <LogOut size={20} />
             </span>
@@ -172,10 +190,13 @@ export default function ModernSidebar() {
           </button>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="w-full flex items-center justify-center p-2 rounded-lg transition-all duration-200"
+            style={{ color: "var(--text-secondary)" }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? <ChevronRight size={20} style={{ color: "var(--text-secondary)" }} /> : <ChevronLeft size={20} style={{ color: "var(--text-secondary)" }} />}
+            {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
         </div>
       </aside>
@@ -183,108 +204,121 @@ export default function ModernSidebar() {
       {/* Mobile Bottom Tab Bar */}
       {role === "HOD" && mobileTabsHOD ? (
         <nav
-          className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t flex items-center justify-around z-50 px-2"
+          className="md:hidden fixed bottom-0 left-0 right-0 border-t z-50 safe-area-inset-bottom"
           style={{
             background: "var(--sidebar-bg)",
             borderColor: "var(--sidebar-border)",
+            boxShadow: "var(--shadow-md)",
           }}
         >
-          {mobileTabsHOD.map((tab, idx) => {
-            if (tab.type === "link") {
-              const isActive = bestMatch === tab.href;
-              return (
-                <Link
-                  key={idx}
-                  href={tab.href}
-                  className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg transition-all duration-200 ${
-                    isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  <span className="text-xs font-medium">{tab.label}</span>
-                </Link>
-              );
-            } else if (tab.type === "group") {
-              const isActive = isActiveInGroup(tab.groupKey!);
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setMobileGroupOpen(mobileGroupOpen === tab.groupKey ? null : tab.groupKey!)}
-                  className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg transition-all duration-200 ${
-                    isActive || mobileGroupOpen === tab.groupKey ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  <span className="text-xs font-medium">{tab.label}</span>
-                </button>
-              );
-            } else {
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg transition-all duration-200 ${
-                    mobileMenuOpen ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  <span className="text-xs font-medium">{tab.label}</span>
-                </button>
-              );
-            }
-          })}
+          <div className="flex items-center justify-around h-16 px-2">
+            {mobileTabsHOD.map((tab, idx) => {
+              if (tab.type === "link") {
+                const isActive = bestMatch === tab.href;
+                return (
+                  <Link
+                    key={idx}
+                    href={tab.href}
+                    className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1"
+                    style={{
+                      color: isActive ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                  >
+                    <span className="shrink-0">{tab.icon}</span>
+                    <span className="text-xs font-medium truncate w-full text-center">{tab.label}</span>
+                  </Link>
+                );
+              } else if (tab.type === "group") {
+                const isActive = isActiveInGroup(tab.groupKey!);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setMobileGroupOpen(mobileGroupOpen === tab.groupKey ? null : tab.groupKey!)}
+                    className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1"
+                    style={{
+                      color: isActive || mobileGroupOpen === tab.groupKey ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                  >
+                    <span className="shrink-0">{tab.icon}</span>
+                    <span className="text-xs font-medium truncate w-full text-center">{tab.label}</span>
+                  </button>
+                );
+              } else {
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1"
+                    style={{
+                      color: mobileMenuOpen ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                  >
+                    <span className="shrink-0">{tab.icon}</span>
+                    <span className="text-xs font-medium truncate w-full text-center">{tab.label}</span>
+                  </button>
+                );
+              }
+            })}
+          </div>
         </nav>
       ) : (
         <nav
-          className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t flex items-center justify-around z-50"
+          className="md:hidden fixed bottom-0 left-0 right-0 border-t z-50 safe-area-inset-bottom"
           style={{
             background: "var(--sidebar-bg)",
             borderColor: "var(--sidebar-border)",
+            boxShadow: "var(--shadow-md)",
           }}
         >
-          {links.slice(0, 4).map((item) => {
-            const isActive = !!bestMatch && item.href === bestMatch;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 ${
-                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"
-                }`}
+          <div className="flex items-center justify-around h-16">
+            {links.slice(0, 4).map((item) => {
+              const isActive = !!bestMatch && item.href === bestMatch;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1"
+                  style={{
+                    color: isActive ? "var(--primary)" : "var(--text-secondary)",
+                  }}
+                >
+                  <span className="shrink-0">{item.icon}</span>
+                  <span className="text-xs font-medium truncate w-full text-center">{item.label.split(" ")[0]}</span>
+                </Link>
+              );
+            })}
+            {links.length > 4 && (
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1"
+                style={{
+                  color: mobileMenuOpen ? "var(--primary)" : "var(--text-secondary)",
+                }}
               >
-                <span>{item.icon}</span>
-                <span className="text-xs font-medium">{item.label.split(" ")[0]}</span>
-              </Link>
-            );
-          })}
-          {links.length > 4 && (
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 dark:text-gray-400"
-            >
-              <MoreHorizontal size={20} />
-              <span className="text-xs font-medium">More</span>
-            </button>
-          )}
+                <MoreHorizontal size={20} />
+                <span className="text-xs font-medium">More</span>
+              </button>
+            )}
+          </div>
         </nav>
       )}
 
       {/* Mobile Group Sheet for HOD */}
       {mobileGroupOpen && role === "HOD" && (
         <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[60] fade-in"
+          className="md:hidden fixed inset-0 bg-black bg-opacity-60 z-[60] fade-in backdrop-blur-sm"
           onClick={() => setMobileGroupOpen(null)}
         >
           <div
-            className="absolute bottom-16 left-0 right-0 rounded-t-2xl p-4 slide-up"
-            style={{ background: "var(--card-bg)", maxHeight: "50vh", overflowY: "auto" }}
+            className="absolute bottom-16 left-0 right-0 rounded-t-3xl p-6 slide-up"
+            style={{ background: "var(--card-bg)", maxHeight: "60vh", overflowY: "auto" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+            <div className="w-12 h-1.5 rounded-full mx-auto mb-6" style={{ background: "var(--text-muted)", opacity: 0.3 }}></div>
+            <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text-primary)" }}>
               {mobileGroupOpen === "management" ? "Management" : "Reports"}
             </h3>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {getGroupItems(mobileGroupOpen).map((item) => {
                 const isActive = bestMatch === item.href;
                 return (
@@ -292,10 +326,13 @@ export default function ModernSidebar() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileGroupOpen(null)}
-                    className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                      isActive ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
-                    style={{ color: isActive ? undefined : "var(--text-primary)" }}
+                    className="flex items-center gap-3 p-4 rounded-xl transition-all"
+                    style={{
+                      background: isActive ? "var(--primary-light)" : "transparent",
+                      color: isActive ? "var(--primary)" : "var(--text-primary)",
+                    }}
+                    onMouseEnter={(e) => !isActive && (e.currentTarget.style.background = "var(--hover-overlay)")}
+                    onMouseLeave={(e) => !isActive && (e.currentTarget.style.background = "transparent")}
                   >
                     <span>{item.icon}</span>
                     <span className="font-medium">{item.label}</span>
@@ -310,19 +347,19 @@ export default function ModernSidebar() {
       {/* Mobile More Menu */}
       {mobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[60] fade-in"
+          className="md:hidden fixed inset-0 bg-black bg-opacity-60 z-[60] fade-in backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
-            className="absolute bottom-16 left-0 right-0 rounded-t-2xl p-4 slide-up"
-            style={{ background: "var(--card-bg)", maxHeight: "50vh", overflowY: "auto" }}
+            className="absolute bottom-16 left-0 right-0 rounded-t-3xl p-6 slide-up"
+            style={{ background: "var(--card-bg)", maxHeight: "60vh", overflowY: "auto" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+            <div className="w-12 h-1.5 rounded-full mx-auto mb-6" style={{ background: "var(--text-muted)", opacity: 0.3 }}></div>
+            <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text-primary)" }}>
               More Options
             </h3>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {role === "HOD" ? (
                 <>
                   {getGroupItems("more").map((item) => (
@@ -330,25 +367,30 @@ export default function ModernSidebar() {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                      className="flex items-center gap-3 p-4 rounded-xl transition-all"
                       style={{ color: "var(--text-primary)" }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                     >
                       <span>{item.icon}</span>
                       <span className="font-medium">{item.label}</span>
                     </Link>
                   ))}
-                  <div className="flex items-center gap-3 p-3">
-                    <span style={{ color: "var(--text-secondary)" }}>Theme</span>
-                    <div className="ml-auto">
-                      <ThemeToggle />
+                  <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: "var(--hover-overlay)" }}>
+                    <div className="flex items-center gap-3">
+                      <span style={{ color: "var(--text-secondary)" }} className="font-medium">Theme</span>
                     </div>
+                    <ThemeToggle />
                   </div>
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
                       signOut({ callbackUrl: "/login" });
                     }}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all w-full text-left text-red-600 dark:text-red-400"
+                    className="flex items-center gap-3 p-4 rounded-xl transition-all w-full text-left"
+                    style={{ color: "var(--danger)" }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                   >
                     <LogOut size={20} />
                     <span className="font-medium">Logout</span>
@@ -361,25 +403,30 @@ export default function ModernSidebar() {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                      className="flex items-center gap-3 p-4 rounded-xl transition-all"
                       style={{ color: "var(--text-primary)" }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                     >
                       <span>{item.icon}</span>
                       <span className="font-medium">{item.label}</span>
                     </Link>
                   ))}
-                  <div className="flex items-center gap-3 p-3">
-                    <span style={{ color: "var(--text-secondary)" }}>Theme</span>
-                    <div className="ml-auto">
-                      <ThemeToggle />
+                  <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: "var(--hover-overlay)" }}>
+                    <div className="flex items-center gap-3">
+                      <span style={{ color: "var(--text-secondary)" }} className="font-medium">Theme</span>
                     </div>
+                    <ThemeToggle />
                   </div>
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
                       signOut({ callbackUrl: "/login" });
                     }}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all w-full text-left text-red-600 dark:text-red-400"
+                    className="flex items-center gap-3 p-4 rounded-xl transition-all w-full text-left"
+                    style={{ color: "var(--danger)" }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                   >
                     <LogOut size={20} />
                     <span className="font-medium">Logout</span>

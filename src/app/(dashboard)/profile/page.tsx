@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
+import { User, Mail, Lock } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { TextInput } from "@/components/ui-controls";
 
 export default function ProfilePage(): React.ReactElement {
   const { data: session } = useSession();
@@ -10,7 +13,6 @@ export default function ProfilePage(): React.ReactElement {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [currentPasswordError, setCurrentPasswordError] = useState<string | null>(null);
@@ -27,6 +29,7 @@ export default function ProfilePage(): React.ReactElement {
         setEmail(data.email || "");
       } catch (err) {
         console.error(err);
+        toast.error("Failed to load profile");
       }
     }
     load();
@@ -38,17 +41,19 @@ export default function ProfilePage(): React.ReactElement {
     try {
       const payload: any = { name };
       if (role !== "STUDENT" && (currentPassword || newPassword)) {
-        // require both
         payload.currentPassword = currentPassword;
         payload.newPassword = newPassword;
       }
 
       setCurrentPasswordError(null);
       setGeneralError(null);
-      const res = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const res = await fetch("/api/profile", { 
+        method: "PATCH", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(payload) 
+      });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        // handle incorrect password specially
         if (json?.error && json.error.toLowerCase().includes("incorrect current password")) {
           setCurrentPasswordError("Incorrect current password");
           return;
@@ -56,52 +61,154 @@ export default function ProfilePage(): React.ReactElement {
         setGeneralError(json?.error || "Update failed");
         return;
       }
-      toast.success("Profile updated");
+      toast.success("Profile updated successfully");
       setCurrentPassword("");
       setNewPassword("");
     } catch (err) {
       console.error(err);
       setGeneralError((err as Error).message || "Update failed");
+      toast.error("Failed to update profile");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">My Profile</h1>
+    <div className="max-w-3xl mx-auto">
+      <PageHeader 
+        title="My Profile" 
+        description="Manage your account settings and preferences"
+      />
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-          <label className="text-sm font-medium">Email</label>
-          <input value={email} disabled className="px-3 py-2 border rounded" />
+      <div className="card">
+        <div className="card-header">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl" style={{ background: "var(--primary-light)" }}>
+              <User size={20} style={{ color: "var(--primary)" }} />
+            </div>
+            <div>
+              <h3 className="font-semibold" style={{ color: "var(--text-primary)" }}>Account Information</h3>
+              <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Update your personal details</p>
+            </div>
+          </div>
+        </div>
 
-          <label className="text-sm font-medium">Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className="px-3 py-2 border rounded" />
+        <form onSubmit={handleSubmit} className="card-body">
+          <div className="space-y-5">
+            {generalError && (
+              <div className="px-4 py-3 rounded-lg text-sm" style={{ background: "var(--danger-light)", color: "var(--danger)" }}>
+                {generalError}
+              </div>
+            )}
 
-          {role !== "STUDENT" && (
-            <>
-              <label className="text-sm font-medium">Current Password</label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className={`px-3 py-2 border rounded ${currentPasswordError ? "border-red-500" : "border-gray-300"}`}
+            <div>
+              <label className="form-label">
+                <div className="flex items-center gap-2">
+                  <Mail size={16} />
+                  <span>Email Address</span>
+                </div>
+              </label>
+              <input 
+                value={email} 
+                disabled 
+                className="input-field"
               />
-              {currentPasswordError && <div className="text-sm text-red-600 mt-1">{currentPasswordError}</div>}
+              <p className="form-helper">Email cannot be changed</p>
+            </div>
 
-              <label className="text-sm font-medium">New Password</label>
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="px-3 py-2 border rounded" />
-            </>
-          )}
+            <div>
+              <label className="form-label">
+                <div className="flex items-center gap-2">
+                  <User size={16} />
+                  <span>Full Name</span>
+                </div>
+              </label>
+              <input 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                className="input-field"
+                placeholder="Enter your full name"
+              />
+            </div>
 
-          {generalError && <div className="text-sm text-red-600">{generalError}</div>}
+            {role !== "STUDENT" && (
+              <div className="pt-4 border-t" style={{ borderColor: "var(--card-border)" }}>
+                <h4 className="text-sm font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
+                  Change Password
+                </h4>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="form-label">
+                      <div className="flex items-center gap-2">
+                        <Lock size={16} />
+                        <span>Current Password</span>
+                      </div>
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className={`input-field ${currentPasswordError ? "border-red-500" : ""}`}
+                      placeholder="Enter current password"
+                    />
+                    {currentPasswordError && (
+                      <p className="form-error">{currentPasswordError}</p>
+                    )}
+                  </div>
 
-          <div className="flex justify-end">
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded" disabled={loading}>{loading ? "Saving..." : "Save Changes"}</button>
+                  <div>
+                    <label className="form-label">
+                      <div className="flex items-center gap-2">
+                        <Lock size={16} />
+                        <span>New Password</span>
+                      </div>
+                    </label>
+                    <input 
+                      type="password" 
+                      value={newPassword} 
+                      onChange={(e) => setNewPassword(e.target.value)} 
+                      className="input-field"
+                      placeholder="Enter new password"
+                    />
+                    <p className="form-helper">Leave blank to keep current password</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-6 border-t" style={{ borderColor: "var(--card-border)" }}>
+            <button 
+              type="button" 
+              className="btn-outline"
+              onClick={() => {
+                setName((session as any)?.user?.name || "");
+                setCurrentPassword("");
+                setNewPassword("");
+                setCurrentPasswordError(null);
+                setGeneralError(null);
+              }}
+            >
+              Reset
+            </button>
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="loading-spinner" />
+                  Saving...
+                </span>
+              ) : (
+                "Save Changes"
+              )}
+            </button>
           </div>
         </form>
       </div>
-    </main>
+    </div>
   );
 }

@@ -23,24 +23,31 @@ export function StatCard({
   className = "",
 }: StatCardProps) {
   return (
-    <div className={`card p-5 ${className}`}>
+    <div className={`card p-6 hover-lift ${className}`}>
       <div className="flex items-start gap-4">
         <div
-          className="p-3 rounded-xl flex items-center justify-center shrink-0"
+          className="p-3.5 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200"
           style={{ background: iconBgColor }}
         >
           <span style={{ color: iconColor }}>{icon}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+          <div className="text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
             {title}
           </div>
-          <div className="text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+          <div className="text-2xl md:text-3xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
             {value}
           </div>
           {trend && (
-            <div className={`text-xs font-medium ${trend.isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-              {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
+            <div 
+              className="text-xs font-semibold inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+              style={{
+                background: trend.isPositive ? "var(--success-light)" : "var(--danger-light)",
+                color: trend.isPositive ? "var(--success)" : "var(--danger)",
+              }}
+            >
+              <span>{trend.isPositive ? "↑" : "↓"}</span>
+              <span>{Math.abs(trend.value)}%</span>
             </div>
           )}
         </div>

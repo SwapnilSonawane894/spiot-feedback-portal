@@ -4,19 +4,15 @@ import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { Users, BookOpen, GraduationCap } from "lucide-react";
 
 export default function HODDashboardPage(): React.ReactElement {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // dashboard metrics (placeholder for future use)
   const [metrics, setMetrics] = useState<any>(null);
-
-  // student feedback submission window
   const [isFeedbackActive, setIsFeedbackActive] = useState<boolean | null>(null);
   const [loadingFeedbackToggle, setLoadingFeedbackToggle] = useState(false);
-
-  // faculty report release status
   const [reportsReleased, setReportsReleased] = useState<boolean | null>(null);
   const [loadingReportsToggle, setLoadingReportsToggle] = useState(false);
 
@@ -28,10 +24,8 @@ export default function HODDashboardPage(): React.ReactElement {
       return;
     }
 
-    // load all required dashboard data
     async function loadAll() {
       try {
-        // metrics (non-blocking)
         (async () => {
           try {
             const r = await fetch('/api/hod/metrics');
@@ -62,8 +56,7 @@ export default function HODDashboardPage(): React.ReactElement {
     }
 
     loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, status]);
+  }, [session, status, router]);
 
   async function handleToggleFeedback() {
     if (isFeedbackActive === null) return;
@@ -112,10 +105,10 @@ export default function HODDashboardPage(): React.ReactElement {
 
   if (status === 'loading' || isFeedbackActive === null || reportsReleased === null) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-3">
-          <div className="loading-spinner" style={{ width: "2rem", height: "2rem" }} />
-          <p style={{ color: "var(--text-secondary)" }}>Loading dashboard...</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="loading-spinner" style={{ width: "2.5rem", height: "2.5rem" }} />
+          <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Loading dashboard...</p>
         </div>
       </div>
     );
@@ -123,9 +116,9 @@ export default function HODDashboardPage(): React.ReactElement {
   
   if (!session) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="card p-6 text-center">
-          <p style={{ color: "var(--danger)" }} className="font-medium">Unauthorized Access</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="card p-8 text-center">
+          <p style={{ color: "var(--danger)" }} className="font-semibold text-lg">Unauthorized Access</p>
         </div>
       </div>
     );
@@ -138,18 +131,18 @@ export default function HODDashboardPage(): React.ReactElement {
         <p className="page-description">Manage feedback collection and view department analytics</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 mb-6">
         {/* Feedback Control Card */}
-        <div className="card card-body">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card card-body hover-lift">
+          <div className="flex items-center justify-between mb-5">
             <h3 className="section-title mb-0">Feedback Control</h3>
-            <span className={isFeedbackActive ? "badge-success" : "badge-danger"}>
+            <span className={`badge ${isFeedbackActive ? "badge-success" : "badge-danger"}`}>
               {isFeedbackActive ? 'OPEN' : 'CLOSED'}
             </span>
           </div>
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
+              <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
                 Feedback Period: {isFeedbackActive ? 'Currently Open' : 'Currently Closed'}
               </p>
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
@@ -181,43 +174,52 @@ export default function HODDashboardPage(): React.ReactElement {
         </div>
 
         {/* Department Metrics Card */}
-        <div className="card card-body">
-          <h3 className="section-title">Department Metrics</h3>
+        <div className="card card-body hover-lift">
+          <h3 className="section-title mb-5">Department Metrics</h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--primary-light)" }}>
-              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Staff</span>
-              <span className="text-lg font-bold" style={{ color: "var(--primary)" }}>-</span>
+            <div className="flex items-center justify-between p-4 rounded-xl transition-all hover-scale" style={{ background: "var(--primary-light)" }}>
+              <div className="flex items-center gap-3">
+                <Users size={20} style={{ color: "var(--primary)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Staff</span>
+              </div>
+              <span className="text-xl font-bold" style={{ color: "var(--primary)" }}>{metrics?.staffCount || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--success-light)" }}>
-              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Subjects</span>
-              <span className="text-lg font-bold" style={{ color: "var(--success)" }}>-</span>
+            <div className="flex items-center justify-between p-4 rounded-xl transition-all hover-scale" style={{ background: "var(--success-light)" }}>
+              <div className="flex items-center gap-3">
+                <BookOpen size={20} style={{ color: "var(--success)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Subjects</span>
+              </div>
+              <span className="text-xl font-bold" style={{ color: "var(--success)" }}>{metrics?.subjectCount || 0}</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--secondary-light)", backgroundColor: "#f1f5f9" }}>
-              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Students</span>
-              <span className="text-lg font-bold" style={{ color: "var(--secondary)" }}>-</span>
+            <div className="flex items-center justify-between p-4 rounded-xl transition-all hover-scale" style={{ background: "var(--hover-overlay)" }}>
+              <div className="flex items-center gap-3">
+                <GraduationCap size={20} style={{ color: "var(--text-secondary)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Total Students</span>
+              </div>
+              <span className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{metrics?.studentCount || 0}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Faculty Reports Control Card */}
-      <div className="card card-body mb-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="card card-body mb-6 hover-lift">
+        <div className="flex items-center justify-between mb-5">
           <h3 className="section-title mb-0">Faculty Report Control</h3>
-          <span className={reportsReleased ? "badge-success" : "badge-danger"}>
+          <span className={`badge ${reportsReleased ? "badge-success" : "badge-danger"}`}>
             {reportsReleased ? 'RELEASED' : 'NOT RELEASED'}
           </span>
         </div>
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
+            <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
               Reports Status: {reportsReleased ? 'Visible to Faculty' : 'Hidden from Faculty'}
             </p>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               Release or retract final feedback reports for faculty members in your department.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             {reportsReleased ? (
               <button onClick={handleToggleReleaseStatus} disabled={loadingReportsToggle} className="btn-danger">
                 {loadingReportsToggle ? (
@@ -241,14 +243,15 @@ export default function HODDashboardPage(): React.ReactElement {
         </div>
       </div>
 
-      {/* Feedback Trend Chart */}
-      <div className="card">
+      {/* Feedback Analytics Chart */}
+      <div className="card hover-lift">
         <div className="card-header">
           <h3 className="section-title mb-0">Feedback Analytics</h3>
+          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>Visual representation of feedback trends</p>
         </div>
         <div className="card-body">
-          <div className="h-48 rounded-lg flex items-center justify-center" style={{ background: "var(--background)" }}>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Chart visualization will appear here</p>
+          <div className="h-64 rounded-xl flex items-center justify-center" style={{ background: "var(--background)" }}>
+            <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>Chart visualization will appear here</p>
           </div>
         </div>
       </div>
