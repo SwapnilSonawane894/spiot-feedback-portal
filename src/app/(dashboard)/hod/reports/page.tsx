@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { Button, Input } from "@/components/ui-controls";
 
 const params = [
   ["coverage_of_syllabus", "Coverage of syllabus"],
@@ -29,25 +30,7 @@ export default function HodReportsPage() {
   const [selectedStaff, setSelectedStaff] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchReports();
-    fetchYears();
-  }, []);
-
-  async function fetchYears() {
-    try {
-      const res = await fetch('/api/years');
-      if (!res.ok) throw new Error('Failed to load years');
-      const json = await res.json();
-      setYears(json || []);
-      if (json && json.length > 0) setSelectedYear(json[0].id);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to load academic years');
-    }
-  }
-
-  async function fetchReports() {
+  const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/hod/reports");
@@ -60,68 +43,100 @@ export default function HodReportsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  const allReleased = data.every((d) => d.reports.every((r: any) => r.isReleased));
-
-  async function handleReleaseAll() {
+  const fetchYears = useCallback(async () => {
     try {
-      const res = await fetch("/api/hod/release", { method: "POST" });
+      const res = await fetch('/api/years');
+      if (!res.ok) throw new Error('Failed to load years');
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Release failed");
-      toast.success(`Released ${json.released} feedback(s)`);
-      fetchReports();
+      setYears(json || []);
+      if (json && json.length > 0) setSelectedYear(json[0].id);
     } catch (err) {
       console.error(err);
-      toast.error((err as Error).message || "Release failed");
+      toast.error('Failed to load academic years');
     }
-  }
+  }, []);
 
-  const staffOptions = data.map((d) => ({ id: d.staffId, name: d.staffName }));
-  const selected = data.find((d) => d.staffId === selectedStaff) || null;
+  useEffect(() => {
+    fetchReports();
+    fetchYears();
+  }, [fetchReports, fetchYears]);
+
+  const handleDownloadReport = useCallback(() => {
+    if (!selectedYear) {
+      toast.error('Select a year');
+      return;
+    }
+    window.location.href = `/api/hod/comparative-report?year=${selectedYear}`;
+  }, [selectedYear]);
+
+  const staffOptions = useMemo(() => data.map((d) => ({ id: d.staffId, name: d.staffName })), [data]);
+  const selected = useMemo(() => data.find((d) => d.staffId === selectedStaff) || null, [data, selectedStaff]);
   
-
   return (
     <main className="max-w-7xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Feedback Analytics & Reports</h1>
+      <div className="page-header">
+        <h1 className="page-title">Feedback Analytics & Reports</h1>
+        <p className="page-description">View and download faculty feedback reports</p>
+      </div>
+
       {/* Generate Comparative Report */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-lg font-medium mb-3">Generate Comparative Report</h2>
-        <div className="flex items-start flex-col gap-3">
-          <label className="text-sm">Select Academic Year:</label>
-          <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="px-2 py-1 border rounded">
-            {years.map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}
-          </select>
-          <button onClick={() => { if (!selectedYear) return toast.error('Select a year'); window.location.href = `/api/hod/comparative-report?year=${selectedYear}` }} className="px-3 py-1 bg-green-600 text-white rounded">
+      <div className="card card-body mb-6 hover-lift">
+        <h2 className="section-title mb-4">Generate Comparative Report</h2>
+        <div className="flex items-start flex-col gap-4">
+          <div className="w-full sm:w-auto">
+            <label className="input-label">Select Academic Year:</label>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)} 
+              className="input-field w-full sm:w-64"
+            >
+              {years.map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}
+            </select>
+          </div>
+          <Button onClick={handleDownloadReport}>
             Download Excel Report
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="flex items-center gap-4 mb-6">
-        <select value={selectedStaff} onChange={(e) => setSelectedStaff(e.target.value)} className="px-2 py-1 border rounded">
+        <select 
+          value={selectedStaff} 
+          onChange={(e) => setSelectedStaff(e.target.value)} 
+          className="input-field"
+        >
           <option value="">All faculty</option>
           {staffOptions.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
-
-        {/* Release All Feedback button removed — release/retract is now controlled from the HOD dashboard */}
       </div>
 
-      {loading && <div>Loading...</div>}
-
-      {selected ? (
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[40vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="loading-spinner" style={{ width: "2.5rem", height: "2.5rem" }} />
+            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Loading reports...</p>
+          </div>
+        </div>
+      ) : selected ? (
         <div>
-          <h2 className="text-lg font-medium mb-3">{selected.staffName}</h2>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>{selected.staffName}</h2>
           {selected.reports.map((r: any) => (
-            <div key={r.assignmentId} className="bg-white rounded p-4 mb-4 shadow">
-              <div className="font-medium">{r.subject?.name} — {r.semester} <span className="text-sm text-gray-500">(Based on {r.submissionCount ?? r.totalResponses} submissions out of {r.totalStudents ?? 'N/A'} students)</span></div>
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div key={r.assignmentId} className="card card-body mb-4 hover-lift">
+              <div className="font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+                {r.subject?.name} — {r.semester}{" "}
+                <span className="text-sm font-normal" style={{ color: "var(--text-secondary)" }}>
+                  (Based on {r.submissionCount ?? r.totalResponses} submissions out of {r.totalStudents ?? 'N/A'} students)
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {params.map(([key, label]) => (
-                  <div key={key} className="flex items-center justify-between border-b pb-2">
-                    <div className="text-sm text-gray-700">{label}</div>
-                    <div className="text-sm font-medium">{r.averages?.[key] ?? 0} / 5</div>
+                  <div key={key} className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--card-border)" }}>
+                    <div className="text-sm" style={{ color: "var(--text-secondary)" }}>{label}</div>
+                    <div className="text-sm font-semibold" style={{ color: "var(--primary)" }}>{r.averages?.[key] ?? 0} / 5</div>
                   </div>
                 ))}
               </div>
@@ -134,21 +149,25 @@ export default function HodReportsPage() {
       ) : (
         data.map((d) => (
           <div key={d.staffId} className="mb-6">
-            <h2 className="text-lg font-medium mb-2">{d.staffName}</h2>
+            <h2 className="text-lg font-semibold mb-3" style={{ color: "var(--text-primary)" }}>{d.staffName}</h2>
             {d.reports.map((r: any) => (
-              <div key={r.assignmentId} className="bg-white rounded p-4 mb-4 shadow">
-                <div className="font-medium">{r.subject?.name} — {r.semester} <span className="text-sm text-gray-500">(Based on {r.submissionCount ?? r.totalResponses} submissions out of {r.totalStudents ?? 'N/A'} students)</span></div>
-                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div key={r.assignmentId} className="card card-body mb-4 hover-lift">
+                <div className="font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+                  {r.subject?.name} — {r.semester}{" "}
+                  <span className="text-sm font-normal" style={{ color: "var(--text-secondary)" }}>
+                    (Based on {r.submissionCount ?? r.totalResponses} submissions out of {r.totalStudents ?? 'N/A'} students)
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {params.map(([key, label]) => (
-                    <div key={key} className="flex items-center justify-between border-b pb-2">
-                      <div className="text-sm text-gray-700">{label}</div>
-                      <div className="text-sm font-medium">{r.averages?.[key] ?? 0} / 5</div>
+                    <div key={key} className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--card-border)" }}>
+                      <div className="text-sm" style={{ color: "var(--text-secondary)" }}>{label}</div>
+                      <div className="text-sm font-semibold" style={{ color: "var(--primary)" }}>{r.averages?.[key] ?? 0} / 5</div>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
-            {/* HOD Suggestions are shown only in the selected staff detail view to avoid duplicates */}
           </div>
         ))
       )}
@@ -181,18 +200,22 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
 
   async function save() {
     if (!staffId || !semester) {
-      alert('Please enter the semester (e.g., "Odd 2025-26") before saving.');
+      toast.error('Please enter the semester (e.g., "Odd 2025-26") before saving.');
       return;
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/hod/suggestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ staffId, semester, content: text }) });
+      const res = await fetch('/api/hod/suggestions', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ staffId, semester, content: text }) 
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || 'Save failed');
-      alert('Saved HOD suggestions');
+      toast.success('Saved HOD suggestions');
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || 'Save failed');
+      toast.error((err as Error).message || 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -201,17 +224,31 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
   if (!staffId) return null;
 
   return (
-    <div className="bg-white rounded p-4 mb-4 shadow">
-      <h3 className="text-md font-medium mb-2">HOD Suggestions & Comments</h3>
-      <div className="mb-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <input value={semester} onChange={(e) => setSemester(e.target.value)} placeholder="Semester (e.g., Odd 2025-26)" className="px-3 py-2 border rounded" />
-        <div className="text-sm text-gray-500 self-center">Enter semester for which this suggestion applies.</div>
+    <div className="card card-body mb-4 hover-lift">
+      <h3 className="section-title mb-3">HOD Suggestions & Comments</h3>
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <Input 
+            value={semester} 
+            onChange={(e) => setSemester(e.target.value)} 
+            placeholder="Semester (e.g., Odd 2025-26)" 
+          />
+        </div>
+        <div className="text-sm self-center" style={{ color: "var(--text-muted)" }}>
+          Enter semester for which this suggestion applies.
+        </div>
       </div>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full border p-2 rounded h-28" placeholder={loading ? 'Loading...' : 'Write suggestions for this faculty...'} />
-      <div className="mt-2">
-        <button onClick={save} disabled={saving} className="px-3 py-1 bg-blue-600 text-white rounded">{saving ? 'Saving...' : 'Save Suggestions'}</button>
+      <textarea 
+        value={text} 
+        onChange={(e) => setText(e.target.value)} 
+        className="input-field w-full h-28 resize-none" 
+        placeholder={loading ? 'Loading...' : 'Write suggestions for this faculty...'} 
+      />
+      <div className="mt-3">
+        <Button onClick={save} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Suggestions'}
+        </Button>
       </div>
     </div>
   );
 }
-// Removed duplicate client component (older ReportsPage). HODReportsPage is defined above in this file.

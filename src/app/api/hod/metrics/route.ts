@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -25,50 +23,52 @@ export async function GET() {
     const departmentId = staffProfile.departmentId;
     const semester = "Odd 2025-26";
 
-    const totalStaff = await prisma.staff.count({
-      where: { departmentId },
-    });
-
-    const totalSubjects = await prisma.subject.count({
-      where: {
-        academicYear: {
-          students: {
-            some: {
-              departmentId,
+    // OPTIMIZED: Run all counts in parallel
+    const [totalStaff, totalSubjects, totalStudents, totalAssignments, totalFeedbackSubmissions] = await Promise.all([
+      prisma.staff.count({
+        where: { departmentId },
+      }),
+      prisma.subject.count({
+        where: {
+          academicYear: {
+            students: {
+              some: {
+                departmentId,
+              },
             },
           },
         },
-      },
-    });
-
-    const totalStudents = await prisma.user.count({
-      where: {
-        departmentId,
-        role: "STUDENT",
-      },
-    });
-
-    const totalAssignments = await prisma.facultyAssignment.count({
-      where: {
-        semester,
-        staff: {
+      }),
+      prisma.user.count({
+        where: {
           departmentId,
+          role: "STUDENT",
         },
-      },
-    });
-
-    const totalFeedbackSubmissions = await prisma.feedback.count({
-      where: {
-        assignment: {
+      }),
+      prisma.facultyAssignment.count({
+        where: {
           semester,
           staff: {
             departmentId,
           },
         },
-      },
-    });
+      }),
+      prisma.feedback.count({
+        where: {
+          assignment: {
+            semester,
+            staff: {
+              departmentId,
+            },
+          },
+        },
+      }),
+    ]);
 
     return NextResponse.json({
+      staffCount: totalStaff,
+      subjectCount: totalSubjects,
+      studentCount: totalStudents,
       totalStaff,
       totalSubjects,
       totalStudents,
