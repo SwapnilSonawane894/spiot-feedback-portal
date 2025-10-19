@@ -95,17 +95,26 @@ export default function LoginPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "var(--background)" }}>
-      <div className="w-full max-w-md fade-in">
-        <div className="card content-spacing">
-          <div className="flex flex-col items-center mb-8">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8" 
+      style={{ background: "var(--background)" }}
+    >
+      <div className="w-full sm:max-w-md fade-in">
+        <div className="card p-6 sm:p-8 md:p-10">
+          <div className="flex flex-col items-center mb-8 sm:mb-10">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-105" 
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mb-5 transition-transform hover:scale-105" 
               style={{ background: "var(--primary-light)" }}
             >
-              <Image src="/logo.png" alt="SPIOT logo" width={56} height={56} style={{ height: "auto" }} />
+              <Image 
+                src="/logo.png" 
+                alt="SPIOT logo" 
+                width={80} 
+                height={80} 
+                style={{ objectFit: "contain", width: "auto", height: "auto", maxWidth: "80%", maxHeight: "80%" }} 
+              />
             </div>
-            <h1 className="text-center text-lg font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+            <h1 className="text-center text-xl sm:text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
               SPIOT Feedback Portal
             </h1>
             <p className="text-center text-sm" style={{ color: "var(--text-secondary)" }}>
@@ -113,7 +122,7 @@ export default function LoginPage(): React.JSX.Element {
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div 
                 className="px-4 py-3 rounded-lg text-sm font-medium slide-in-right" 
@@ -126,13 +135,13 @@ export default function LoginPage(): React.JSX.Element {
             <div>
               <label className="form-label">Email / Enrollment Number</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center" style={{ color: "var(--text-muted)" }}>
+                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style={{ color: "var(--text-muted)" }}>
                   <Mail size={18} />
                 </span>
                 <input
                   type="text"
                   placeholder="Enter your credentials"
-                  className="input-field pl-11"
+                  className="input-field pl-12"
                   aria-label="Email or Enrollment Number"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -144,13 +153,13 @@ export default function LoginPage(): React.JSX.Element {
             <div>
               <label className="form-label">Password</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center" style={{ color: "var(--text-muted)" }}>
+                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style={{ color: "var(--text-muted)" }}>
                   <Lock size={18} />
                 </span>
                 <input
                   type="password"
                   placeholder="Enter your password"
-                  className="input-field pl-11"
+                  className="input-field pl-12"
                   aria-label="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -162,7 +171,7 @@ export default function LoginPage(): React.JSX.Element {
             <button 
               type="submit" 
               disabled={isLoading} 
-              className="btn-primary w-full py-3 text-base font-semibold"
+              className="btn-primary w-full py-3.5 text-base font-semibold mt-6"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -176,7 +185,7 @@ export default function LoginPage(): React.JSX.Element {
           </form>
         </div>
 
-        <div className="text-center text-xs mt-6" style={{ color: "var(--text-muted)" }}>
+        <div className="text-center text-xs mt-6 sm:mt-8" style={{ color: "var(--text-muted)" }}>
           © 2025-26 SPIOT | Student Feedback Portal
         </div>
       </div>
