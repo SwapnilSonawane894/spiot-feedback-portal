@@ -169,48 +169,49 @@ export default function ManageStaffPage(): React.ReactElement {
         </Button>
       </div>
 
-      <div className="bg-white rounded shadow overflow-hidden">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-primary)" }}>Name</th>
-              <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-primary)" }}>Email</th>
-              <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-primary)" }}>Employee ID</th>
-              <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-primary)" }}>Designation</th>
-              <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-primary)" }}>Department</th>
-              <th className="px-4 py-3 text-right font-medium" style={{ color: "var(--text-primary)" }}>Actions</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Employee ID</th>
+              <th>Designation</th>
+              <th>Department</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {staff.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={6} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
                   No staff members found
                 </td>
               </tr>
             ) : (
               staff.map((s) => (
-                <tr key={s.id} className="border-t">
-                  <td className="px-4 py-3">{s.user?.name || "—"}</td>
-                  <td className="px-4 py-3">{s.user?.email || "—"}</td>
-                  <td className="px-4 py-3">{s.employeeId || "—"}</td>
-                  <td className="px-4 py-3">{s.designation || "—"}</td>
-                  <td className="px-4 py-3">{s.department?.name || "—"}</td>
-                  <td className="px-4 py-3 text-right">
+                <tr key={s.id}>
+                  <td>{s.user?.name || "—"}</td>
+                  <td>{s.user?.email || "—"}</td>
+                  <td>{s.employeeId || "—"}</td>
+                  <td>{s.designation || "—"}</td>
+                  <td>{s.department?.name || "—"}</td>
+                  <td className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => openEditModal(s)}
-                        className="p-1.5 hover:bg-gray-100 rounded"
+                        className="btn-icon"
                         title="Edit"
                       >
-                        <Pencil size={16} style={{ color: "var(--primary)" }} />
+                        <Pencil size={16} />
                       </button>
                       <button
                         onClick={() => handleDelete(s.id)}
-                        className="p-1.5 hover:bg-gray-100 rounded"
+                        className="btn-icon"
                         title="Delete"
+                        style={{ color: "var(--danger)" }}
                       >
-                        <Trash2 size={16} style={{ color: "var(--danger)" }} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
@@ -222,91 +223,100 @@ export default function ManageStaffPage(): React.ReactElement {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold" style={{ color: "var(--text-primary)" }}>
-                {editingStaff ? "Edit Staff" : "Add Staff"}
-              </h2>
-              <button onClick={closeModal} className="p-1 hover:bg-gray-100 rounded">
+        <div className="modal-overlay" onClick={closeModal}>
+          <div 
+            className="modal-content max-w-md w-full mx-4" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {editingStaff ? "Edit Staff" : "Add Staff"}
+                </h2>
+                <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+                  {editingStaff ? "Update staff member information" : "Add a new staff member to the system"}
+                </p>
+              </div>
+              <button 
+                onClick={closeModal} 
+                className="p-2 rounded-lg hover:bg-[var(--hover-overlay)] transition-colors"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                  Name <span className="text-red-500">*</span>
+                <label className="form-label">
+                  Name <span style={{ color: "var(--danger)" }}>*</span>
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="input w-full"
+                  className="input-field"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                  Email <span className="text-red-500">*</span>
+                <label className="form-label">
+                  Email <span style={{ color: "var(--danger)" }}>*</span>
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input w-full"
+                  className="input-field"
                   required
                   disabled={!!editingStaff}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                  Password {!editingStaff && <span className="text-red-500">*</span>}
+                <label className="form-label">
+                  Password {!editingStaff && <span style={{ color: "var(--danger)" }}>*</span>}
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input w-full"
+                  className="input-field"
                   required={!editingStaff}
                   placeholder={editingStaff ? "Leave blank to keep current password" : ""}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                  Employee ID
-                </label>
+                <label className="form-label">Employee ID</label>
                 <input
                   type="text"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
-                  className="input w-full"
+                  className="input-field"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                  Designation
-                </label>
+                <label className="form-label">Designation</label>
                 <input
                   type="text"
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
-                  className="input w-full"
+                  className="input-field"
                   placeholder="e.g., Assistant Professor, Professor"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                  Department <span className="text-red-500">*</span>
+                <label className="form-label">
+                  Department <span style={{ color: "var(--danger)" }}>*</span>
                 </label>
                 <select
                   value={departmentId}
                   onChange={(e) => setDepartmentId(e.target.value)}
-                  className="input w-full"
+                  className="input-field"
                   required
                 >
                   {departments.map((dept) => (
@@ -322,7 +332,7 @@ export default function ManageStaffPage(): React.ReactElement {
                   Cancel
                 </button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (editingStaff ? "Saving..." : "Creating...") : (editingStaff ? "Save" : "Create Staff")}
+                  {isSubmitting ? (editingStaff ? "Saving..." : "Creating...") : (editingStaff ? "Save Changes" : "Create Staff")}
                 </Button>
               </div>
             </form>
