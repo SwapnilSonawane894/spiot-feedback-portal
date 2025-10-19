@@ -4,15 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 5000 -H 0.0.0.0",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start -p 5000 -H 0.0.0.0",
-    "lint": "eslint",
-    "seed": "node prisma/seed-admin.js"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.11.0",
     "bcrypt": "^6.0.0",
     "exceljs": "^4.4.0",
+    "firebase-admin": "^13.5.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "lucide-react": "^0.545.0",
@@ -28,7 +27,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@prisma/client": "^6.17.1",
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
@@ -38,7 +36,6 @@
     "@types/react-select": "^5.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "prisma": "^6.17.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
