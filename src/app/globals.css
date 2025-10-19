@@ -340,19 +340,7 @@ body {
    UTILITY CLASSES - LAYOUT
    ============================================ */
 .page-container {
-  @apply max-w-7xl mx-auto px-3 sm:px-4;
-}
-
-@media (min-width: 768px) {
-  .page-container {
-    @apply px-5;
-  }
-}
-
-@media (min-width: 1024px) {
-  .page-container {
-    @apply px-6;
-  }
+  @apply max-w-7xl mx-auto px-4;
 }
 
 .page-header {
