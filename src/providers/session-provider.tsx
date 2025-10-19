@@ -8,14 +8,9 @@ type Props = {
 };
 
 export const NextAuthProvider = ({ children }: Props) => {
-  const baseUrl = typeof window !== 'undefined' 
-    ? window.location.origin 
-    : process.env.NEXTAUTH_URL || 'http://localhost:5000';
-    
   return (
     <SessionProvider 
       basePath="/api/auth"
-      baseUrl={baseUrl}
       refetchInterval={0}
       refetchOnWindowFocus={false}
     >
