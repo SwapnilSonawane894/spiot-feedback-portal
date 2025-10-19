@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui-controls";
 import { CustomSelect } from "@/components/custom-select";
-import { Download, TrendingUp, Users, BookOpen, Award, BarChart3 } from "lucide-react";
+import { Download, TrendingUp, Users, BookOpen, BarChart3 } from "lucide-react";
 
 const parameterGroups = {
   "Course Content & Delivery": [
@@ -134,28 +134,28 @@ export default function HodReportsPage() {
       {overallStats && !selectedStaff && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
-            icon={<Users size={20} />}
+            icon={Users}
             label="Faculty Members"
             value={overallStats.totalFaculty}
             color="var(--primary)"
           />
           <StatCard
-            icon={<BookOpen size={20} />}
+            icon={BookOpen}
             label="Total Subjects"
             value={overallStats.totalSubjects}
             color="var(--success)"
           />
           <StatCard
-            icon={<TrendingUp size={20} />}
+            icon={TrendingUp}
             label="Average Score"
             value={`${overallStats.avgScore.toFixed(1)}/5`}
             color="#FFA500"
           />
           <StatCard
-            icon={<BarChart3 size={20} />}
+            icon={BarChart3}
             label="Response Rate"
             value={`${overallStats.responseRate.toFixed(0)}%`}
-            color="var(--danger)"
+            color="#9333EA"
           />
         </div>
       )}
@@ -228,17 +228,20 @@ export default function HodReportsPage() {
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string | number; color: string }) {
   return (
-    <div className="card hover-lift" style={{ borderLeft: `4px solid ${color}` }}>
+    <div className="card" style={{ borderLeft: `4px solid ${color}` }}>
       <div className="card-body">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
             <p className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
           </div>
-          <div className="p-3 rounded-lg" style={{ background: color, opacity: 0.1 }}>
-            <div style={{ color }}>{icon}</div>
+          <div 
+            className="p-3 rounded-lg flex items-center justify-center" 
+            style={{ backgroundColor: `${color}15` }}
+          >
+            <Icon size={24} style={{ color }} />
           </div>
         </div>
       </div>
@@ -266,8 +269,8 @@ function FacultyReportView({ staff, compact = false }: { staff: any; compact?: b
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg" style={{ background: "var(--primary-light)" }}>
-          <Award size={20} style={{ color: "var(--primary)" }} />
+        <div className="p-2 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--primary-light)" }}>
+          <Users size={20} style={{ color: "var(--primary)" }} />
         </div>
         <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{staff.staffName}</h2>
         <span className="badge badge-secondary">{staff.reports.length} Subject{staff.reports.length !== 1 ? 's' : ''}</span>
@@ -279,8 +282,8 @@ function FacultyReportView({ staff, compact = false }: { staff: any; compact?: b
           const isExpanded = expandedReport === report.assignmentId;
 
           return (
-            <div key={report.assignmentId} className="card hover-lift">
-              <div className="card-body">
+            <div key={report.assignmentId} className="card flex flex-col">
+              <div className="card-body flex-1 flex flex-col">
                 {/* Subject Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -325,50 +328,52 @@ function FacultyReportView({ staff, compact = false }: { staff: any; compact?: b
                   </div>
                 </div>
 
-                {/* Detailed Metrics */}
-                {isExpanded && (
-                  <div className="space-y-4 mb-4">
-                    {Object.entries(parameterGroups).map(([groupName, params]) => (
-                      <div key={groupName}>
-                        <h4 className="text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
-                          {groupName}
-                        </h4>
-                        <div className="space-y-2">
-                          {params.map(([key, label]) => {
-                            const score = report.averages?.[key] ?? 0;
-                            const percentage = (score / 5) * 100;
-                            return (
-                              <div key={key} className="flex items-center gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-xs truncate" style={{ color: "var(--text-primary)" }}>
-                                    {label}
+                {/* Detailed Metrics - flex-1 to push button down */}
+                <div className={`flex-1 ${isExpanded ? 'mb-4' : ''}`}>
+                  {isExpanded && (
+                    <div className="space-y-4">
+                      {Object.entries(parameterGroups).map(([groupName, params]) => (
+                        <div key={groupName}>
+                          <h4 className="text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                            {groupName}
+                          </h4>
+                          <div className="space-y-2">
+                            {params.map(([key, label]) => {
+                              const score = report.averages?.[key] ?? 0;
+                              const percentage = (score / 5) * 100;
+                              return (
+                                <div key={key} className="flex items-center gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs truncate" style={{ color: "var(--text-primary)" }}>
+                                      {label}
+                                    </div>
+                                    <div className="w-full h-1.5 rounded-full mt-1" style={{ background: "var(--card-border)" }}>
+                                      <div 
+                                        className="h-full rounded-full transition-all duration-300" 
+                                        style={{ 
+                                          width: `${percentage}%`, 
+                                          background: getScoreColor(score) 
+                                        }}
+                                      />
+                                    </div>
                                   </div>
-                                  <div className="w-full h-1.5 rounded-full mt-1" style={{ background: "var(--card-border)" }}>
-                                    <div 
-                                      className="h-full rounded-full transition-all duration-300" 
-                                      style={{ 
-                                        width: `${percentage}%`, 
-                                        background: getScoreColor(score) 
-                                      }}
-                                    />
+                                  <div className="text-xs font-bold shrink-0" style={{ color: getScoreColor(score), minWidth: '45px', textAlign: 'right' }}>
+                                    {score.toFixed(1)}
                                   </div>
                                 </div>
-                                <div className="text-xs font-bold shrink-0" style={{ color: getScoreColor(score), minWidth: '45px', textAlign: 'right' }}>
-                                  {score.toFixed(1)}
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                {/* Toggle Button */}
+                {/* Toggle Button - always at bottom */}
                 <button
                   onClick={() => setExpandedReport(isExpanded ? null : report.assignmentId)}
-                  className="w-full text-center text-sm font-medium py-2 rounded-lg transition-colors"
+                  className="w-full text-center text-sm font-medium py-2 rounded-lg transition-colors mt-auto"
                   style={{ 
                     color: "var(--primary)",
                     background: "var(--primary-light)"

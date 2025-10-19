@@ -99,12 +99,11 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
-  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:focus {
@@ -123,12 +122,11 @@ body {
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--secondary-hover);
-  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
 .btn-secondary:active:not(:disabled) {
-  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-danger {
@@ -143,12 +141,11 @@ body {
 
 .btn-danger:hover:not(:disabled) {
   background: var(--danger-hover);
-  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
 .btn-danger:active:not(:disabled) {
-  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-success {
@@ -163,12 +160,11 @@ body {
 
 .btn-success:hover:not(:disabled) {
   background: var(--success-hover);
-  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
 .btn-success:active:not(:disabled) {
-  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-outline {
@@ -247,7 +243,7 @@ body {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card:hover {
@@ -259,17 +255,15 @@ body {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card-interactive:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
   border-color: var(--primary);
 }
 
 .card-interactive:active {
-  transform: translateY(0);
   box-shadow: var(--shadow-md);
 }
 
@@ -701,17 +695,17 @@ html {
    HOVER EFFECTS
    ============================================ */
 .hover-lift {
-  @apply transition-transform duration-200;
+  @apply transition-shadow duration-200;
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .hover-scale {
-  @apply transition-transform duration-200;
+  @apply transition-opacity duration-200;
 }
 
 .hover-scale:hover {
-  transform: scale(1.02);
+  opacity: 0.9;
 }
