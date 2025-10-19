@@ -22,12 +22,12 @@ export async function GET() {
     // Get total students count once (not inside loops!)
     const totalStudents = await userService.count({ role: 'STUDENT', departmentId });
 
-    const reports = await Promise.all(staffList.map(async (s) => {
+    const reports = await Promise.all(staffList.map(async (s: any) => {
       // Fetch user and assignments for this staff member
       const user = await userService.findUnique({ id: s.userId });
       const assignments = await assignmentService.findMany({ where: { staffId: s.id } });
       
-      const staffReports = await Promise.all(assignments.map(async (a) => {
+      const staffReports = await Promise.all(assignments.map(async (a: any) => {
         // Fetch subject and feedbacks for this assignment
         const subject = await subjectService.findUnique({ id: a.subjectId });
         const feedbacks = await feedbackService.findMany({ where: { assignmentId: a.id } });
@@ -81,7 +81,7 @@ export async function GET() {
           totalStudents,
           isReleased: feedbacks.every((ff: any) => ff.isReleased),
         };
-      })));
+      }));
       
       const validReports = staffReports.filter(Boolean); // Remove null entries
 
