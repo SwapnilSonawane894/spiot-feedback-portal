@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Edit, Trash, Plus } from "lucide-react";
 import { Button } from "@/components/ui-controls";
+import { CustomSelect } from "@/components/custom-select";
 
 type Subject = { 
   id: string; 
@@ -246,20 +247,15 @@ export default function ManageSubjectsPage(): React.ReactElement {
                 />
               </div>
 
-              <div>
-                <label className="form-label">Academic Year</label>
-                <select 
-                  value={academicYearId} 
-                  onChange={(e) => setAcademicYearId(e.target.value)} 
-                  className="input-field"
-                  required
-                >
-                  <option value="">Select year</option>
-                  {years.map((y) => (
-                    <option key={y.id} value={y.id}>{y.abbreviation ?? y.name}</option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                label="Academic Year"
+                options={[
+                  { value: "", label: "Select year" },
+                  ...years.map((y) => ({ value: y.id, label: y.abbreviation ?? y.name }))
+                ]}
+                value={academicYearId}
+                onChange={setAcademicYearId}
+              />
 
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={closeModal} className="btn-outline">

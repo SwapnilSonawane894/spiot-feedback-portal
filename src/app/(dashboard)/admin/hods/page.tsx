@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Edit2, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui-controls";
+import { CustomSelect } from "@/components/custom-select";
 
 type Department = { id: string; name: string; abbreviation: string };
 type Hod = {
@@ -251,21 +252,15 @@ export default function ManageHodsPage(): React.ReactElement {
                 </div>
               )}
 
-              <div>
-                <label className="form-label">Department</label>
-                <select 
-                  value={departmentId} 
-                  onChange={(e) => setDepartmentId(e.target.value)} 
-                  className="input-field"
-                  required
-                >
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} ({d.abbreviation})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                label="Department"
+                options={departments.map((d) => ({
+                  value: d.id,
+                  label: `${d.name} (${d.abbreviation})`
+                }))}
+                value={departmentId}
+                onChange={setDepartmentId}
+              />
 
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={closeModal} className="btn-outline">

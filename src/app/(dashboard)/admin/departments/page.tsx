@@ -161,7 +161,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
                           setDepartmentAbbreviation(d.abbreviation);
                           setIsModalOpen(true);
                         }}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="p-2 rounded-lg transition-colors hover:bg-[var(--hover-overlay)]"
                         style={{ color: "var(--text-secondary)" }}
                         aria-label="Edit"
                       >
@@ -173,7 +173,10 @@ export default function ManageDepartmentsPage(): React.ReactElement {
                           setShowDeleteModal(true);
                         }}
                         type="button"
-                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
+                        className="p-2 rounded-lg transition-colors"
+                        style={{ color: "var(--danger)" }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                         aria-label="Delete"
                       >
                         <Trash2 size={16} />
@@ -202,7 +205,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)} 
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" 
+                className="p-2 rounded-lg transition-colors hover:bg-[var(--hover-overlay)]" 
                 style={{ color: "var(--text-secondary)" }}
                 aria-label="Close modal"
               >
