@@ -8,6 +8,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: <Home size={16} /> },
   { href: "/admin/departments", label: "Departments", icon: <Layers size={16} /> },
   { href: "/admin/hod-management", label: "HOD Management", icon: <Users size={16} /> },
+  { href: "/admin/staff", label: "Staff Management", icon: <Users size={16} /> },
   { href: "/api/auth/signout", label: "Logout", icon: <LogOut size={16} /> }
 ];
 

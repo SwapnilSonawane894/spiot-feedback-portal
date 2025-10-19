@@ -37,12 +37,12 @@ const adminLinks: NavItem[] = [
   { href: "/admin/departments", label: "Departments", icon: <Building2 size={20} /> },
   { href: "/admin/years", label: "Academic Years", icon: <GraduationCap size={20} /> },
   { href: "/admin/hods", label: "HOD Management", icon: <Users size={20} /> },
+  { href: "/admin/staff", label: "Staff Management", icon: <User size={20} /> },
   { href: "/profile", label: "My Profile", icon: <User size={20} /> },
 ];
 
 const hodLinks: NavItem[] = [
   { href: "/hod/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-  { href: "/hod/staff", label: "Staff Management", icon: <User size={20} />, group: "management" },
   { href: "/hod/subjects", label: "Subject Management", icon: <Book size={20} />, group: "management" },
   { href: "/hod/students", label: "Student Management", icon: <School size={20} />, group: "management" },
   { href: "/hod/assignment", label: "Faculty Assignment", icon: <ClipboardList size={20} /> },
