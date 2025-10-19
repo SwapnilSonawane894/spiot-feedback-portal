@@ -7,6 +7,7 @@ import { Mail, Lock } from "lucide-react";
 import { PrimaryButton, TextInput } from "@/components/ui-controls";
 import { signIn, SignInResponse, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import LoadingOverlay from "@/components/loading-overlay";
 
 export default function LoginPage(): React.JSX.Element {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function LoginPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session, status } = useSession();
   const [signedIn, setSignedIn] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -62,6 +64,7 @@ export default function LoginPage(): React.JSX.Element {
     if (!signedIn) return;
     if (status !== "authenticated") return;
 
+    setIsNavigating(true);
     const role = (session as any)?.user?.role;
     if (role === "ADMIN") {
       router.push("/admin");
@@ -86,6 +89,10 @@ export default function LoginPage(): React.JSX.Element {
     router.push("/");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signedIn, status, session]);
+
+  if (isNavigating) {
+    return <LoadingOverlay />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ background: "var(--background)" }}>
