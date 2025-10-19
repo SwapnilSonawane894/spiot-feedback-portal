@@ -17,11 +17,8 @@ export async function GET() {
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    const departmentId = hodProfile.departmentId;
-
-    const staff = await staffService.findMany({
-      where: { departmentId },
-    });
+    // Fetch all staff from all departments to allow cross-departmental assignments
+    const staff = await staffService.findMany({});
 
     // Manually fetch user and assignments for each staff member
     const result = await Promise.all(
@@ -73,9 +70,7 @@ export async function POST(request: Request) {
     const staffRecord = await staffService.findUnique({ where: { id: staffId } });
     if (!staffRecord) return NextResponse.json({ error: "Staff not found" }, { status: 404 });
 
-    if (staffRecord.departmentId !== hodProfile.departmentId) {
-      return NextResponse.json({ error: "Staff does not belong to your department" }, { status: 403 });
-    }
+    // Allow cross-departmental faculty assignments (removed department restriction)
 
     const createData = subjectIds.map((subjId: string) => ({ staffId, subjectId: subjId, semester }));
 
