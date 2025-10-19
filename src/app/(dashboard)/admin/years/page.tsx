@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui-controls";
+import { Plus } from "lucide-react";
 
 type Year = { id: string; name: string; abbreviation: string };
 
@@ -28,7 +30,7 @@ export default function ManageYearsPage(): React.ReactElement {
     }
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  const handleCreate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await fetch("/api/years", {
@@ -45,52 +47,88 @@ export default function ManageYearsPage(): React.ReactElement {
       console.error(err);
       alert((err as Error).message || "Create failed");
     }
-  }
+  }, [name, abbrev]);
+
+  const openModal = useCallback(() => {
+    setName("");
+    setAbbrev("");
+    setShowModal(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+  }, []);
 
   return (
     <main className="max-w-4xl mx-auto">
       <div className="flex items-start flex-col gap-3 justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Manage Academic Years</h1>
-        <button onClick={() => setShowModal(true)} className="px-3 py-2 bg-blue-600 text-white rounded">New Year</button>
+        <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+          Manage Academic Years
+        </h1>
+        <Button onClick={openModal} className="gap-2">
+          <Plus size={18} />
+          New Year
+        </Button>
       </div>
 
       {loading ? (
-        <div>Loading…</div>
+        <div style={{ color: "var(--text-secondary)" }}>Loading…</div>
       ) : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="text-left">
-              <th className="py-2">Name</th>
-              <th className="py-2">Abbreviation</th>
-            </tr>
-          </thead>
-          <tbody>
-            {years.map((y) => (
-              <tr key={y.id} className="border-t">
-                <td className="py-2">{y.name}</td>
-                <td className="py-2">{y.abbreviation}</td>
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Abbreviation</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {years.map((y) => (
+                <tr key={y.id}>
+                  <td>{y.name}</td>
+                  <td>{y.abbreviation}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white p-6 rounded shadow max-w-md w-full">
-            <h2 className="text-xl font-semibold mb-4">Create Academic Year</h2>
-            <form onSubmit={handleCreate} className="space-y-3">
+        <div className="modal-overlay" onClick={closeModal}>
+          <div 
+            role="dialog" 
+            aria-modal="true" 
+            className="modal-content w-full max-w-md p-6" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
+              Create Academic Year
+            </h2>
+            <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium">Name</label>
-                <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full border rounded px-2 py-1" />
+                <label className="form-label">Name</label>
+                <input 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  className="input-field" 
+                  required
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium">Abbreviation</label>
-                <input value={abbrev} onChange={(e) => setAbbrev(e.target.value)} className="mt-1 block w-full border rounded px-2 py-1" />
+                <label className="form-label">Abbreviation</label>
+                <input 
+                  value={abbrev} 
+                  onChange={(e) => setAbbrev(e.target.value)} 
+                  className="input-field"
+                  required
+                />
               </div>
-              <div className="flex gap-2 justify-end pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="px-3 py-1 border rounded">Cancel</button>
-                <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">Create</button>
+              <div className="flex gap-3 justify-end pt-4">
+                <button type="button" onClick={closeModal} className="btn-outline">
+                  Cancel
+                </button>
+                <Button type="submit">Create</Button>
               </div>
             </form>
           </div>
