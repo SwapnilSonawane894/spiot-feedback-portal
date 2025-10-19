@@ -21,7 +21,6 @@ export async function GET() {
 
     const staff = await staffService.findMany({
       where: { departmentId },
-      orderBy: { id: "asc" },
     });
 
     // Manually fetch user and assignments for each staff member

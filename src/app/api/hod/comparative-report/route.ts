@@ -68,7 +68,6 @@ export async function GET(req: Request) {
           include: { subject: true, feedbacks: true },
         },
       },
-      orderBy: { id: "asc" },
     });
 
     // Build ordered list of staff with their assignments

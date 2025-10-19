@@ -21,7 +21,6 @@ export async function GET(request: Request) {
 
     const staff = await staffService.findMany({
       where: { departmentId },
-      orderBy: { id: "asc" },
     });
 
     // Manually fetch user data and filter by role
