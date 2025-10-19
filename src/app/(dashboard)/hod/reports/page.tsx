@@ -290,115 +290,129 @@ function FacultyReportView({ staff, compact = false }: { staff: any; compact?: b
         <span className="badge badge-secondary">{staff.reports.length} Subject{staff.reports.length !== 1 ? 's' : ''}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        {staff.reports.map((report: any) => {
-          const overallScore = getOverallScore(report);
-          const isExpanded = expandedReports.has(report.assignmentId);
+      <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
+          {staff.reports.map((report: any) => {
+            const overallScore = getOverallScore(report);
+            const isExpanded = expandedReports.has(report.assignmentId);
 
-          return (
-            <div key={report.assignmentId} className="card flex flex-col">
-              <div className="card-body flex-1 flex flex-col">
-                {/* Subject Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
-                      {report.subject?.name}
-                    </h3>
-                    <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                      {report.semester} • {report.subject?.subjectCode}
-                    </p>
-                  </div>
-                  <div className="text-right ml-3">
-                    <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
-                      Responses
+            return (
+              <div 
+                key={report.assignmentId} 
+                className="card flex flex-col"
+                style={{ 
+                  minWidth: isExpanded ? '500px' : '320px',
+                  width: isExpanded ? '500px' : '320px',
+                  height: isExpanded ? 'auto' : '280px'
+                }}
+              >
+                <div className="card-body flex-1 flex flex-col">
+                  {/* Subject Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1 min-w-0 mr-3">
+                      <h3 
+                        className="font-bold text-base mb-1 truncate" 
+                        style={{ color: "var(--text-primary)" }}
+                        title={report.subject?.name}
+                      >
+                        {report.subject?.name}
+                      </h3>
+                      <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
+                        {report.semester} • {report.subject?.subjectCode}
+                      </p>
                     </div>
-                    <div className="text-sm font-bold" style={{ color: "var(--primary)" }}>
-                      {report.submissionCount ?? report.totalResponses} / {report.totalStudents ?? 'N/A'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Overall Score Badge */}
-                <div className="mb-4 p-3 rounded-lg" style={{ background: "var(--hover-overlay)" }}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                      Overall Performance
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold" style={{ color: getScoreColor(overallScore) }}>
-                        {overallScore.toFixed(1)}
+                    <div className="text-right shrink-0">
+                      <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+                        Responses
                       </div>
-                      <span className="text-sm" style={{ color: "var(--text-muted)" }}>/5.0</span>
+                      <div className="text-sm font-bold" style={{ color: "var(--primary)" }}>
+                        {report.submissionCount ?? report.totalResponses} / {report.totalStudents ?? 'N/A'}
+                      </div>
                     </div>
                   </div>
-                  <div className="mt-2 w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
-                    <div 
-                      className="h-full rounded-full transition-all duration-300" 
-                      style={{ 
-                        width: `${(overallScore / 5) * 100}%`, 
-                        background: getScoreColor(overallScore) 
-                      }}
-                    />
-                  </div>
-                </div>
 
-                {/* Detailed Metrics - flex-1 to push button down */}
-                <div className={`flex-1 ${isExpanded ? 'mb-4' : ''}`}>
-                  {isExpanded && (
-                    <div className="space-y-4">
-                      {Object.entries(parameterGroups).map(([groupName, params]) => (
-                        <div key={groupName}>
-                          <h4 className="text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
-                            {groupName}
-                          </h4>
-                          <div className="space-y-2">
-                            {params.map(([key, label]) => {
-                              const score = report.averages?.[key] ?? 0;
-                              const percentage = (score / 5) * 100;
-                              return (
-                                <div key={key} className="flex items-center gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-xs truncate" style={{ color: "var(--text-primary)" }}>
-                                      {label}
-                                    </div>
-                                    <div className="w-full h-1.5 rounded-full mt-1" style={{ background: "var(--card-border)" }}>
-                                      <div 
-                                        className="h-full rounded-full transition-all duration-300" 
-                                        style={{ 
-                                          width: `${percentage}%`, 
-                                          background: getScoreColor(score) 
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="text-xs font-bold shrink-0" style={{ color: getScoreColor(score), minWidth: '45px', textAlign: 'right' }}>
-                                    {score.toFixed(1)}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                  {/* Overall Score Badge */}
+                  <div className="mb-4 p-3 rounded-lg" style={{ background: "var(--hover-overlay)" }}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                        Overall Performance
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="text-2xl font-bold" style={{ color: getScoreColor(overallScore) }}>
+                          {overallScore.toFixed(1)}
                         </div>
-                      ))}
+                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>/5.0</span>
+                      </div>
                     </div>
-                  )}
-                </div>
+                    <div className="mt-2 w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
+                      <div 
+                        className="h-full rounded-full transition-all duration-300" 
+                        style={{ 
+                          width: `${(overallScore / 5) * 100}%`, 
+                          background: getScoreColor(overallScore) 
+                        }}
+                      />
+                    </div>
+                  </div>
 
-                {/* Toggle Button - always at bottom */}
-                <button
-                  onClick={() => toggleExpanded(report.assignmentId)}
-                  className="w-full text-center text-sm font-medium py-2 rounded-lg transition-colors mt-auto"
-                  style={{ 
-                    color: "var(--primary)",
-                    background: "var(--primary-light)"
-                  }}
-                >
-                  {isExpanded ? 'Show Less' : 'View Detailed Metrics'}
-                </button>
+                  {/* Detailed Metrics - flex-1 to push button down */}
+                  <div className={`flex-1 ${isExpanded ? 'mb-4' : ''}`}>
+                    {isExpanded && (
+                      <div className="space-y-4 overflow-y-auto" style={{ maxHeight: '600px' }}>
+                        {Object.entries(parameterGroups).map(([groupName, params]) => (
+                          <div key={groupName}>
+                            <h4 className="text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                              {groupName}
+                            </h4>
+                            <div className="space-y-2">
+                              {params.map(([key, label]) => {
+                                const score = report.averages?.[key] ?? 0;
+                                const percentage = (score / 5) * 100;
+                                return (
+                                  <div key={key} className="flex items-center gap-3">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-xs truncate" style={{ color: "var(--text-primary)" }}>
+                                        {label}
+                                      </div>
+                                      <div className="w-full h-1.5 rounded-full mt-1" style={{ background: "var(--card-border)" }}>
+                                        <div 
+                                          className="h-full rounded-full transition-all duration-300" 
+                                          style={{ 
+                                            width: `${percentage}%`, 
+                                            background: getScoreColor(score) 
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="text-xs font-bold shrink-0" style={{ color: getScoreColor(score), minWidth: '45px', textAlign: 'right' }}>
+                                      {score.toFixed(1)}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Toggle Button - always at bottom */}
+                  <button
+                    onClick={() => toggleExpanded(report.assignmentId)}
+                    className="w-full text-center text-sm font-medium py-2 rounded-lg transition-colors mt-auto"
+                    style={{ 
+                      color: "var(--primary)",
+                      background: "var(--primary-light)"
+                    }}
+                  >
+                    {isExpanded ? 'Show Less' : 'View Detailed Metrics'}
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
