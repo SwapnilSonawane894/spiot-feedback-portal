@@ -95,81 +95,89 @@ export default function LoginPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ background: "var(--background)" }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "var(--background)" }}>
       <div className="w-full max-w-md fade-in">
-        <div className="card p-6 sm:p-8">
-          <div className="flex flex-col items-center gap-3 sm:gap-4 mb-8">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-transform hover:scale-105" style={{ background: "var(--primary-light)" }}>
-              <Image src="/logo.png" alt="SPIOT logo" width={64} height={64} style={{ height: "auto" }} />
+        <div className="card content-spacing">
+          <div className="flex flex-col items-center mb-8">
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-105" 
+              style={{ background: "var(--primary-light)" }}
+            >
+              <Image src="/logo.png" alt="SPIOT logo" width={56} height={56} style={{ height: "auto" }} />
             </div>
-            <h1 className="text-center text-base sm:text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-              Sharadchandra Pawar Institute of Technology, Someshwarnagar
+            <h1 className="text-center text-lg font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+              SPIOT Feedback Portal
             </h1>
+            <p className="text-center text-sm" style={{ color: "var(--text-secondary)" }}>
+              Sharadchandra Pawar Institute of Technology
+            </p>
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
-              <div className="px-4 py-3 rounded-lg text-sm slide-in-right" style={{ background: "var(--danger-light)", color: "var(--danger)" }}>
+              <div 
+                className="px-4 py-3 rounded-lg text-sm font-medium slide-in-right" 
+                style={{ background: "var(--danger-light)", color: "var(--danger)" }}
+              >
                 {error}
               </div>
             )}
 
             <div>
-              <label className="sr-only">Enrollment No. / Email</label>
+              <label className="form-label">Email / Enrollment Number</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center" style={{ color: "var(--text-muted)" }}>
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center" style={{ color: "var(--text-muted)" }}>
                   <Mail size={18} />
                 </span>
                 <input
                   type="text"
                   placeholder="Enter your credentials"
                   className="input-field pl-11"
-                  aria-label="Enrollment No. or Email"
+                  aria-label="Email or Enrollment Number"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="username"
                 />
               </div>
             </div>
 
             <div>
-              <label className="sr-only">Password</label>
+              <label className="form-label">Password</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center" style={{ color: "var(--text-muted)" }}>
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center" style={{ color: "var(--text-muted)" }}>
                   <Lock size={18} />
                 </span>
                 <input
                   type="password"
-                  placeholder="Password"
+                  placeholder="Enter your password"
                   className="input-field pl-11"
                   aria-label="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                 />
-              </div>
-              <div className="text-right mt-2">
-                <a href="#" className="text-sm hover:underline transition-colors" style={{ color: "var(--primary)" }}>
-                  Forgot password?
-                </a>
               </div>
             </div>
 
-            <div className="pt-2">
-              <button type="submit" disabled={isLoading} className="btn-primary w-full text-base font-semibold">
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="loading-spinner" />
-                    Logging in...
-                  </span>
-                ) : (
-                  "Login"
-                )}
-              </button>
-            </div>
+            <button 
+              type="submit" 
+              disabled={isLoading} 
+              className="btn-primary w-full py-3 text-base font-semibold"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="loading-spinner" />
+                  Logging in...
+                </span>
+              ) : (
+                "Login"
+              )}
+            </button>
           </form>
         </div>
 
-        <div className="text-center text-sm mt-4" style={{ color: "var(--text-muted)" }}>
-          © 2025-26 | Student Feedback Portal
+        <div className="text-center text-xs mt-6" style={{ color: "var(--text-muted)" }}>
+          © 2025-26 SPIOT | Student Feedback Portal
         </div>
       </div>
     </div>
