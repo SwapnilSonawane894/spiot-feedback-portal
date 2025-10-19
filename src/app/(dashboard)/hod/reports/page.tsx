@@ -250,7 +250,21 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 }
 
 function FacultyReportView({ staff, compact = false }: { staff: any; compact?: boolean }) {
-  const [expandedReport, setExpandedReport] = useState<string | null>(compact ? null : staff.reports[0]?.assignmentId || null);
+  const [expandedReports, setExpandedReports] = useState<Set<string>>(
+    new Set(compact ? [] : [staff.reports[0]?.assignmentId].filter(Boolean))
+  );
+
+  const toggleExpanded = (reportId: string) => {
+    setExpandedReports(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(reportId)) {
+        newSet.delete(reportId);
+      } else {
+        newSet.add(reportId);
+      }
+      return newSet;
+    });
+  };
 
   const getOverallScore = (report: any) => {
     const scores = Object.values(report.averages || {}) as number[];
@@ -276,10 +290,10 @@ function FacultyReportView({ staff, compact = false }: { staff: any; compact?: b
         <span className="badge badge-secondary">{staff.reports.length} Subject{staff.reports.length !== 1 ? 's' : ''}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {staff.reports.map((report: any) => {
           const overallScore = getOverallScore(report);
-          const isExpanded = expandedReport === report.assignmentId;
+          const isExpanded = expandedReports.has(report.assignmentId);
 
           return (
             <div key={report.assignmentId} className="card flex flex-col">
@@ -372,7 +386,7 @@ function FacultyReportView({ staff, compact = false }: { staff: any; compact?: b
 
                 {/* Toggle Button - always at bottom */}
                 <button
-                  onClick={() => setExpandedReport(isExpanded ? null : report.assignmentId)}
+                  onClick={() => toggleExpanded(report.assignmentId)}
                   className="w-full text-center text-sm font-medium py-2 rounded-lg transition-colors mt-auto"
                   style={{ 
                     color: "var(--primary)",
