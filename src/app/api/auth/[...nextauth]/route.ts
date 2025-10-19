@@ -47,7 +47,7 @@ export const authOptions = {
     },
   },
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET || "spiot-feedback-portal-secret-key-change-in-production",
+  secret: "4M6PmUDdOTgSuDLaE1+9fAxJFnD0Jbxgklph8RqzheA=",
   debug: process.env.NODE_ENV === "development",
 };
 
