@@ -11,7 +11,13 @@ if (!process.env.NEXTAUTH_SECRET) {
 }
 
 if (!process.env.NEXTAUTH_URL) {
-  process.env.NEXTAUTH_URL = "https://ff8be4eb-87bd-42e4-b9ca-0e1844f9010b-00-iw02txcjz11a.pike.replit.dev";
+  // Use Replit domain if available, otherwise localhost
+  const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS;
+  if (replitDomain) {
+    process.env.NEXTAUTH_URL = `https://${replitDomain}`;
+  } else {
+    process.env.NEXTAUTH_URL = "http://localhost:5000";
+  }
 }
 
 export const config = {

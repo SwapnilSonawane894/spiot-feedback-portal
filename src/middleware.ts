@@ -1,72 +1,73 @@
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const pathname = req.nextUrl.pathname;
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
 
-    // If user is logged in and tries to access login page, redirect to home
-    if (token && pathname === "/login") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-
-    // Role-based access control
-    if (token) {
-      const role = token.role as string;
-
-      // Admin routes
-      if (pathname.startsWith("/admin") && role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
-
-      // HOD routes
-      if (pathname.startsWith("/hod") && role !== "HOD") {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
-
-      // Faculty routes
-      if (pathname.startsWith("/faculty") && role !== "FACULTY") {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
-
-      // Student routes
-      if (pathname.startsWith("/student") && role !== "STUDENT") {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
-    }
-
+  // Allow public routes
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon")
+  ) {
     return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const pathname = req.nextUrl.pathname;
-        
-        // Public routes that don't require authentication
-        if (pathname === "/login" || pathname.startsWith("/api/auth")) {
-          return true;
-        }
-
-        // All other routes require authentication
-        return !!token;
-      },
-    },
-    pages: {
-      signIn: "/login",
-    },
   }
-);
+
+  // Get the token
+  const token = await getToken({
+    req: request,
+    secret: "4M6PmUDdOTgSuDLaE1+9fAxJFnD0Jbxgklph8RqzheA=",
+  });
+
+  // Redirect to login if no token
+  if (!token) {
+    const url = new URL("/login", request.url);
+    return NextResponse.redirect(url);
+  }
+
+  // If logged in and trying to access login page, redirect to home
+  if (pathname === "/login") {
+    const url = new URL("/", request.url);
+    return NextResponse.redirect(url);
+  }
+
+  // Role-based access control
+  const role = token.role as string;
+
+  // Admin routes
+  if (pathname.startsWith("/admin") && role !== "ADMIN") {
+    const url = new URL("/", request.url);
+    return NextResponse.redirect(url);
+  }
+
+  // HOD routes
+  if (pathname.startsWith("/hod") && role !== "HOD") {
+    const url = new URL("/", request.url);
+    return NextResponse.redirect(url);
+  }
+
+  // Faculty routes
+  if (pathname.startsWith("/faculty") && role !== "FACULTY") {
+    const url = new URL("/", request.url);
+    return NextResponse.redirect(url);
+  }
+
+  // Student routes
+  if (pathname.startsWith("/student") && role !== "STUDENT") {
+    const url = new URL("/", request.url);
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+}
 
 // Protect all routes except public ones
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
+     * Match all request paths except static files
      */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
