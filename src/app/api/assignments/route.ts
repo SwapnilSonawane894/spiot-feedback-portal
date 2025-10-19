@@ -25,7 +25,7 @@ export async function GET() {
       orderBy: { id: "asc" },
     });
 
-    const result = staff.map((s) => ({
+    const result = staff.map((s: any) => ({
       id: s.id,
       user: s.user,
       subjectIds: s.assignments.map((a: any) => a.subjectId),
