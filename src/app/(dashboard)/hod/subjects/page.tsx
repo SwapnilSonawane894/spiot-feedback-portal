@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Edit, Trash } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Edit, Trash, Plus } from "lucide-react";
+import { Button } from "@/components/ui-controls";
 
-type Subject = { id: string; name: string; subjectCode: string; academicYear?: { id: string; name: string; abbreviation?: string } };
+type Subject = { 
+  id: string; 
+  name: string; 
+  subjectCode: string; 
+  academicYear?: { id: string; name: string; abbreviation?: string } 
+};
 
 export default function ManageSubjectsPage(): React.ReactElement {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -43,9 +49,9 @@ export default function ManageSubjectsPage(): React.ReactElement {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-  if (!name || !subjectCode || !academicYearId) return;
+    if (!name || !subjectCode || !academicYearId) return;
 
     setIsSubmitting(true);
     try {
@@ -63,9 +69,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
           } catch (e) {
             try {
               errMsg = await res.text();
-            } catch (_) {
-              /* ignore */
-            }
+            } catch (_) {}
           }
           throw new Error(errMsg);
         }
@@ -86,9 +90,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
           } catch (e) {
             try {
               errMsg = await res.text();
-            } catch (_) {
-              /* ignore */
-            }
+            } catch (_) {}
           }
           throw new Error(errMsg);
         }
@@ -106,9 +108,9 @@ export default function ManageSubjectsPage(): React.ReactElement {
     } finally {
       setIsSubmitting(false);
     }
-  }
+  }, [editingSubject, name, subjectCode, academicYearId]);
 
-  async function handleDelete(id: string) {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Delete this subject?")) return;
     try {
       const res = await fetch(`/api/subjects/${id}`, { method: "DELETE" });
@@ -118,49 +120,75 @@ export default function ManageSubjectsPage(): React.ReactElement {
       console.error(err);
       alert((err as Error).message || "Delete failed");
     }
-  }
+  }, []);
+
+  const openCreateModal = useCallback(() => {
+    setEditingSubject(null);
+    setName("");
+    setSubjectCode("");
+    setAcademicYearId("");
+    setIsModalOpen(true);
+  }, []);
+
+  const openEditModal = useCallback((s: Subject) => {
+    setEditingSubject(s);
+    setName(s.name);
+    setSubjectCode(s.subjectCode);
+    setAcademicYearId(s.academicYear?.id ?? "");
+    setIsModalOpen(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   return (
     <main className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Manage Department Subjects</h1>
-        <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          + Add New Subject
-        </button>
+        <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+          Manage Department Subjects
+        </h1>
+        <Button onClick={openCreateModal} className="gap-2">
+          <Plus size={18} />
+          Add New Subject
+        </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-gray-700">Subject Name</th>
-              <th className="px-6 py-3 text-left text-gray-700">Subject Code</th>
-              <th className="px-6 py-3 text-left text-gray-700">Target Year</th>
-              <th className="px-6 py-3 text-left text-gray-700">Actions</th>
+              <th>Subject Name</th>
+              <th>Subject Code</th>
+              <th>Target Year</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody>
             {subjects.map((s) => (
-              <tr key={s.id} className="hover:bg-gray-50">
-                <td className="px-6 py-3">{s.name}</td>
-                <td className="px-6 py-3">{s.subjectCode}</td>
-                <td className="px-6 py-3">{s.academicYear?.abbreviation ?? s.academicYear?.name ?? "-"}</td>
-                <td className="px-6 py-3">
+              <tr key={s.id}>
+                <td>{s.name}</td>
+                <td>{s.subjectCode}</td>
+                <td>{s.academicYear?.abbreviation ?? s.academicYear?.name ?? "-"}</td>
+                <td>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => {
-                        setEditingSubject(s);
-                        setName(s.name);
-                        setSubjectCode(s.subjectCode);
-                        setAcademicYearId(s.academicYear?.id ?? "");
-                        setIsModalOpen(true);
-                      }}
-                      className="p-2 rounded hover:bg-gray-100 text-gray-600"
+                      onClick={() => openEditModal(s)}
+                      className="p-2 rounded-lg transition-colors hover:bg-[var(--hover-overlay)]"
+                      style={{ color: "var(--text-secondary)" }}
                       aria-label="Edit"
                     >
                       <Edit size={16} />
                     </button>
-                    <button onClick={() => handleDelete(s.id)} type="button" className="p-2 rounded hover:bg-gray-100 text-red-600" aria-label="Delete">
+                    <button 
+                      onClick={() => handleDelete(s.id)} 
+                      type="button" 
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ color: "var(--danger)" }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                      aria-label="Delete"
+                    >
                       <Trash size={16} />
                     </button>
                   </div>
@@ -172,35 +200,74 @@ export default function ManageSubjectsPage(): React.ReactElement {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsModalOpen(false)} aria-hidden />
-          <div role="dialog" aria-modal className="relative bg-white rounded-lg shadow-xl w-full max-w-xl mx-4 p-6">
+        <div className="modal-overlay" onClick={closeModal}>
+          <div 
+            role="dialog" 
+            aria-modal="true" 
+            className="modal-content w-full max-w-xl mx-4 p-6" 
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-semibold">Create Subject</h3>
-                <p className="text-sm text-gray-500 mt-1">Add a new subject for your department.</p>
+                <h3 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {editingSubject ? "Edit Subject" : "Create Subject"}
+                </h3>
+                <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+                  {editingSubject ? "Update subject details." : "Add a new subject for your department."}
+                </p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-gray-700 ml-4">✕</button>
+              <button 
+                onClick={closeModal} 
+                className="p-2 rounded-lg transition-colors ml-4 hover:bg-[var(--hover-overlay)]"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                ✕
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 gap-3">
-              <label className="text-sm font-medium text-gray-700">Subject Name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300" />
+            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+              <div>
+                <label className="form-label">Subject Name</label>
+                <input 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  className="input-field"
+                  required
+                />
+              </div>
 
-              <label className="text-sm font-medium text-gray-700">Subject Code</label>
-              <input value={subjectCode} onChange={(e) => setSubjectCode(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300" />
+              <div>
+                <label className="form-label">Subject Code</label>
+                <input 
+                  value={subjectCode} 
+                  onChange={(e) => setSubjectCode(e.target.value)} 
+                  className="input-field"
+                  required
+                />
+              </div>
 
-              <label className="text-sm font-medium text-gray-700">Academic Year</label>
-              <select value={academicYearId} onChange={(e) => setAcademicYearId(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300">
-                <option value="">Select year</option>
-                {years.map((y) => (
-                  <option key={y.id} value={y.id}>{y.abbreviation ?? y.name}</option>
-                ))}
-              </select>
+              <div>
+                <label className="form-label">Academic Year</label>
+                <select 
+                  value={academicYearId} 
+                  onChange={(e) => setAcademicYearId(e.target.value)} 
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select year</option>
+                  {years.map((y) => (
+                    <option key={y.id} value={y.id}>{y.abbreviation ?? y.name}</option>
+                  ))}
+                </select>
+              </div>
 
-              <div className="mt-6 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-md text-gray-700 border">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{isSubmitting ? "Creating..." : "Create Subject"}</button>
+              <div className="flex justify-end gap-3 pt-4">
+                <button type="button" onClick={closeModal} className="btn-outline">
+                  Cancel
+                </button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : (editingSubject ? "Save" : "Create Subject")}
+                </Button>
               </div>
             </form>
           </div>
