@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui-controls";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 
 type Year = { id: string; name: string; abbreviation: string };
 
@@ -12,6 +12,7 @@ export default function ManageYearsPage(): React.ReactElement {
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [abbrev, setAbbrev] = useState("");
+  const [editingYear, setEditingYear] = useState<Year | null>(null);
 
   useEffect(() => {
     fetchYears();
@@ -49,14 +50,60 @@ export default function ManageYearsPage(): React.ReactElement {
     }
   }, [name, abbrev]);
 
-  const openModal = useCallback(() => {
+  const handleUpdate = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingYear) return;
+    
+    try {
+      const res = await fetch(`/api/years/${editingYear.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, abbreviation: abbrev }),
+      });
+      if (!res.ok) throw new Error("Failed to update");
+      setName("");
+      setAbbrev("");
+      setEditingYear(null);
+      setShowModal(false);
+      fetchYears();
+    } catch (err) {
+      console.error(err);
+      alert((err as Error).message || "Update failed");
+    }
+  }, [name, abbrev, editingYear]);
+
+  const handleDelete = useCallback(async (yearId: string, yearName: string) => {
+    if (!confirm(`Are you sure you want to delete "${yearName}"?`)) return;
+    
+    try {
+      const res = await fetch(`/api/years/${yearId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete");
+      fetchYears();
+    } catch (err) {
+      console.error(err);
+      alert((err as Error).message || "Delete failed");
+    }
+  }, []);
+
+  const openCreateModal = useCallback(() => {
     setName("");
     setAbbrev("");
+    setEditingYear(null);
+    setShowModal(true);
+  }, []);
+
+  const openEditModal = useCallback((year: Year) => {
+    setName(year.name);
+    setAbbrev(year.abbreviation);
+    setEditingYear(year);
     setShowModal(true);
   }, []);
 
   const closeModal = useCallback(() => {
     setShowModal(false);
+    setEditingYear(null);
   }, []);
 
   return (
@@ -65,7 +112,7 @@ export default function ManageYearsPage(): React.ReactElement {
         <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
           Manage Academic Years
         </h1>
-        <Button onClick={openModal} className="gap-2">
+        <Button onClick={openCreateModal} className="gap-2">
           <Plus size={18} />
           New Year
         </Button>
@@ -80,6 +127,7 @@ export default function ManageYearsPage(): React.ReactElement {
               <tr>
                 <th>Name</th>
                 <th>Abbreviation</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -87,6 +135,24 @@ export default function ManageYearsPage(): React.ReactElement {
                 <tr key={y.id}>
                   <td>{y.name}</td>
                   <td>{y.abbreviation}</td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openEditModal(y)}
+                        className="btn-icon"
+                        title="Edit"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(y.id, y.name)}
+                        className="btn-icon text-red-600 hover:text-red-700"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -103,9 +169,9 @@ export default function ManageYearsPage(): React.ReactElement {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
-              Create Academic Year
+              {editingYear ? "Edit Academic Year" : "Create Academic Year"}
             </h2>
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={editingYear ? handleUpdate : handleCreate} className="space-y-4">
               <div>
                 <label className="form-label">Name</label>
                 <input 
@@ -128,7 +194,7 @@ export default function ManageYearsPage(): React.ReactElement {
                 <button type="button" onClick={closeModal} className="btn-outline">
                   Cancel
                 </button>
-                <Button type="submit">Create</Button>
+                <Button type="submit">{editingYear ? "Update" : "Create"}</Button>
               </div>
             </form>
           </div>

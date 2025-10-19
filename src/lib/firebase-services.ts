@@ -591,6 +591,16 @@ export const academicYearService = {
       throw error;
     }
   },
+
+  async delete(where: { id: string }) {
+    try {
+      await firestore.collection(COLLECTIONS.ACADEMIC_YEARS).doc(where.id).delete();
+      return { success: true };
+    } catch (error) {
+      console.error('Error in academicYearService.delete:', error);
+      throw error;
+    }
+  },
 };
 
 // ============ SUBJECT OPERATIONS ============
