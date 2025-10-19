@@ -20,6 +20,32 @@ This is a **Student Feedback Portal** built for SPIOT (an educational institutio
 
 # Recent Changes
 
+**October 19, 2025 - Firebase Migration (COMPLETED):**
+Migrated from Prisma + PostgreSQL to Firebase Firestore for improved performance and scalability:
+- ✅ **Removed Prisma completely** - Uninstalled @prisma/client, @auth/prisma-adapter, and all Prisma dependencies
+- ✅ **Installed Firebase Admin SDK** - Added firebase-admin v13.5.0 for server-side Firestore operations
+- ✅ **Created Firebase service layer** - Built comprehensive service modules for all collections:
+  - userService - User authentication and management
+  - departmentService - Department CRUD operations
+  - staffService - Staff profile management with relational queries
+  - academicYearService - Academic year tracking
+  - subjectService - Subject/course management
+  - assignmentService - Faculty-subject assignments
+  - feedbackService - Student feedback submissions
+  - hodSuggestionService - HOD comments and suggestions
+- ✅ **Updated NextAuth configuration** - Removed PrismaAdapter, now using pure JWT-based sessions
+- ✅ **Migrated all 28 API routes** - Converted all Prisma queries to Firebase Firestore operations
+- ✅ **Maintained all functionality** - Business logic, authorization, error handling all preserved
+- ✅ **Improved performance** - Firebase's NoSQL structure eliminates N+1 query problems inherent to relational databases
+- ✅ **Created setup documentation** - Comprehensive FIREBASE_SETUP.md guide for database configuration
+
+**Migration Benefits:**
+- **Faster queries** - NoSQL document structure eliminates complex joins
+- **Better scalability** - Firebase scales automatically without manual database management
+- **Simplified deployment** - No need for separate PostgreSQL instance
+- **Cost-effective** - Pay-per-use pricing model vs fixed database hosting costs
+- **Real-time capabilities** - Firebase supports real-time listeners (future enhancement opportunity)
+
 **October 18, 2025 - Vercel to Replit Migration:**
 - Migrated project from Vercel to Replit environment
 - Updated development and production scripts to bind to port 5000 and host 0.0.0.0
@@ -120,25 +146,27 @@ Preferred communication style: Simple, everyday language.
 **Framework:** Next.js API Routes (serverless functions)
 
 **Database:**
-- **ORM:** Prisma Client
-- **Database:** PostgreSQL (schema defined in Prisma)
-- **Connection Management:** Singleton Prisma client pattern to prevent connection pool exhaustion
+- **Database:** Firebase Firestore (NoSQL document database)
+- **SDK:** Firebase Admin SDK v13.5.0
+- **Connection Management:** Singleton Firebase app initialization
+- **Service Layer:** Custom services wrapping Firestore operations for type safety and consistency
 
 **Authentication:**
-- **Library:** NextAuth v4 with Prisma adapter
-- **Strategy:** JWT-based sessions with credentials provider
+- **Library:** NextAuth v4 (without database adapter)
+- **Strategy:** Pure JWT-based sessions with credentials provider
 - **Password Hashing:** bcrypt (10 rounds)
 - **Role-Based Access:** ADMIN, HOD, STAFF, STUDENT roles with route-level protection
+- **User Storage:** Users stored in Firestore 'users' collection
 
-**Data Model Highlights:**
-- **User:** Core authentication entity with role field
-- **Department:** Institute organizational units with HOD assignment
-- **AcademicYear:** Year/class groupings (e.g., "First Year Computer Engineering")
-- **Staff:** Faculty profiles linked to departments
-- **Subject:** Course definitions tied to academic years
-- **FacultyAssignment:** Many-to-many relationship between staff and subjects with semester tracking
-- **Feedback:** Student responses with 16 rating parameters plus suggestions
-- **Student Enrollment:** Students linked to departments and academic years
+**Firestore Collections:**
+- **users** - Core authentication entity with role field, departmentId, and academicYearId
+- **departments** - Institute organizational units with name and abbreviation
+- **academicYears** - Year/class groupings (e.g., "First Year", "Second Year")
+- **staff** - Faculty profiles linking userId to departmentId
+- **subjects** - Course definitions with subjectCode, name, and academicYearId
+- **facultyAssignments** - Staff-to-subject mappings with semester tracking
+- **feedback** - Student responses with 16 rating parameters plus suggestions
+- **hodSuggestions** - HOD comments on faculty performance by semester
 
 **API Design Patterns:**
 - RESTful conventions (GET, POST, PATCH, DELETE)
@@ -162,12 +190,12 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 **Authentication:**
-- NextAuth v4.24.11 for session management
-- @auth/prisma-adapter for database integration
+- NextAuth v4.24.11 for session management (JWT-only, no database adapter)
 
-**Database & ORM:**
-- Prisma 6.17.1 (client and CLI)
-- PostgreSQL (connection via DATABASE_URL environment variable)
+**Database:**
+- Firebase Admin SDK v13.5.0
+- Firebase Firestore (NoSQL cloud database)
+- Service account authentication via FIREBASE_SERVICE_ACCOUNT_KEY environment variable
 
 **UI Libraries:**
 - lucide-react: Icon library
@@ -190,14 +218,24 @@ Preferred communication style: Simple, everyday language.
 - ESLint with Next.js config (build errors currently ignored via next.config.ts)
 
 **Deployment Considerations:**
-- Designed for Vercel deployment (README_VERCEL.md included)
-- Prisma generate required in build step
-- Environment variables: DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET
+- Designed for Replit deployment with autoscale configuration
+- No build step required for Firebase (client initialized at runtime)
+- Required environment variables:
+  - FIREBASE_SERVICE_ACCOUNT_KEY (Firebase service account JSON)
+  - NEXTAUTH_URL (application URL)
+  - NEXTAUTH_SECRET (JWT signing secret)
 - Port 5000 for development server (configured for Replit compatibility)
 - Cross-origin support for Replit iframe environments
+
+**Setup Requirements:**
+1. Create Firebase project at console.firebase.google.com
+2. Enable Firestore Database
+3. Generate service account key (JSON)
+4. Add FIREBASE_SERVICE_ACCOUNT_KEY to Replit Secrets
+5. Initialize collections with seed data (see FIREBASE_SETUP.md)
 
 **Missing/Future Dependencies:**
 - Dynamic semester management system
 - Email notification service (for password resets, feedback reminders)
-- File storage service (if moving beyond local CSV uploads)
-- Analytics/monitoring service (for production error tracking)
+- File storage service (if moving beyond local CSV uploads; could use Firebase Storage)
+- Analytics/monitoring service (Firebase Analytics could be integrated)
