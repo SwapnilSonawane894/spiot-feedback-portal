@@ -4,25 +4,34 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui-controls";
 import { CustomSelect } from "@/components/custom-select";
+import { Download, TrendingUp, Users, BookOpen, Award, BarChart3 } from "lucide-react";
 
-const params = [
-  ["coverage_of_syllabus", "Coverage of syllabus"],
-  ["covering_relevant_topics_beyond_syllabus", "Covering relevant topics beyond the syllabus"],
-  ["effectiveness_technical_contents", "Effectiveness in terms of technical contents/ course contents"],
-  ["effectiveness_communication_skills", "Effectiveness in terms of communication skills"],
-  ["effectiveness_teaching_aids", "Effectiveness in terms of teaching aids"],
-  ["motivation_self_learning", "Motivation and inspiration for students to learn in self-learning mode"],
-  ["support_practical_performance", "Support for development of student skills: practical performance"],
-  ["support_project_seminar", "Support for development of student skills: project and seminar preparation"],
-  ["feedback_on_student_progress", "Feedback provided on student progress"],
-  ["punctuality_and_discipline", "Punctuality and discipline"],
-  ["domain_knowledge", "Domain knowledge"],
-  ["interaction_with_students", "Interaction with students"],
-  ["ability_to_resolve_difficulties", "Ability to resolve difficulties"],
-  ["encourage_cocurricular", "Encourage to participate in cocurricular activities"],
-  ["encourage_extracurricular", "Encourage to participate in extracurricular activities"],
-  ["guidance_during_internship", "Guidance during internship"],
-];
+const parameterGroups = {
+  "Course Content & Delivery": [
+    ["coverage_of_syllabus", "Coverage of Syllabus"],
+    ["covering_relevant_topics_beyond_syllabus", "Beyond Syllabus Topics"],
+    ["effectiveness_technical_contents", "Technical Content Effectiveness"],
+    ["effectiveness_communication_skills", "Communication Skills"],
+    ["effectiveness_teaching_aids", "Teaching Aids Usage"],
+  ],
+  "Student Development": [
+    ["motivation_self_learning", "Self-Learning Motivation"],
+    ["support_practical_performance", "Practical Skills Development"],
+    ["support_project_seminar", "Project & Seminar Support"],
+    ["feedback_on_student_progress", "Progress Feedback"],
+  ],
+  "Professional Conduct": [
+    ["punctuality_and_discipline", "Punctuality & Discipline"],
+    ["domain_knowledge", "Domain Knowledge"],
+    ["interaction_with_students", "Student Interaction"],
+    ["ability_to_resolve_difficulties", "Problem Resolution"],
+  ],
+  "Holistic Development": [
+    ["encourage_cocurricular", "Co-curricular Activities"],
+    ["encourage_extracurricular", "Extra-curricular Activities"],
+    ["guidance_during_internship", "Internship Guidance"],
+  ],
+};
 
 export default function HodReportsPage() {
   const [data, setData] = useState<any[]>([]);
@@ -75,44 +84,124 @@ export default function HodReportsPage() {
   const staffOptions = useMemo(() => data.map((d) => ({ id: d.staffId, name: d.staffName })), [data]);
   const selected = useMemo(() => data.find((d) => d.staffId === selectedStaff) || null, [data, selectedStaff]);
   
+  const overallStats = useMemo(() => {
+    if (!data.length) return null;
+    
+    let totalResponses = 0;
+    let totalStudents = 0;
+    let totalSubjects = 0;
+    let allScores: number[] = [];
+
+    data.forEach(staff => {
+      staff.reports.forEach((r: any) => {
+        totalResponses += r.submissionCount ?? r.totalResponses ?? 0;
+        totalStudents += r.totalStudents ?? 0;
+        totalSubjects++;
+        
+        Object.keys(r.averages || {}).forEach(key => {
+          const score = r.averages[key];
+          if (score > 0) allScores.push(score);
+        });
+      });
+    });
+
+    const avgScore = allScores.length > 0 
+      ? allScores.reduce((a, b) => a + b, 0) / allScores.length 
+      : 0;
+    
+    const responseRate = totalStudents > 0 
+      ? (totalResponses / totalStudents) * 100 
+      : 0;
+
+    return {
+      totalFaculty: data.length,
+      totalSubjects,
+      totalResponses,
+      totalStudents,
+      avgScore,
+      responseRate
+    };
+  }, [data]);
+
   return (
     <main className="max-w-7xl mx-auto">
       <div className="page-header">
         <h1 className="page-title">Feedback Analytics & Reports</h1>
-        <p className="page-description">View and download faculty feedback reports</p>
+        <p className="page-description">Comprehensive faculty performance insights</p>
       </div>
 
-      {/* Generate Comparative Report */}
-      <div className="card card-body mb-6 hover-lift">
-        <h2 className="section-title mb-4">Generate Comparative Report</h2>
-        <div className="flex items-start flex-col gap-4">
-          <div className="w-full sm:w-auto">
-            <CustomSelect
-              label="Select Academic Year"
-              options={years.map((y) => ({ value: y.id, label: y.name }))}
-              value={selectedYear}
-              onChange={setSelectedYear}
-              placeholder="Select year"
-              className="w-full sm:w-64"
-            />
+      {/* Stats Overview */}
+      {overallStats && !selectedStaff && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            icon={<Users size={20} />}
+            label="Faculty Members"
+            value={overallStats.totalFaculty}
+            color="var(--primary)"
+          />
+          <StatCard
+            icon={<BookOpen size={20} />}
+            label="Total Subjects"
+            value={overallStats.totalSubjects}
+            color="var(--success)"
+          />
+          <StatCard
+            icon={<TrendingUp size={20} />}
+            label="Average Score"
+            value={`${overallStats.avgScore.toFixed(1)}/5`}
+            color="#FFA500"
+          />
+          <StatCard
+            icon={<BarChart3 size={20} />}
+            label="Response Rate"
+            value={`${overallStats.responseRate.toFixed(0)}%`}
+            color="var(--danger)"
+          />
+        </div>
+      )}
+
+      {/* Download Report Section */}
+      <div className="card mb-6" style={{ background: "linear-gradient(135deg, var(--primary-light) 0%, var(--card-bg) 100%)" }}>
+        <div className="card-body">
+          <div className="flex items-start justify-between flex-wrap gap-4">
+            <div>
+              <h2 className="text-lg font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+                Generate Comparative Report
+              </h2>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                Download comprehensive Excel report for selected academic year
+              </p>
+            </div>
+            <div className="flex items-end gap-3 flex-wrap">
+              <CustomSelect
+                label="Academic Year"
+                options={years.map((y) => ({ value: y.id, label: y.name }))}
+                value={selectedYear}
+                onChange={setSelectedYear}
+                placeholder="Select year"
+                className="w-64"
+              />
+              <Button onClick={handleDownloadReport} className="gap-2">
+                <Download size={16} />
+                Download Report
+              </Button>
+            </div>
           </div>
-          <Button onClick={handleDownloadReport}>
-            Download Excel Report
-          </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
+      {/* Filter Section */}
+      <div className="mb-6">
         <CustomSelect
-          label="Filter by Faculty"
+          label="Filter by Faculty Member"
           options={[
-            { value: "", label: "All faculty" },
+            { value: "", label: "All Faculty Members" },
             ...staffOptions.map((s) => ({ value: s.id, label: s.name }))
           ]}
           value={selectedStaff}
           onChange={setSelectedStaff}
           placeholder="Select faculty"
-          className="w-full sm:w-80"
+          className="w-full sm:w-96"
         />
       </div>
 
@@ -125,115 +214,174 @@ export default function HodReportsPage() {
         </div>
       ) : selected ? (
         <div>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{selected.staffName}</h2>
-          </div>
-          {selected.reports.map((r: any) => (
-            <div key={r.assignmentId} className="card card-body mb-5 hover-lift">
-              <div className="flex items-start justify-between mb-5 pb-4" style={{ borderBottom: "2px solid var(--card-border)" }}>
-                <div>
-                  <h3 className="font-bold text-lg mb-1" style={{ color: "var(--text-primary)" }}>
-                    {r.subject?.name}
-                  </h3>
-                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                    {r.semester} • {r.subject?.subjectCode}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Responses</div>
-                  <div className="text-lg font-bold" style={{ color: "var(--primary)" }}>
-                    {r.submissionCount ?? r.totalResponses} / {r.totalStudents ?? 'N/A'}
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {params.map(([key, label]) => {
-                  const score = r.averages?.[key] ?? 0;
-                  const percentage = (score / 5) * 100;
-                  const getColor = (pct: number) => {
-                    if (pct >= 80) return "var(--success)";
-                    if (pct >= 60) return "var(--primary)";
-                    if (pct >= 40) return "#FFA500";
-                    return "var(--danger)";
-                  };
-                  return (
-                    <div key={key} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{label}</div>
-                        <div className="text-sm font-bold" style={{ color: getColor(percentage) }}>{score.toFixed(1)} / 5</div>
-                      </div>
-                      <div className="w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
-                        <div 
-                          className="h-full rounded-full transition-all duration-300" 
-                          style={{ width: `${percentage}%`, background: getColor(percentage) }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-
-          {/* HOD Suggestions Card (selected staff) */}
+          <FacultyReportView staff={selected} />
           <HODSuggestionCard staffId={selectedStaff} semester={selected?.reports?.[0]?.semester || ''} />
         </div>
       ) : (
-        data.map((d) => (
-          <div key={d.staffId} className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{d.staffName}</h2>
-            </div>
-            {d.reports.map((r: any) => (
-              <div key={r.assignmentId} className="card card-body mb-5 hover-lift">
-                <div className="flex items-start justify-between mb-5 pb-4" style={{ borderBottom: "2px solid var(--card-border)" }}>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1" style={{ color: "var(--text-primary)" }}>
-                      {r.subject?.name}
+        <div className="grid grid-cols-1 gap-6">
+          {data.map((d) => (
+            <FacultyReportView key={d.staffId} staff={d} compact />
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
+  return (
+    <div className="card hover-lift" style={{ borderLeft: `4px solid ${color}` }}>
+      <div className="card-body">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+            <p className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
+          </div>
+          <div className="p-3 rounded-lg" style={{ background: color, opacity: 0.1 }}>
+            <div style={{ color }}>{icon}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FacultyReportView({ staff, compact = false }: { staff: any; compact?: boolean }) {
+  const [expandedReport, setExpandedReport] = useState<string | null>(compact ? null : staff.reports[0]?.assignmentId || null);
+
+  const getOverallScore = (report: any) => {
+    const scores = Object.values(report.averages || {}) as number[];
+    if (scores.length === 0) return 0;
+    return scores.reduce((a, b) => a + b, 0) / scores.length;
+  };
+
+  const getScoreColor = (score: number) => {
+    const percentage = (score / 5) * 100;
+    if (percentage >= 80) return "var(--success)";
+    if (percentage >= 60) return "var(--primary)";
+    if (percentage >= 40) return "#FFA500";
+    return "var(--danger)";
+  };
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 rounded-lg" style={{ background: "var(--primary-light)" }}>
+          <Award size={20} style={{ color: "var(--primary)" }} />
+        </div>
+        <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{staff.staffName}</h2>
+        <span className="badge badge-secondary">{staff.reports.length} Subject{staff.reports.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {staff.reports.map((report: any) => {
+          const overallScore = getOverallScore(report);
+          const isExpanded = expandedReport === report.assignmentId;
+
+          return (
+            <div key={report.assignmentId} className="card hover-lift">
+              <div className="card-body">
+                {/* Subject Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
+                      {report.subject?.name}
                     </h3>
-                    <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                      {r.semester} • {r.subject?.subjectCode}
+                    <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                      {report.semester} • {report.subject?.subjectCode}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Responses</div>
-                    <div className="text-lg font-bold" style={{ color: "var(--primary)" }}>
-                      {r.submissionCount ?? r.totalResponses} / {r.totalStudents ?? 'N/A'}
+                  <div className="text-right ml-3">
+                    <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+                      Responses
+                    </div>
+                    <div className="text-sm font-bold" style={{ color: "var(--primary)" }}>
+                      {report.submissionCount ?? report.totalResponses} / {report.totalStudents ?? 'N/A'}
                     </div>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {params.map(([key, label]) => {
-                    const score = r.averages?.[key] ?? 0;
-                    const percentage = (score / 5) * 100;
-                    const getColor = (pct: number) => {
-                      if (pct >= 80) return "var(--success)";
-                      if (pct >= 60) return "var(--primary)";
-                      if (pct >= 40) return "#FFA500";
-                      return "var(--danger)";
-                    };
-                    return (
-                      <div key={key} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{label}</div>
-                          <div className="text-sm font-bold" style={{ color: getColor(percentage) }}>{score.toFixed(1)} / 5</div>
-                        </div>
-                        <div className="w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
-                          <div 
-                            className="h-full rounded-full transition-all duration-300" 
-                            style={{ width: `${percentage}%`, background: getColor(percentage) }}
-                          />
+
+                {/* Overall Score Badge */}
+                <div className="mb-4 p-3 rounded-lg" style={{ background: "var(--hover-overlay)" }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                      Overall Performance
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="text-2xl font-bold" style={{ color: getScoreColor(overallScore) }}>
+                        {overallScore.toFixed(1)}
+                      </div>
+                      <span className="text-sm" style={{ color: "var(--text-muted)" }}>/5.0</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
+                    <div 
+                      className="h-full rounded-full transition-all duration-300" 
+                      style={{ 
+                        width: `${(overallScore / 5) * 100}%`, 
+                        background: getScoreColor(overallScore) 
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Detailed Metrics */}
+                {isExpanded && (
+                  <div className="space-y-4 mb-4">
+                    {Object.entries(parameterGroups).map(([groupName, params]) => (
+                      <div key={groupName}>
+                        <h4 className="text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                          {groupName}
+                        </h4>
+                        <div className="space-y-2">
+                          {params.map(([key, label]) => {
+                            const score = report.averages?.[key] ?? 0;
+                            const percentage = (score / 5) * 100;
+                            return (
+                              <div key={key} className="flex items-center gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs truncate" style={{ color: "var(--text-primary)" }}>
+                                    {label}
+                                  </div>
+                                  <div className="w-full h-1.5 rounded-full mt-1" style={{ background: "var(--card-border)" }}>
+                                    <div 
+                                      className="h-full rounded-full transition-all duration-300" 
+                                      style={{ 
+                                        width: `${percentage}%`, 
+                                        background: getScoreColor(score) 
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="text-xs font-bold shrink-0" style={{ color: getScoreColor(score), minWidth: '45px', textAlign: 'right' }}>
+                                  {score.toFixed(1)}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Toggle Button */}
+                <button
+                  onClick={() => setExpandedReport(isExpanded ? null : report.assignmentId)}
+                  className="w-full text-center text-sm font-medium py-2 rounded-lg transition-colors"
+                  style={{ 
+                    color: "var(--primary)",
+                    background: "var(--primary-light)"
+                  }}
+                >
+                  {isExpanded ? 'Show Less' : 'View Detailed Metrics'}
+                </button>
               </div>
-            ))}
-          </div>
-        ))
-      )}
-    </main>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -286,32 +434,27 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
   if (!staffId) return null;
 
   return (
-    <div className="card card-body mb-4 hover-lift">
-      <h3 className="section-title mb-3">HOD Suggestions & Comments</h3>
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
+    <div className="card mt-6">
+      <div className="card-body">
+        <h3 className="section-title mb-4">HOD Suggestions & Comments</h3>
+        <div className="mb-4">
           <label className="form-label">Semester</label>
           <input 
             value={semester} 
             onChange={(e) => setSemester(e.target.value)} 
-            placeholder="Semester (e.g., Odd 2025-26)"
-            className="input-field"
+            placeholder="e.g., Odd 2025-26"
+            className="input-field max-w-md"
           />
         </div>
-        <div className="text-sm self-center" style={{ color: "var(--text-muted)" }}>
-          Enter semester for which this suggestion applies.
+        <div className="mb-4">
+          <label className="form-label">Your Suggestions</label>
+          <textarea 
+            value={text} 
+            onChange={(e) => setText(e.target.value)} 
+            className="input-field w-full h-32 resize-none" 
+            placeholder={loading ? 'Loading...' : 'Enter your suggestions and feedback for this faculty member...'} 
+          />
         </div>
-      </div>
-      <div>
-        <label className="form-label">Suggestions</label>
-        <textarea 
-          value={text} 
-          onChange={(e) => setText(e.target.value)} 
-          className="input-field w-full h-28 resize-none" 
-          placeholder={loading ? 'Loading...' : 'Write suggestions for this faculty...'} 
-        />
-      </div>
-      <div className="mt-3">
         <Button onClick={save} disabled={saving}>
           {saving ? 'Saving...' : 'Save Suggestions'}
         </Button>
