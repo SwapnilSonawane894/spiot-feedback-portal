@@ -83,7 +83,10 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
 
         <div className="absolute bottom-6 left-0 w-full px-6">
           <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={async () => {
+              await signOut({ redirect: false });
+              window.location.href = "/login";
+            }}
             className="w-full flex items-center gap-3 px-4 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50"
             aria-label="Logout"
           >
@@ -127,7 +130,10 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
 
           <div className="absolute bottom-6 left-0 w-full px-6">
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={async () => {
+                await signOut({ redirect: false });
+                window.location.href = "/login";
+              }}
               className="w-full flex items-center gap-3 px-4 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50"
               aria-label="Logout"
             >

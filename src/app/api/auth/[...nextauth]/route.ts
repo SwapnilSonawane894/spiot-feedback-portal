@@ -28,6 +28,11 @@ export const authOptions = {
       },
     }),
   ],
+  pages: {
+    signIn: "/login",
+    signOut: "/login",
+    error: "/login",
+  },
   callbacks: {
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
@@ -44,7 +49,10 @@ export const authOptions = {
       return session;
     },
   },
-  session: { strategy: "jwt" },
+  session: { 
+    strategy: "jwt" as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   secret: "4M6PmUDdOTgSuDLaE1+9fAxJFnD0Jbxgklph8RqzheA=",
   debug: process.env.NODE_ENV === "development",
 };

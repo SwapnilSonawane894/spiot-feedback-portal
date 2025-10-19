@@ -203,7 +203,10 @@ export default function ModernSidebar({
             <ThemeToggle />
           </div>
           <button 
-            onClick={() => signOut({ callbackUrl: "/login" })} 
+            onClick={async () => {
+              await signOut({ redirect: false });
+              window.location.href = "/login";
+            }}
             className="nav-link w-full justify-center" 
             title={collapsed ? "Logout" : ""}
           >
