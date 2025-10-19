@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Select, { MultiValue } from "react-select";
+import { Button } from "@/components/ui-controls";
 
 type StaffRow = { id: string; user: { id: string; name?: string | null; email?: string | null }; subjectIds?: string[] };
 type Subject = { id: string; name: string; subjectCode: string; targetYear: string };
@@ -27,7 +28,6 @@ export default function AssignmentPage(): React.ReactElement {
       const res = await fetch("/api/assignments");
       if (!res.ok) throw new Error("Failed to fetch assignments");
       const data = (await res.json()) as StaffRow[];
-      // data is [{ id, user, subjectIds }]
       setStaff(data || []);
 
       const map: Record<string, string[]> = {};
@@ -51,37 +51,37 @@ export default function AssignmentPage(): React.ReactElement {
     }
   }
 
-  function subjectOptions(): Option[] {
+  const subjectOptions = useMemo((): Option[] => {
     return subjects.map((s) => ({ value: s.id, label: `${s.name} (${s.subjectCode})` }));
-  }
+  }, [subjects]);
 
-  function valueForStaff(staffId: string) {
+  const valueForStaff = useCallback((staffId: string): Option[] => {
     const ids = selected[staffId] || [];
-    const opts = subjectOptions();
-    return opts.filter((o) => ids.includes(o.value));
-  }
+    return subjectOptions.filter((o) => ids.includes(o.value));
+  }, [selected, subjectOptions]);
 
-  async function handleSave(staffId: string) {
+  const handleChange = useCallback((staffId: string, opts: MultiValue<Option> | null) => {
+    const picked = opts ? Array.from(opts) as Option[] : [];
+    const ids = picked.map((o) => o.value);
+    setSelected((prev) => ({ ...prev, [staffId]: ids }));
+  }, []);
+
+  const handleSave = useCallback(async (staffId: string) => {
     const subjectIds = selected[staffId] || [];
     setIsSaving((prev) => ({ ...prev, [staffId]: true }));
     try {
-      console.log("HOD: saving assignments for staffId", staffId, { subjectIds });
-
       const res = await fetch(`/api/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId, subjectIds, semester: CURRENT_SEMESTER }),
       });
 
-      console.log("HOD: save API response status", res.status);
       const json = await res.json().catch(() => null);
-      console.log("HOD: save API response json", json);
 
       if (!res.ok) {
         throw new Error(json?.error || "Failed to save assignments");
       }
 
-      // success feedback: show a temporary Saved marker
       setSavedAt((prev) => ({ ...prev, [staffId]: Date.now() }));
       setTimeout(() => setSavedAt((prev) => ({ ...prev, [staffId]: null })), 3000);
     } catch (err) {
@@ -90,54 +90,91 @@ export default function AssignmentPage(): React.ReactElement {
     } finally {
       setIsSaving((prev) => ({ ...prev, [staffId]: false }));
     }
-  }
+  }, [selected]);
+
+  const selectStyles = useMemo(() => ({
+    menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
+    control: (base: any) => ({
+      ...base,
+      background: 'var(--input-bg)',
+      borderColor: 'var(--input-border)',
+      '&:hover': {
+        borderColor: 'var(--input-focus-border)',
+      },
+    }),
+    menu: (base: any) => ({
+      ...base,
+      background: 'var(--card-bg)',
+      border: '1px solid var(--card-border)',
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      background: state.isSelected ? 'var(--primary)' : state.isFocused ? 'var(--hover-overlay)' : 'transparent',
+      color: state.isSelected ? 'white' : 'var(--text-primary)',
+      '&:active': {
+        background: 'var(--primary)',
+      },
+    }),
+    multiValue: (base: any) => ({
+      ...base,
+      background: 'var(--primary-light)',
+    }),
+    multiValueLabel: (base: any) => ({
+      ...base,
+      color: 'var(--text-primary)',
+    }),
+    multiValueRemove: (base: any) => ({
+      ...base,
+      color: 'var(--text-secondary)',
+      '&:hover': {
+        background: 'var(--danger-light)',
+        color: 'var(--danger)',
+      },
+    }),
+  }), []);
 
   return (
     <main className="max-w-7xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Assign Faculty for {CURRENT_SEMESTER}</h1>
+      <h1 className="text-2xl font-semibold mb-6" style={{ color: "var(--text-primary)" }}>
+        Assign Faculty for {CURRENT_SEMESTER}
+      </h1>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-gray-700">Faculty Name</th>
-              <th className="px-6 py-3 text-left text-gray-700">Assigned Subjects</th>
-              <th className="px-6 py-3 text-left text-gray-700">Actions</th>
+              <th>Faculty Name</th>
+              <th>Assigned Subjects</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody>
             {staff.map((s) => (
-              <tr key={s.id} className="hover:bg-gray-50">
-                <td className="px-6 py-3">{s.user?.name ?? s.user?.email ?? "Unnamed"}</td>
-                <td className="px-6 py-3">
+              <tr key={s.id}>
+                <td>{s.user?.name ?? s.user?.email ?? "Unnamed"}</td>
+                <td>
                   <Select
                     isMulti
-                    options={subjectOptions()}
+                    options={subjectOptions}
                     value={valueForStaff(s.id)}
-                    onChange={(opts: MultiValue<Option> | null) => {
-                      const picked = opts ? Array.from(opts) as Option[] : [];
-                      const ids = picked.map((o) => o.value);
-                      setSelected((prev) => ({ ...prev, [s.id]: ids }));
-                    }}
-                    // render the menu into document.body so it is not clipped by overflow:hidden parents
+                    onChange={(opts) => handleChange(s.id, opts)}
                     menuPortalTarget={typeof document !== "undefined" ? document.body : null}
-                    styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+                    styles={selectStyles}
                   />
                 </td>
-                <td className="px-6 py-3">
-                  <button
+                <td>
+                  <Button
                     onClick={() => handleSave(s.id)}
-                    className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
                     disabled={!!isSaving[s.id]}
                   >
                     {isSaving[s.id] ? (
                       "Saving..."
                     ) : savedAt[s.id] ? (
-                      <span className="text-green-100">Saved!</span>
+                      <span style={{ color: "var(--success)" }}>Saved!</span>
                     ) : (
                       "Save"
                     )}
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}
