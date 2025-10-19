@@ -10,6 +10,9 @@
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:all": "tsx scripts/seed-database.ts"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
     "@prisma/client": "^6.17.1",
