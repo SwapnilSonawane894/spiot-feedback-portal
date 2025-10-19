@@ -43,6 +43,9 @@ Preferred communication style: Simple, everyday language.
 - **Feedback Window Control:** HODs manage feedback submission and report visibility.
 - **Assignment Sync Pattern:** Assignments are managed by atomically replacing existing entries for a semester.
 - **Student Auto-Password:** Initial student passwords are their enrollment numbers.
+- **Middleware Authentication:** Custom middleware using `getToken` from next-auth/jwt for route protection and role-based access control. Protected routes automatically redirect unauthenticated users to login page.
+- **Signout Handling:** Uses `signOut({ redirect: false })` with manual redirect to prevent crashes and ensure smooth logout experience.
+- **Dynamic NEXTAUTH_URL:** Automatically detects Replit domain from environment variables or falls back to localhost for development.
 
 # External Dependencies
 
