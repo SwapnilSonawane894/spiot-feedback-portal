@@ -210,6 +210,16 @@ body {
   background: var(--active-overlay);
 }
 
+.btn-danger-text {
+  @apply text-sm font-medium transition-colors cursor-pointer;
+  color: var(--danger);
+}
+
+.btn-danger-text:hover {
+  color: var(--danger-hover);
+  text-decoration: underline;
+}
+
 /* ============================================
    UTILITY CLASSES - CARDS
    ============================================ */
