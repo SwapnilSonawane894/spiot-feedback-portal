@@ -268,6 +268,19 @@ body {
   border-top: 1px solid var(--card-border);
 }
 
+.login-card {
+  /* No card styling on mobile (full screen) */
+}
+
+@media (min-width: 640px) {
+  .login-card {
+    @apply rounded-xl;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
 /* ============================================
    UTILITY CLASSES - FORMS
    ============================================ */

@@ -99,8 +99,8 @@ export default function LoginPage(): React.JSX.Element {
       className="min-h-screen flex items-center justify-center sm:p-6 md:p-8" 
       style={{ background: "var(--background)" }}
     >
-      <div className="w-full h-full min-h-screen sm:min-h-0 sm:h-auto sm:max-w-md fade-in flex flex-col justify-center">
-        <div className="p-8 sm:p-8 md:p-10 sm:card sm:shadow-lg">
+      <div className="w-full min-h-screen sm:min-h-0 sm:max-w-md fade-in flex flex-col justify-center">
+        <div className="login-card p-8 sm:p-8 md:p-10">
           <div className="flex flex-col items-center mb-8 sm:mb-10">
             <div 
               className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mb-5 transition-transform hover:scale-105" 

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Button, Input } from "@/components/ui-controls";
+import { Button } from "@/components/ui-controls";
 import { CustomSelect } from "@/components/custom-select";
 
 const params = [
@@ -290,22 +290,27 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
       <h3 className="section-title mb-3">HOD Suggestions & Comments</h3>
       <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <Input 
+          <label className="form-label">Semester</label>
+          <input 
             value={semester} 
             onChange={(e) => setSemester(e.target.value)} 
-            placeholder="Semester (e.g., Odd 2025-26)" 
+            placeholder="Semester (e.g., Odd 2025-26)"
+            className="input-field"
           />
         </div>
         <div className="text-sm self-center" style={{ color: "var(--text-muted)" }}>
           Enter semester for which this suggestion applies.
         </div>
       </div>
-      <textarea 
-        value={text} 
-        onChange={(e) => setText(e.target.value)} 
-        className="input-field w-full h-28 resize-none" 
-        placeholder={loading ? 'Loading...' : 'Write suggestions for this faculty...'} 
-      />
+      <div>
+        <label className="form-label">Suggestions</label>
+        <textarea 
+          value={text} 
+          onChange={(e) => setText(e.target.value)} 
+          className="input-field w-full h-28 resize-none" 
+          placeholder={loading ? 'Loading...' : 'Write suggestions for this faculty...'} 
+        />
+      </div>
       <div className="mt-3">
         <Button onClick={save} disabled={saving}>
           {saving ? 'Saving...' : 'Save Suggestions'}
