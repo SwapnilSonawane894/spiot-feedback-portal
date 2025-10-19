@@ -29,13 +29,16 @@ const PARAMETERS = feedbackParameters.map((p) => p.key);
 
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex gap-1" role="radiogroup">
+    <div className="flex gap-2" role="radiogroup">
       {Array.from({ length: 5 }).map((_, i) => (
         <button
           key={i}
           type="button"
           onClick={() => onChange(i + 1)}
-          className={`text-2xl ${i < value ? "text-yellow-500" : "text-gray-300"}`}
+          className={`text-3xl transition-all duration-200 ${i < value ? "text-yellow-500 scale-110" : "text-gray-300 hover:text-yellow-300 hover:scale-105"}`}
+          style={{ 
+            filter: i < value ? "drop-shadow(0 2px 4px rgba(234, 179, 8, 0.3))" : "none"
+          }}
           aria-label={`${i + 1} star`}
         >
           ★
@@ -118,39 +121,64 @@ export default function FeedbackForm(): React.ReactElement {
 
   return (
     <main className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-2">Feedback Form</h1>
-      <div className="mb-6 text-sm text-gray-600">Assignment: {assignmentId}</div>
+      <div className="page-header">
+        <h1 className="page-title">Feedback Form</h1>
+        <p className="page-description">Rate your faculty on the following parameters</p>
+      </div>
 
-      {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+      {error && (
+        <div className="mb-6 px-4 py-3 rounded-lg text-sm font-medium" style={{ background: "var(--danger-light)", color: "var(--danger)" }}>
+          {error}
+        </div>
+      )}
 
       {info && (
-        <div className="mb-6">
-          <div className="font-medium">Faculty: {info.facultyName}</div>
-          <div className="text-sm text-gray-500">Subject: {info.subjectName}</div>
+        <div className="card card-body mb-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium px-2 py-1 rounded" style={{ background: "var(--primary-light)", color: "var(--primary)" }}>Faculty</span>
+              <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{info.facultyName}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium px-2 py-1 rounded" style={{ background: "var(--secondary)", color: "white" }}>Subject</span>
+              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{info.subjectName}</span>
+            </div>
+          </div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {feedbackParameters.map((p) => (
-          <div key={p.key} className="flex items-center justify-between bg-white p-4 rounded shadow">
-            <div className="">{p.label}</div>
+          <div key={p.key} className="card card-body space-y-3">
+            <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{p.label}</div>
             <Stars value={ratings[p.key]} onChange={(v) => setRating(p.key, v)} />
           </div>
         ))}
 
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-medium mb-2">Any Suggestion (applicable)</h3>
+        <div className="card card-body">
+          <label className="form-label">Any Suggestions (Optional)</label>
           <textarea
             value={anySuggestion}
             onChange={(e) => setAnySuggestion(e.target.value)}
-            className="w-full border rounded p-2 min-h-[100px]"
+            className="input-field min-h-[100px] resize-none"
             placeholder="Optional: add any comments or suggestions for the faculty..."
           />
         </div>
 
-        <div className="pt-4">
-          <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 text-white rounded">
+        <div className="pt-4 flex gap-3">
+          <button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="btn-primary w-full sm:w-auto"
+          >
             {isSubmitting ? "Submitting..." : "Submit Feedback"}
+          </button>
+          <button 
+            type="button" 
+            onClick={() => router.push("/student/dashboard")}
+            className="btn-outline w-full sm:w-auto"
+          >
+            Cancel
           </button>
         </div>
       </form>
