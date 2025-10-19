@@ -67,31 +67,43 @@ export default function SubmissionStatusPage() {
         />
       </div>
 
-      {loading ? <div>Loading...</div> : (
-        <div className="bg-white rounded shadow">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div style={{ color: "var(--text-muted)" }}>Loading...</div>
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-2 text-left">Student Name</th>
-                <th className="px-4 py-2 text-left">Enrollment No.</th>
-                <th className="px-4 py-2 text-left">Year</th>
-                <th className="px-4 py-2 text-left">Status</th>
+                <th>Student Name</th>
+                <th>Enrollment No.</th>
+                <th>Year</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {data.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                    No students found
+                  <td colSpan={4} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
+                    {academicYears.length === 0 
+                      ? "No students or subjects found for your department" 
+                      : "No students found for the selected year"}
                   </td>
                 </tr>
               ) : (
                 data.map((s: any) => (
-                  <tr key={s.email} className="border-t">
-                    <td className="px-4 py-2">{s.name}</td>
-                    <td className="px-4 py-2">{s.email}</td>
-                    <td className="px-4 py-2">{s.year || '—'}</td>
-                    <td className="px-4 py-2">{s.completedTasks} / {s.totalTasks} Submitted</td>
+                  <tr key={s.email}>
+                    <td>{s.name}</td>
+                    <td>{s.email}</td>
+                    <td>{s.year || '—'}</td>
+                    <td>
+                      <span style={{ 
+                        color: s.completedTasks === s.totalTasks ? "var(--success)" : "var(--text-secondary)"
+                      }}>
+                        {s.completedTasks} / {s.totalTasks} Submitted
+                      </span>
+                    </td>
                   </tr>
                 ))
               )}

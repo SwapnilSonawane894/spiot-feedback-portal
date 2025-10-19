@@ -30,7 +30,14 @@ export async function GET(request: Request) {
       })
     );
     
-    if (!assignmentsWithSubjects || assignmentsWithSubjects.length === 0) return NextResponse.json({ students: [] });
+    if (!assignmentsWithSubjects || assignmentsWithSubjects.length === 0) {
+      return NextResponse.json({ 
+        semester: null, 
+        academicYears: [], 
+        selectedYearId: null, 
+        students: [] 
+      });
+    }
 
     // Determine the semester to consider: pick the most common or latest string (best-effort)
     const semesters = Array.from(new Set(assignmentsWithSubjects.map((a) => a.semester)));
