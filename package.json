@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 5000 -H 0.0.0.0",
     "lint": "eslint",
-    "seed:admin": "tsx scripts/seed-admin.ts"
+    "seed:admin": "tsx scripts/seed-admin.ts",
+    "seed:all": "tsx scripts/seed-database.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
