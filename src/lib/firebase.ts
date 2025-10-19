@@ -23,25 +23,9 @@ function initializeFirebase() {
       universe_domain: "googleapis.com",
     };
 
-    if (!serviceAccountKey) {
-      throw new Error(
-        "FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. " +
-          "Please add your Firebase service account key as an environment variable.",
-      );
-    }
-
-    try {
-      const serviceAccount = JSON.parse(serviceAccountKey);
-
-      app = initializeApp({
-        credential: cert(serviceAccount),
-      });
-    } catch (error) {
-      throw new Error(
-        "Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. " +
-          "Make sure it contains valid JSON from your Firebase service account.",
-      );
-    }
+    app = initializeApp({
+      credential: cert(serviceAccountKey),
+    });
   } else {
     app = getApps()[0];
   }
