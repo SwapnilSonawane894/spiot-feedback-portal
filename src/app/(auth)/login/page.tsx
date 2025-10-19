@@ -111,6 +111,7 @@ export default function LoginPage(): React.JSX.Element {
                 alt="SPIOT logo" 
                 width={80} 
                 height={80} 
+                priority
                 style={{ objectFit: "contain", width: "auto", height: "auto", maxWidth: "80%", maxHeight: "80%" }} 
               />
             </div>
