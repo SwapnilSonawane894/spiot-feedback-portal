@@ -141,7 +141,8 @@ export default function LoginPage(): React.JSX.Element {
                 <input
                   type="text"
                   placeholder="Enter your credentials"
-                  className="input-field pl-12"
+                  style={{ paddingLeft: '3.5rem' }}
+                  className="input-field"
                   aria-label="Email or Enrollment Number"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -159,7 +160,8 @@ export default function LoginPage(): React.JSX.Element {
                 <input
                   type="password"
                   placeholder="Enter your password"
-                  className="input-field pl-12"
+                  style={{ paddingLeft: '3.5rem' }}
+                  className="input-field"
                   aria-label="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
