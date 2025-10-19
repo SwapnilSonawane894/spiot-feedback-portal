@@ -1,15 +1,15 @@
 import React from "react";
 import { Building2, Users, MessageSquare, Calendar } from "lucide-react";
-import prisma from "@/lib/prisma";
+import { departmentService, staffService, feedbackService } from "@/lib/firebase-services";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { ContentCard, ContentCardHeader, ContentCardBody } from "@/components/content-card";
 
 export default async function AdminHomePage(): Promise<React.ReactElement> {
   // Fetch real counts from the database
-  const departmentCount = await prisma.department.count();
-  const staffCount = await prisma.staff.count();
-  const feedbackCount = await prisma.feedback.count();
+  const departmentCount = await departmentService.count();
+  const staffCount = await staffService.count();
+  const feedbackCount = await feedbackService.count();
 
   return (
     <div>

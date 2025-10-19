@@ -78,7 +78,7 @@ export const userService = {
       const results = snapshot.docs.map(docWithId);
 
       if (params?.select) {
-        return results.map(item => {
+        return results.map((item: any) => {
           const selected: any = {};
           Object.keys(params.select).forEach(key => {
             if (params.select[key]) {
@@ -162,7 +162,7 @@ export const userService = {
       const batch = firestore.batch();
       let count = 0;
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: any) => {
         batch.update(doc.ref, {
           ...data,
           updatedAt: FieldValue.serverTimestamp(),
@@ -285,6 +285,26 @@ export const departmentService = {
       return { success: true };
     } catch (error) {
       console.error('Error in departmentService.delete:', error);
+      throw error;
+    }
+  },
+
+  async count(where?: any) {
+    try {
+      let query: any = firestore.collection(COLLECTIONS.DEPARTMENTS);
+
+      if (where) {
+        Object.entries(where).forEach(([key, value]) => {
+          if (value !== undefined) {
+            query = query.where(key, '==', value);
+          }
+        });
+      }
+
+      const snapshot = await query.get();
+      return snapshot.size;
+    } catch (error) {
+      console.error('Error in departmentService.count:', error);
       throw error;
     }
   },
@@ -437,7 +457,7 @@ export const staffService = {
       const snapshot = await query.get();
       const batch = firestore.batch();
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: any) => {
         batch.update(doc.ref, {
           ...data,
           updatedAt: FieldValue.serverTimestamp(),
@@ -465,7 +485,7 @@ export const staffService = {
       const snapshot = await query.get();
       const batch = firestore.batch();
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: any) => {
         batch.delete(doc.ref);
       });
 
@@ -778,7 +798,7 @@ export const assignmentService = {
       const snapshot = await query.get();
       const batch = firestore.batch();
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: any) => {
         batch.delete(doc.ref);
       });
 
@@ -901,7 +921,7 @@ export const feedbackService = {
       const batch = firestore.batch();
       let count = 0;
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: any) => {
         batch.update(doc.ref, {
           ...data,
           updatedAt: FieldValue.serverTimestamp(),
@@ -988,7 +1008,7 @@ export const hodSuggestionService = {
       const snapshot = await query.get();
       const batch = firestore.batch();
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: any) => {
         batch.delete(doc.ref);
       });
 
