@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, userService, assignmentService } from "@/lib/firebase-services";
+import { staffService, userService, assignmentService, subjectService, feedbackService } from "@/lib/firebase-services";
 
 export async function GET() {
   try {
@@ -17,23 +17,20 @@ export async function GET() {
     // Get staff list with user data and assignments
     const staffList = await staffService.findMany({
       where: { departmentId },
-      include: {
-        user: true,
-        assignments: {
-          include: {
-            subject: true,
-            feedbacks: true,
-          },
-        },
-      },
     });
 
     // Get total students count once (not inside loops!)
     const totalStudents = await userService.count({ role: 'STUDENT', departmentId });
 
-    const reports = staffList.map((s) => {
-      const staffReports = s.assignments.map((a) => {
-        const feedbacks = a.feedbacks;
+    const reports = await Promise.all(staffList.map(async (s) => {
+      // Fetch user and assignments for this staff member
+      const user = await userService.findUnique({ id: s.userId });
+      const assignments = await assignmentService.findMany({ where: { staffId: s.id } });
+      
+      const staffReports = await Promise.all(assignments.map(async (a) => {
+        // Fetch subject and feedbacks for this assignment
+        const subject = await subjectService.findUnique({ id: a.subjectId });
+        const feedbacks = await feedbackService.findMany({ where: { assignmentId: a.id } });
         
         if (!feedbacks || feedbacks.length === 0) {
           return null; // Skip assignments with no feedback
@@ -77,21 +74,23 @@ export async function GET() {
         return {
           assignmentId: a.id,
           semester: a.semester,
-          subject: a.subject,
+          subject: subject,
           averages: avg,
           submissionCount: feedbacks.length,
           totalResponses: feedbacks.length,
           totalStudents,
           isReleased: feedbacks.every((ff: any) => ff.isReleased),
         };
-      }).filter(Boolean); // Remove null entries
+      })));
+      
+      const validReports = staffReports.filter(Boolean); // Remove null entries
 
       return {
         staffId: s.id,
-        staffName: s.user?.name ?? s.user?.email ?? "Unknown",
-        reports: staffReports,
+        staffName: user?.name ?? user?.email ?? "Unknown",
+        reports: validReports,
       };
-    });
+    }));
 
     return NextResponse.json({ reports });
   } catch (error) {

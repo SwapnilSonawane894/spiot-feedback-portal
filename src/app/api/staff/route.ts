@@ -20,12 +20,22 @@ export async function GET(request: Request) {
     const departmentId = hodProfile.departmentId;
 
     const staff = await staffService.findMany({
-      where: { departmentId, user: { role: { equals: "STAFF" } } },
-      include: { user: true },
+      where: { departmentId },
       orderBy: { id: "asc" },
     });
 
-    return NextResponse.json(staff);
+    // Manually fetch user data and filter by role
+    const staffWithUsers = await Promise.all(
+      staff.map(async (s) => {
+        const user = await userService.findUnique({ id: s.userId });
+        return { ...s, user };
+      })
+    );
+
+    // Filter to only include STAFF role
+    const filteredStaff = staffWithUsers.filter((s) => s.user?.role === "STAFF");
+
+    return NextResponse.json(filteredStaff);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch staff" }, { status: 500 });
@@ -66,7 +76,10 @@ export async function POST(request: Request) {
       departmentId: hodProfile.departmentId,
     });
 
-    const staffWithUser = await staffService.findUnique({ where: { id: createdStaff.id }, include: { user: true } });
+    const staffWithUser = {
+      ...createdStaff,
+      user: createdUser,
+    };
 
     return NextResponse.json(staffWithUser, { status: 201 });
   } catch (error) {

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService, academicYearService, userService, feedbackService } from "@/lib/firebase-services";
+import { staffService, assignmentService, academicYearService, userService, feedbackService, subjectService } from "@/lib/firebase-services";
 
 export async function GET(request: Request) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "HOD") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const staff = await staffService.findUnique({ where: { userId: session.user.id } });
+    const staff = await staffService.findFirst({ where: { userId: session.user.id } });
     if (!staff || !staff.departmentId) return NextResponse.json({ error: "HOD or department not found" }, { status: 404 });
     const departmentId = staff.departmentId;
 
@@ -18,16 +18,24 @@ export async function GET(request: Request) {
     const deptStaff = await staffService.findMany({ where: { departmentId } });
     const staffIds = deptStaff.map(s => s.id);
     
-    const allAssignments = await assignmentService.findMany({ include: { subject: true } });
+    const allAssignments = await assignmentService.findMany({});
     const deptAssignments = allAssignments.filter(a => staffIds.includes(a.staffId));
     
-    if (!deptAssignments || deptAssignments.length === 0) return NextResponse.json({ students: [] });
+    // Fetch subject data for each assignment
+    const assignmentsWithSubjects = await Promise.all(
+      deptAssignments.map(async (a) => {
+        const subject = await subjectService.findUnique({ id: a.subjectId });
+        return { ...a, subject };
+      })
+    );
+    
+    if (!assignmentsWithSubjects || assignmentsWithSubjects.length === 0) return NextResponse.json({ students: [] });
 
     // Determine the semester to consider: pick the most common or latest string (best-effort)
-    const semesters = Array.from(new Set(deptAssignments.map((a) => a.semester)));
+    const semesters = Array.from(new Set(assignmentsWithSubjects.map((a) => a.semester)));
     const semesterToUse = semesters.sort().reverse()[0];
 
-    const semesterAssignments = deptAssignments.filter((a) => a.semester === semesterToUse);
+    const semesterAssignments = assignmentsWithSubjects.filter((a) => a.semester === semesterToUse);
     // Determine available academic years present in these assignments
     const yearIds = Array.from(new Set(semesterAssignments.map((a) => a.subject?.academicYearId).filter(Boolean)));
     const academicYears = yearIds.length > 0 ? await Promise.all(yearIds.map(id => academicYearService.findUnique({ id }))) : [];

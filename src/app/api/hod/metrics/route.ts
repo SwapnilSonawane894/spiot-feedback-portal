@@ -11,9 +11,8 @@ export async function GET() {
 
   try {
     const userId = (session.user as any).id;
-    const staffProfile = await staffService.findUnique({
+    const staffProfile = await staffService.findFirst({
       where: { userId },
-      include: { department: true },
     });
 
     if (!staffProfile) {

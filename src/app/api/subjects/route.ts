@@ -19,9 +19,17 @@ export async function GET(request: Request) {
 
   const subjects = await subjectService.findMany({
     orderBy: { name: "asc" },
-    include: { academicYear: true },
   });
-  return NextResponse.json(subjects);
+
+  // Manually fetch academic year data
+  const subjectsWithYear = await Promise.all(
+    subjects.map(async (subject) => {
+      const academicYear = await academicYearService.findUnique({ id: subject.academicYearId });
+      return { ...subject, academicYear };
+    })
+  );
+
+  return NextResponse.json(subjectsWithYear);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch subjects" }, { status: 500 });

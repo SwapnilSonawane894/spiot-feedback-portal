@@ -10,8 +10,8 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "HOD") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const staff = await staffService.findUnique({ where: { userId: session.user.id }, include: { department: true } });
-    if (!staff || !staff.department) return NextResponse.json({ error: "Department not found" }, { status: 404 });
+    const staff = await staffService.findFirst({ where: { userId: session.user.id } });
+    if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
     // Check the first feedback in the department to infer release status
     // Get all staff in department, then their assignments, then feedback
@@ -43,7 +43,7 @@ export async function PATCH(request: Request) {
     const { shouldBeReleased } = body || {};
     if (typeof shouldBeReleased !== 'boolean') return NextResponse.json({ error: 'shouldBeReleased must be boolean' }, { status: 400 });
 
-    const staff = await staffService.findUnique({ where: { userId: session.user.id } });
+    const staff = await staffService.findFirst({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
     // Get all staff in department, then their assignments, then bulk update feedback

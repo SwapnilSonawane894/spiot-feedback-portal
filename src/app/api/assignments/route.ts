@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService } from "@/lib/firebase-services";
+import { staffService, assignmentService, userService } from "@/lib/firebase-services";
 
 const CURRENT_SEMESTER = "Odd 2025-26";
 
@@ -21,15 +21,24 @@ export async function GET() {
 
     const staff = await staffService.findMany({
       where: { departmentId },
-      include: { user: true, assignments: { where: { semester: CURRENT_SEMESTER } } },
       orderBy: { id: "asc" },
     });
 
-    const result = staff.map((s: any) => ({
-      id: s.id,
-      user: s.user,
-      subjectIds: s.assignments.map((a: any) => a.subjectId),
-    }));
+    // Manually fetch user and assignments for each staff member
+    const result = await Promise.all(
+      staff.map(async (s) => {
+        const user = await userService.findUnique({ id: s.userId });
+        const assignments = await assignmentService.findMany({
+          where: { staffId: s.id, semester: CURRENT_SEMESTER },
+        });
+        
+        return {
+          id: s.id,
+          user: user,
+          subjectIds: assignments.map((a: any) => a.subjectId),
+        };
+      })
+    );
 
     return NextResponse.json(result);
   } catch (error) {
