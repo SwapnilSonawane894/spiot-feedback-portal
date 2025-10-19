@@ -220,6 +220,25 @@ body {
   text-decoration: underline;
 }
 
+.btn-icon {
+  @apply inline-flex items-center justify-center p-2 rounded-lg;
+  @apply transition-all duration-200;
+  @apply focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: var(--hover-overlay);
+  color: var(--primary);
+}
+
+.btn-icon:active:not(:disabled) {
+  background: var(--active-overlay);
+}
+
 /* ============================================
    UTILITY CLASSES - CARDS
    ============================================ */

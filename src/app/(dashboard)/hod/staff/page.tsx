@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { UserPlus, Edit, Trash } from "lucide-react";
+import { UserPlus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 
 type StaffRow = {
@@ -129,7 +129,7 @@ export default function ManageStaffPage(): React.ReactElement {
           Manage Department Staff
         </h1>
         <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-          Click on any staff member to edit their details
+          Add, edit, or remove staff members from your department
         </p>
         <Button onClick={openCreateModal} className="gap-2">
           <UserPlus size={16} />
@@ -143,47 +143,41 @@ export default function ManageStaffPage(): React.ReactElement {
             <tr>
               <th>Name</th>
               <th>Email</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {staffList.length === 0 ? (
               <tr>
-                <td colSpan={2} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
+                <td colSpan={3} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
                   No staff members found. Add one to get started.
                 </td>
               </tr>
             ) : (
               staffList.map((s) => (
-                <tr 
-                  key={s.id}
-                  onClick={() => {
-                    if (s.user?.id !== currentUserId) {
-                      openEditModal(s);
-                    }
-                  }}
-                  className={s.user?.id === currentUserId ? "opacity-60" : "cursor-pointer hover:bg-[var(--hover-overlay)]"}
-                  style={{ transition: "background-color 0.2s" }}
-                  title={s.user?.id === currentUserId ? "Cannot edit yourself" : "Click to edit"}
-                >
+                <tr key={s.id}>
                   <td>{s.user?.name ?? "-"}</td>
+                  <td>{s.user?.email ?? "-"}</td>
                   <td>
-                    <div className="flex items-center justify-between">
-                      <span>{s.user?.email ?? "-"}</span>
-                      {s.user?.id !== currentUserId && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(s);
-                          }}
-                          className={`p-2 rounded-lg transition-colors ml-2 ${deletingId === s.id ? "opacity-50 pointer-events-none" : ""}`}
-                          style={{ color: "var(--danger)" }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
-                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                          title="Delete"
-                        >
-                          <Trash size={16} />
-                        </button>
-                      )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openEditModal(s)}
+                        className="btn-icon"
+                        title="Edit"
+                        disabled={s.user?.id === currentUserId}
+                        style={s.user?.id === currentUserId ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s)}
+                        className="btn-icon text-red-600 hover:text-red-700"
+                        title="Delete"
+                        disabled={s.user?.id === currentUserId || deletingId === s.id}
+                        style={s.user?.id === currentUserId ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
