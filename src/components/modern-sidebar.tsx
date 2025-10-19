@@ -126,6 +126,27 @@ export default function ModernSidebar({
           borderColor: "var(--sidebar-border)",
         }}
       >
+        {/* Collapse Button - Top Right Edge */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute top-6 -right-3 w-6 h-6 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 z-50"
+          style={{ 
+            background: "var(--primary)",
+            color: "white"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.1)";
+            e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "var(--shadow-md)";
+          }}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-16 border-b shrink-0" style={{ borderColor: "var(--sidebar-border)" }}>
           {!collapsed && (
@@ -190,16 +211,6 @@ export default function ModernSidebar({
               <LogOut size={20} />
             </span>
             {!collapsed && <span>Logout</span>}
-          </button>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center p-2 rounded-lg transition-all duration-200"
-            style={{ color: "var(--text-secondary)" }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
         </div>
       </aside>
