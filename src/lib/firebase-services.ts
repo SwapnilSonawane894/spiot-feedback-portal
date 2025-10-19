@@ -476,6 +476,26 @@ export const staffService = {
       throw error;
     }
   },
+
+  async count(where?: any) {
+    try {
+      let query: any = firestore.collection(COLLECTIONS.STAFF);
+
+      if (where) {
+        Object.entries(where).forEach(([key, value]) => {
+          if (value !== undefined) {
+            query = query.where(key, '==', value);
+          }
+        });
+      }
+
+      const snapshot = await query.get();
+      return snapshot.size;
+    } catch (error) {
+      console.error('Error in staffService.count:', error);
+      throw error;
+    }
+  },
 };
 
 // ============ ACADEMIC YEAR OPERATIONS ============
@@ -652,6 +672,26 @@ export const subjectService = {
       throw error;
     }
   },
+
+  async count(where?: any) {
+    try {
+      let query: any = firestore.collection(COLLECTIONS.SUBJECTS);
+
+      if (where) {
+        Object.entries(where).forEach(([key, value]) => {
+          if (value !== undefined) {
+            query = query.where(key, '==', value);
+          }
+        });
+      }
+
+      const snapshot = await query.get();
+      return snapshot.size;
+    } catch (error) {
+      console.error('Error in subjectService.count:', error);
+      throw error;
+    }
+  },
 };
 
 // ============ FACULTY ASSIGNMENT OPERATIONS ============
@@ -749,6 +789,26 @@ export const assignmentService = {
       throw error;
     }
   },
+
+  async count(where?: any) {
+    try {
+      let query: any = firestore.collection(COLLECTIONS.FACULTY_ASSIGNMENTS);
+
+      if (where) {
+        Object.entries(where).forEach(([key, value]) => {
+          if (value !== undefined) {
+            query = query.where(key, '==', value);
+          }
+        });
+      }
+
+      const snapshot = await query.get();
+      return snapshot.size;
+    } catch (error) {
+      console.error('Error in assignmentService.count:', error);
+      throw error;
+    }
+  },
 };
 
 // ============ FEEDBACK OPERATIONS ============
@@ -803,6 +863,56 @@ export const feedbackService = {
       return docWithId(doc);
     } catch (error) {
       console.error('Error in feedbackService.create:', error);
+      throw error;
+    }
+  },
+
+  async count(where?: any) {
+    try {
+      let query: any = firestore.collection(COLLECTIONS.FEEDBACK);
+
+      if (where) {
+        Object.entries(where).forEach(([key, value]) => {
+          if (value !== undefined) {
+            query = query.where(key, '==', value);
+          }
+        });
+      }
+
+      const snapshot = await query.get();
+      return snapshot.size;
+    } catch (error) {
+      console.error('Error in feedbackService.count:', error);
+      throw error;
+    }
+  },
+
+  async updateMany(where: any, data: any) {
+    try {
+      let query: any = firestore.collection(COLLECTIONS.FEEDBACK);
+
+      Object.entries(where).forEach(([key, value]) => {
+        if (value !== undefined) {
+          query = query.where(key, '==', value);
+        }
+      });
+
+      const snapshot = await query.get();
+      const batch = firestore.batch();
+      let count = 0;
+
+      snapshot.docs.forEach(doc => {
+        batch.update(doc.ref, {
+          ...data,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        count++;
+      });
+
+      await batch.commit();
+      return { count };
+    } catch (error) {
+      console.error('Error in feedbackService.updateMany:', error);
       throw error;
     }
   },

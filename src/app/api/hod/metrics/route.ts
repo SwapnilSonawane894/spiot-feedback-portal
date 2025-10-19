@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, subjectService, userService, assignmentService, feedbackService } from "@/lib/firebase-services";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -11,7 +11,7 @@ export async function GET() {
 
   try {
     const userId = (session.user as any).id;
-    const staffProfile = await prisma.staff.findUnique({
+    const staffProfile = await staffService.findUnique({
       where: { userId },
       include: { department: true },
     });
@@ -23,47 +23,28 @@ export async function GET() {
     const departmentId = staffProfile.departmentId;
     const semester = "Odd 2025-26";
 
+    // Get all staff in department to filter assignments and feedback
+    const deptStaff = await staffService.findMany({ where: { departmentId } });
+    const staffIds = deptStaff.map(s => s.id);
+
+    // Get all assignments for this department in this semester
+    const allAssignments = await assignmentService.findMany({ where: { semester } });
+    const deptAssignments = allAssignments.filter(a => staffIds.includes(a.staffId));
+    const assignmentIds = deptAssignments.map(a => a.id);
+
+    // Get all feedback for these assignments
+    const allFeedback = await feedbackService.findMany({});
+    const deptFeedback = allFeedback.filter(f => assignmentIds.includes(f.assignmentId));
+
     // OPTIMIZED: Run all counts in parallel
-    const [totalStaff, totalSubjects, totalStudents, totalAssignments, totalFeedbackSubmissions] = await Promise.all([
-      prisma.staff.count({
-        where: { departmentId },
-      }),
-      prisma.subject.count({
-        where: {
-          academicYear: {
-            students: {
-              some: {
-                departmentId,
-              },
-            },
-          },
-        },
-      }),
-      prisma.user.count({
-        where: {
-          departmentId,
-          role: "STUDENT",
-        },
-      }),
-      prisma.facultyAssignment.count({
-        where: {
-          semester,
-          staff: {
-            departmentId,
-          },
-        },
-      }),
-      prisma.feedback.count({
-        where: {
-          assignment: {
-            semester,
-            staff: {
-              departmentId,
-            },
-          },
-        },
-      }),
+    const [totalStaff, totalSubjects, totalStudents] = await Promise.all([
+      staffService.count({ departmentId }),
+      subjectService.count({}),
+      userService.count({ departmentId, role: "STUDENT" }),
     ]);
+
+    const totalAssignments = deptAssignments.length;
+    const totalFeedbackSubmissions = deptFeedback.length;
 
     return NextResponse.json({
       staffCount: totalStaff,

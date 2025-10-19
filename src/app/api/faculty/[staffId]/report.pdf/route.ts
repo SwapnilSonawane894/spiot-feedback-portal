@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, assignmentService, hodSuggestionService } from "@/lib/firebase-services";
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 const PARAM_KEYS = [
@@ -53,18 +53,18 @@ export async function GET(req: Request, ctx: { params?: any }) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     // allow HODs or the staff member themselves
-    const staff = await prisma.staff.findUnique({ where: { id: staffId }, include: { user: true } });
+    const staff = await staffService.findUnique({ where: { id: staffId }, include: { user: true } });
     if (!staff) return NextResponse.json({ error: 'Staff not found' }, { status: 404 });
 
     const allowed = session.user?.role === 'HOD' || (session.user?.role === 'STAFF' && session.user?.id === staff.userId);
     if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // fetch assignments + feedbacks
-    const assignments = await prisma.facultyAssignment.findMany({ where: { staffId }, include: { subject: true, feedbacks: true } });
+    const assignments = await assignmentService.findMany({ where: { staffId }, include: { subject: true, feedbacks: true } });
 
   // determine semester (best-effort: use first assignment.semester) and fetch the single HOD suggestion for it
   const semester = assignments?.[0]?.semester || '';
-  const hodSuggestion = await prisma.hodSuggestion.findUnique({ where: { staffId_semester: { staffId, semester } } as any }).catch(() => null);
+  const hodSuggestion = await hodSuggestionService.findUnique({ staffId_semester: { staffId, semester } });
 
     // prepare data
     const reports: any[] = [];

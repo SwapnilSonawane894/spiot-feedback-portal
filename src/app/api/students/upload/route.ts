@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { departmentService, userService } from "@/lib/firebase-services";
 import bcrypt from "bcrypt";
 import Papa from "papaparse";
 
@@ -45,14 +45,14 @@ export async function POST(request: Request) {
       }
 
   // find department
-  const dept = await (prisma as any).department.findUnique({ where: { abbreviation: deptAbbr } });
+  const dept = await departmentService.findUnique({ abbreviation: deptAbbr });
       if (!dept) {
         skipped.push({ email: enrollment, reason: `Department not found: ${deptAbbr}` });
         continue;
       }
 
       // check existing user
-  const existing = await (prisma as any).user.findUnique({ where: { email: enrollment } });
+  const existing = await userService.findUnique({ email: enrollment });
       if (existing) {
         skipped.push({ email: enrollment, reason: "User already exists" });
         continue;
@@ -61,15 +61,13 @@ export async function POST(request: Request) {
       const hashed = await bcrypt.hash(enrollment, 10);
 
       try {
-        await (prisma as any).user.create({
-          data: {
-            email: enrollment,
-            name: fullName,
-            hashedPassword: hashed,
-            role: "STUDENT",
-            departmentId: dept.id,
-            academicYearId,
-          },
+        await userService.create({
+          email: enrollment,
+          name: fullName,
+          hashedPassword: hashed,
+          role: "STUDENT",
+          departmentId: dept.id,
+          academicYearId,
         });
         created.push(enrollment);
       } catch (err: any) {

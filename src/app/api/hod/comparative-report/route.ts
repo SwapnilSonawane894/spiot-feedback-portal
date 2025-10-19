@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, assignmentService } from "@/lib/firebase-services";
 import ExcelJS from "exceljs";
 
 const PARAM_KEYS = [
@@ -54,12 +54,12 @@ export async function GET(req: Request) {
     if (!yearId) return NextResponse.json({ error: "Missing academicYearId (year) query param" }, { status: 400 });
 
     // find department for HOD
-    const hodStaff = await prisma.staff.findUnique({ where: { userId: session.user.id } });
+    const hodStaff = await staffService.findUnique({ where: { userId: session.user.id } });
     if (!hodStaff || !hodStaff.departmentId) return NextResponse.json({ error: "HOD or department not found" }, { status: 404 });
     const departmentId = hodStaff.departmentId;
 
     // fetch staff in department with assignments for the requested academic year
-    const staffs = await prisma.staff.findMany({
+    const staffs = await staffService.findMany({
       where: { departmentId },
       include: {
         user: true,

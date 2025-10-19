@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, assignmentService, hodSuggestionService } from "@/lib/firebase-services";
 
 export async function GET() {
   try {
@@ -9,9 +9,9 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "STAFF" && session.user?.role !== "HOD") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const staff = await prisma.staff.findFirst({ where: { userId: session.user.id } });
+    const staff = await staffService.findFirst({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
-    const assignments = await prisma.facultyAssignment.findMany({ where: { staffId: staff.id }, include: { subject: true, feedbacks: true } });
+    const assignments = await assignmentService.findMany({ where: { staffId: staff.id }, include: { subject: true, feedbacks: true } });
 
     const params = [
       "coverage_of_syllabus",
@@ -60,13 +60,13 @@ export async function GET() {
     }
 
   // include staffId (inferred from session) so client can request the PDF
-  const staffProfile = await prisma.staff.findFirst({ where: { userId: session.user.id } });
+  const staffProfile = await staffService.findFirst({ where: { userId: session.user.id } });
 
   // return single HOD suggestion for the current semester (best-effort)
   const semester = reports?.[0]?.semester || '';
   let hodSuggestion = '';
   if (staffProfile?.id && semester) {
-    const row = await prisma.hodSuggestion.findUnique({ where: { staffId_semester: { staffId: staffProfile.id, semester } } as any }).catch(() => null);
+    const row = await hodSuggestionService.findUnique({ staffId_semester: { staffId: staffProfile.id, semester } });
     hodSuggestion = row?.content || '';
   }
 

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, userService } from "@/lib/firebase-services";
 import bcrypt from "bcrypt";
 
 export async function POST(request: Request) {
@@ -14,27 +14,23 @@ export async function POST(request: Request) {
     const { fullName, enrollment, academicYearId } = body || {};
     if (!fullName || !enrollment || !academicYearId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-    // Find HOD's department
-    const staff = await prisma.staff.findUnique({ where: { userId: session.user.id } });
+    const staff = await staffService.findUnique({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
     const deptId = staff.departmentId;
 
-    // check existing user
-    const existing = await prisma.user.findUnique({ where: { email: enrollment } });
+    const existing = await userService.findUnique({ email: enrollment });
     if (existing) return NextResponse.json({ error: "User already exists" }, { status: 409 });
 
     const hashed = await bcrypt.hash(enrollment, 10);
 
-    const created = await prisma.user.create({
-      data: {
-        email: enrollment,
-        name: fullName,
-        hashedPassword: hashed,
-        role: 'STUDENT',
-        departmentId: deptId,
-        academicYearId,
-      },
+    const created = await userService.create({
+      email: enrollment,
+      name: fullName,
+      hashedPassword: hashed,
+      role: 'STUDENT',
+      departmentId: deptId,
+      academicYearId,
     });
 
     return NextResponse.json({ success: true, id: created.id });
@@ -52,10 +48,13 @@ export async function GET() {
     }
 
     const hodUserId = session.user.id as string;
-    const hodProfile = await prisma.staff.findUnique({ where: { userId: hodUserId } });
+    const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    const students = await prisma.user.findMany({ where: { departmentId: hodProfile.departmentId, role: "STUDENT" }, select: { id: true, name: true, email: true, academicYearId: true } });
+    const students = await userService.findMany({ 
+      where: { departmentId: hodProfile.departmentId, role: "STUDENT" }, 
+      select: { id: true, name: true, email: true, academicYearId: true } 
+    });
 
     return NextResponse.json(students);
   } catch (error) {

@@ -2,12 +2,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { academicYearService } from "@/lib/firebase-services";
 
-// GET: list all academic years (public within authenticated area)
 export async function GET() {
   try {
-    const years = await (prisma as any).academicYear.findMany({ orderBy: { name: "asc" } });
+    const years = await academicYearService.findMany({ orderBy: { name: "asc" } });
     return NextResponse.json(years);
   } catch (error) {
     console.error(error);
@@ -15,7 +14,6 @@ export async function GET() {
   }
 }
 
-// POST: create a new academic year (ADMIN only)
 export async function POST(request: Request) {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
@@ -27,7 +25,7 @@ export async function POST(request: Request) {
     const { name, abbreviation } = body || {};
     if (!name || !abbreviation) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-    const created = await (prisma as any).academicYear.create({ data: { name, abbreviation } });
+    const created = await academicYearService.create({ name, abbreviation });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error(error);

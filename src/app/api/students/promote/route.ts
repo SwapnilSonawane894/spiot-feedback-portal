@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, userService } from "@/lib/firebase-services";
 
 export async function POST(request: Request) {
   try {
@@ -15,10 +15,10 @@ export async function POST(request: Request) {
     const { fromYearId, toYearId } = body || {};
     if (!fromYearId || !toYearId) return NextResponse.json({ error: "fromYearId and toYearId are required" }, { status: 400 });
 
-    const hodProfile = await prisma.staff.findUnique({ where: { userId: session.user.id } });
+    const hodProfile = await staffService.findUnique({ where: { userId: session.user.id } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    const result = await (prisma as any).user.updateMany({ where: { academicYearId: fromYearId, departmentId: hodProfile.departmentId, role: "STUDENT" }, data: { academicYearId: toYearId } });
+    const result = await userService.updateMany({ academicYearId: fromYearId, departmentId: hodProfile.departmentId, role: "STUDENT" }, { academicYearId: toYearId });
 
     return NextResponse.json({ success: true, promoted: result.count });
   } catch (error) {

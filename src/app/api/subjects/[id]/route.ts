@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import type { Session } from "next-auth";
-import prisma from "@/lib/prisma";
+import { staffService, subjectService, assignmentService } from "@/lib/firebase-services";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,10 +15,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const hodUserId = session.user.id as string;
-    const hodProfile = await prisma.staff.findUnique({ where: { userId: hodUserId } });
+    const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    const subject = await prisma.subject.findUnique({ where: { id } });
+    const subject = await subjectService.findUnique({ id });
     if (!subject) return NextResponse.json({ error: "Subject not found" }, { status: 404 });
 
     // The HOD must exist and own a staff profile; that's sufficient to allow edits to
@@ -32,7 +32,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { name, subjectCode, academicYearId } = body || {};
     if (!name || !subjectCode || !academicYearId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-  const updated = await (prisma as any).subject.update({ where: { id }, data: { name, subjectCode, academicYearId } });
+  const updated = await subjectService.update({ id }, { name, subjectCode, academicYearId });
   return NextResponse.json(updated);
   } catch (error) {
     console.error(error);
@@ -50,10 +50,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     const hodUserId = session.user.id as string;
-    const hodProfile = await prisma.staff.findUnique({ where: { userId: hodUserId } });
+    const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    const subject = await prisma.subject.findUnique({ where: { id } });
+    const subject = await subjectService.findUnique({ id });
     if (!subject) return NextResponse.json({ error: "Subject not found" }, { status: 404 });
 
   // Allow HODs to delete subjects; no longer require an existing assignment in
@@ -61,12 +61,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     // Delete related faculty assignments first (best-effort)
     try {
-      await prisma.facultyAssignment.deleteMany({ where: { subjectId: id } });
+      await assignmentService.deleteMany({ subjectId: id });
     } catch (e) {
       console.warn("Failed to delete related assignments", e);
     }
 
-    await prisma.subject.delete({ where: { id } });
+    await subjectService.delete({ id });
 
     return NextResponse.json({ success: true });
   } catch (error) {

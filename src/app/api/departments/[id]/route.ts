@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { departmentService, staffService } from "@/lib/firebase-services";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -13,7 +13,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Missing name or abbreviation" }, { status: 400 });
     }
 
-    const updated = await prisma.department.update({ where: { id }, data: { name, abbreviation } });
+    const updated = await departmentService.update({ id }, { name, abbreviation });
     return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: "Failed to update department" }, { status: 500 });
@@ -30,7 +30,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Missing name or abbreviation" }, { status: 400 });
     }
 
-    const updated = await prisma.department.update({ where: { id }, data: { name, abbreviation } });
+    const updated = await departmentService.update({ id }, { name, abbreviation });
     return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: "Failed to update department" }, { status: 500 });
@@ -44,7 +44,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     if (session.user?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await params;
-    await prisma.department.delete({ where: { id } });
+    await staffService.deleteMany({ departmentId: id });
+    await departmentService.delete({ id });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);

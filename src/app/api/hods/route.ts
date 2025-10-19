@@ -1,25 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { userService, staffService, departmentService } from "@/lib/firebase-services";
 import bcrypt from "bcrypt";
 
 export async function GET() {
   try {
-    // Return all users with HOD role. Some HOD accounts may not yet be assigned via department.hodId —
-    // include their staffProfile and department info when available.
-    const users = await prisma.user.findMany({
-      where: { role: 'HOD' },
-      include: { staffProfile: { include: { department: true } } },
-      orderBy: { name: 'asc' },
-    });
+    const users = await userService.findMany({ where: { role: 'HOD' } });
 
-    const hods = users.map((u) => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      staffProfile: u.staffProfile
-        ? { department: u.staffProfile.department ? { id: u.staffProfile.department.id, name: u.staffProfile.department.name, abbreviation: u.staffProfile.department.abbreviation } : null }
-        : null,
+    const hods = await Promise.all(users.map(async (u) => {
+      const staffProfile = await staffService.findFirst({ where: { userId: u.id } });
+      let department = null;
+      if (staffProfile && staffProfile.departmentId) {
+        department = await departmentService.findUnique({ id: staffProfile.departmentId });
+      }
+
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        staffProfile: staffProfile
+          ? { department: department ? { id: department.id, name: department.name, abbreviation: department.abbreviation } : null }
+          : null,
+      };
     }));
 
     return NextResponse.json(hods);
@@ -37,35 +39,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // check for existing user
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await userService.findUnique({ email });
     if (existing) {
       return NextResponse.json({ error: "User with this email already exists" }, { status: 409 });
     }
 
     const hashed = await bcrypt.hash(password, 10);
 
-    // build data object and cast to `any` to avoid transient TypeScript errors
-    const createData: any = {
+    const created = await userService.create({
       name,
       email,
       hashedPassword: hashed,
       role: "HOD",
+    });
+
+    const createdStaff = await staffService.create({
+      userId: created.id,
+      departmentId,
+    });
+
+    const department = await departmentService.findUnique({ id: departmentId });
+
+    const result = {
+      ...created,
       staffProfile: {
-        create: {
-          department: { connect: { id: departmentId } },
-        },
+        ...createdStaff,
+        department,
       },
     };
 
-    const created = await prisma.user.create({
-      data: createData,
-      include: {
-        staffProfile: { include: { department: true } },
-      },
-    });
-
-    return NextResponse.json(created, { status: 201 });
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to create HOD" }, { status: 500 });

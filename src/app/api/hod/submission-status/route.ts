@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, assignmentService, academicYearService, userService, feedbackService } from "@/lib/firebase-services";
 
 export async function GET(request: Request) {
   try {
@@ -10,25 +10,27 @@ export async function GET(request: Request) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "HOD") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const staff = await prisma.staff.findUnique({ where: { userId: session.user.id } });
+    const staff = await staffService.findUnique({ where: { userId: session.user.id } });
     if (!staff || !staff.departmentId) return NextResponse.json({ error: "HOD or department not found" }, { status: 404 });
     const departmentId = staff.departmentId;
 
-    // Find assignments belonging to this department (include subject academicYear)
-    const assignments = await prisma.facultyAssignment.findMany({
-      where: { staff: { departmentId } },
-      select: { id: true, semester: true, subject: { select: { academicYearId: true } } },
-    });
-    if (!assignments || assignments.length === 0) return NextResponse.json({ students: [] });
+    // Find staff in department, then their assignments
+    const deptStaff = await staffService.findMany({ where: { departmentId } });
+    const staffIds = deptStaff.map(s => s.id);
+    
+    const allAssignments = await assignmentService.findMany({ include: { subject: true } });
+    const deptAssignments = allAssignments.filter(a => staffIds.includes(a.staffId));
+    
+    if (!deptAssignments || deptAssignments.length === 0) return NextResponse.json({ students: [] });
 
     // Determine the semester to consider: pick the most common or latest string (best-effort)
-    const semesters = Array.from(new Set(assignments.map((a) => a.semester)));
+    const semesters = Array.from(new Set(deptAssignments.map((a) => a.semester)));
     const semesterToUse = semesters.sort().reverse()[0];
 
-    const semesterAssignments = assignments.filter((a) => a.semester === semesterToUse);
+    const semesterAssignments = deptAssignments.filter((a) => a.semester === semesterToUse);
     // Determine available academic years present in these assignments
     const yearIds = Array.from(new Set(semesterAssignments.map((a) => a.subject?.academicYearId).filter(Boolean)));
-    const academicYears = yearIds.length > 0 ? await prisma.academicYear.findMany({ where: { id: { in: yearIds } }, select: { id: true, name: true, abbreviation: true } }) : [];
+    const academicYears = yearIds.length > 0 ? await Promise.all(yearIds.map(id => academicYearService.findUnique({ id }))) : [];
 
     // Read optional yearId query param to filter subject assignments to a specific academic year
     const url = new URL(request.url);
@@ -38,11 +40,14 @@ export async function GET(request: Request) {
     const assignmentIds = filteredSemesterAssignments.map((a) => a.id);
 
     // Find students in department
-    const students = await prisma.user.findMany({ where: { role: 'STUDENT', departmentId }, select: { id: true, name: true, email: true } });
+    const students = await userService.findMany({ where: { role: 'STUDENT', departmentId }, select: { id: true, name: true, email: true } });
 
+    // Get all feedback for these students
+    const allFeedback = await feedbackService.findMany({});
+    
     const results = [] as any[];
     for (const s of students) {
-      const completed = await prisma.feedback.count({ where: { studentId: s.id, assignmentId: { in: assignmentIds } } });
+      const completed = allFeedback.filter(f => f.studentId === s.id && assignmentIds.includes(f.assignmentId)).length;
       results.push({ name: s.name || s.email || 'Unknown', email: s.email || '', totalTasks: assignmentIds.length, completedTasks: completed });
     }
 

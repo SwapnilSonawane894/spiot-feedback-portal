@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, assignmentService } from "@/lib/firebase-services";
 
 const CURRENT_SEMESTER = "Odd 2025-26";
 
@@ -14,13 +14,19 @@ export async function GET() {
     const role = session.user?.role;
 
     if (role === "HOD") {
-      const hodProfile = await prisma.staff.findUnique({ where: { userId: session.user.id } });
+      const hodProfile = await staffService.findUnique({ where: { userId: session.user.id } });
       if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-      // fetch assignments for department
-      const assignments = await prisma.facultyAssignment.findMany({ where: { semester: CURRENT_SEMESTER, staff: { departmentId: hodProfile.departmentId } }, include: { staff: { include: { user: true } }, subject: true, feedbacks: true } });
+      // fetch staff in department, then filter assignments
+      const deptStaff = await staffService.findMany({ where: { departmentId: hodProfile.departmentId }, include: { user: true } });
+      const staffIds = deptStaff.map(s => s.id);
+      const allAssignments = await assignmentService.findMany({ where: { semester: CURRENT_SEMESTER }, include: { subject: true, feedbacks: true } });
+      const assignments = allAssignments.filter(a => staffIds.includes(a.staffId)).map(a => ({
+        ...a,
+        staff: deptStaff.find(s => s.id === a.staffId)
+      }));
 
-      const reports = assignments.map((a: any) => {
+      const reports = assignmentsWithStaff.map((a: any) => {
         const averages: any = {};
         const params = [
           "coverage_of_syllabus",
@@ -64,12 +70,13 @@ export async function GET() {
 
     if (role) {
       // assume staff
-      const staff = await prisma.staff.findUnique({ where: { userId: session.user.id } });
+      const staff = await staffService.findUnique({ where: { userId: session.user.id }, include: { user: true } });
       if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
-      const assignments = await prisma.facultyAssignment.findMany({ where: { semester: CURRENT_SEMESTER, staffId: staff.id }, include: { subject: true, feedbacks: true, staff: { include: { user: true } } } });
+      const assignments = await assignmentService.findMany({ where: { semester: CURRENT_SEMESTER, staffId: staff.id }, include: { subject: true, feedbacks: true } });
+      const assignmentsWithStaff = assignments.map(a => ({ ...a, staff }));
 
-      const reports = assignments.map((a: any) => {
+      const reports = assignmentsWithStaff.map((a: any) => {
         const averages: any = {};
         const params = [
           "coverage_of_syllabus",

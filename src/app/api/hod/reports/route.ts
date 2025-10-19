@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, userService, assignmentService } from "@/lib/firebase-services";
 
 export async function GET() {
   try {
@@ -9,13 +9,13 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "HOD") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const staff = await prisma.staff.findFirst({ where: { userId: session.user.id } });
+    const staff = await staffService.findFirst({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
     const departmentId = staff.departmentId;
 
-    // OPTIMIZED: Single query with all includes - no N+1 problem
-    const staffList = await prisma.staff.findMany({
+    // Get staff list with user data and assignments
+    const staffList = await staffService.findMany({
       where: { departmentId },
       include: {
         user: true,
@@ -29,9 +29,7 @@ export async function GET() {
     });
 
     // Get total students count once (not inside loops!)
-    const totalStudents = await prisma.user.count({
-      where: { role: 'STUDENT', departmentId },
-    });
+    const totalStudents = await userService.count({ role: 'STUDENT', departmentId });
 
     const reports = staffList.map((s) => {
       const staffReports = s.assignments.map((a) => {

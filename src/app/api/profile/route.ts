@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { userService } from "@/lib/firebase-services";
 import bcrypt from "bcrypt";
 
 export async function GET() {
@@ -10,10 +10,10 @@ export async function GET() {
     const session = (await getServerSession(authOptions as any)) as any;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await (prisma as any).user.findUnique({ where: { id: session.user.id }, select: { id: true, name: true, email: true, role: true } });
+    const user = await userService.findUnique({ id: session.user.id });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    return NextResponse.json(user);
+    return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
@@ -32,7 +32,6 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { name, currentPassword, newPassword } = body || {};
 
-    // If changing password, require both currentPassword and newPassword
     const data: any = {};
     if (name) data.name = name;
 
@@ -41,8 +40,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: "Both currentPassword and newPassword are required to change password" }, { status: 400 });
       }
 
-      // fetch existing hash
-      const user = await (prisma as any).user.findUnique({ where: { id: session.user.id }, select: { hashedPassword: true } });
+      const user = await userService.findUnique({ id: session.user.id });
       const existingHash = user?.hashedPassword;
       if (!existingHash) return NextResponse.json({ error: "No password set for this user" }, { status: 400 });
 
@@ -54,9 +52,9 @@ export async function PATCH(request: Request) {
 
     if (Object.keys(data).length === 0) return NextResponse.json({ error: "No changes provided" }, { status: 400 });
 
-    const updated = await (prisma as any).user.update({ where: { id: session.user.id }, data, select: { id: true, name: true, email: true, role: true } });
+    const updated = await userService.update({ id: session.user.id }, data);
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { userService, staffService, departmentService, assignmentService } from "@/lib/firebase-services";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -14,13 +14,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     // Update user
-    const updatedUser = await prisma.user.update({ where: { id }, data: { name, email } });
+    const updatedUser = await userService.update({ id }, { name, email });
 
     // Update staff profile (find by userId)
-    await prisma.staff.updateMany({ where: { userId: id }, data: { departmentId } });
+    await staffService.updateMany({ userId: id }, { departmentId });
 
-    const updated = await prisma.user.findUnique({ where: { id }, include: { staffProfile: { include: { department: true } } } });
-    return NextResponse.json(updated);
+    const updated = await userService.findUnique({ id });
+    const staffProfile = await staffService.findFirst({ where: { userId: id }, include: { department: true } });
+    return NextResponse.json({ ...updated, staffProfile });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to update HOD" }, { status: 500 });
@@ -35,27 +36,26 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     const { id: userId } = await params;
 
-    await prisma.$transaction(async (tx) => {
-      // find staff profile for this user
-      const staff = await tx.staff.findFirst({ where: { userId } });
-      const staffId = staff?.id;
+    // Execute deletion logic sequentially (Firebase doesn't support transactions like Prisma)
+    const staff = await staffService.findFirst({ where: { userId } });
+    const staffId = staff?.id;
 
-      if (staffId) {
-        // find department where this staff is hod
-        const dept = await tx.department.findFirst({ where: { hodId: staffId } });
-        if (dept) {
-          // unassign hod
-          await tx.department.update({ where: { id: dept.id }, data: { hodId: null } });
-        }
-        // delete any faculty assignments referencing this staff
-        await tx.facultyAssignment.deleteMany({ where: { staffId } });
-        // delete the staff profile(s) referencing this user
-        await tx.staff.deleteMany({ where: { userId } });
+    if (staffId) {
+      // find department where this staff is hod (check all departments)
+      const allDepts = await departmentService.findMany({});
+      const dept = allDepts.find(d => d.hodId === staffId);
+      if (dept) {
+        // unassign hod
+        await departmentService.update({ id: dept.id }, { hodId: null });
       }
+      // delete any faculty assignments referencing this staff
+      await assignmentService.deleteMany({ staffId });
+      // delete the staff profile(s) referencing this user
+      await staffService.deleteMany({ userId });
+    }
 
-      // finally delete the user (cascade will remove staff profile)
-      await tx.user.delete({ where: { id: userId } });
-    });
+    // finally delete the user
+    await userService.delete({ id: userId });
 
     return NextResponse.json({ success: true });
   } catch (error) {

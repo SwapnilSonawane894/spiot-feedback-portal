@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { staffService, feedbackService, assignmentService } from "@/lib/firebase-services";
 
 export async function GET() {
   try {
@@ -10,14 +10,20 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (session.user?.role !== "HOD") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const staff = await prisma.staff.findUnique({ where: { userId: session.user.id }, include: { department: true } });
+    const staff = await staffService.findUnique({ where: { userId: session.user.id }, include: { department: true } });
     if (!staff || !staff.department) return NextResponse.json({ error: "Department not found" }, { status: 404 });
 
     // Check the first feedback in the department to infer release status
-    const firstFeedback = await prisma.feedback.findFirst({
-      where: { assignment: { staff: { departmentId: staff.departmentId } } },
-      orderBy: { createdAt: 'asc' },
-    });
+    // Get all staff in department, then their assignments, then feedback
+    const deptStaff = await staffService.findMany({ where: { departmentId: staff.departmentId } });
+    const staffIds = deptStaff.map(s => s.id);
+    const deptAssignments = await assignmentService.findMany({});
+    const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
+    const assignmentIds = relevantAssignments.map(a => a.id);
+    
+    const allFeedback = await feedbackService.findMany({});
+    const deptFeedback = allFeedback.filter(f => assignmentIds.includes(f.assignmentId));
+    const firstFeedback = deptFeedback.length > 0 ? deptFeedback[0] : null;
 
     const isReleased = firstFeedback ? firstFeedback.isReleased : false;
     return NextResponse.json({ isReleased });
@@ -37,16 +43,28 @@ export async function PATCH(request: Request) {
     const { shouldBeReleased } = body || {};
     if (typeof shouldBeReleased !== 'boolean') return NextResponse.json({ error: 'shouldBeReleased must be boolean' }, { status: 400 });
 
-    const staff = await prisma.staff.findUnique({ where: { userId: session.user.id } });
+    const staff = await staffService.findUnique({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
-    // Bulk update all feedbacks for assignments where the staff belongs to this department
-    const result = await prisma.feedback.updateMany({
-      where: { assignment: { staff: { departmentId: staff.departmentId } } },
-      data: { isReleased: shouldBeReleased },
-    });
+    // Get all staff in department, then their assignments, then bulk update feedback
+    const deptStaff = await staffService.findMany({ where: { departmentId: staff.departmentId } });
+    const staffIds = deptStaff.map(s => s.id);
+    const deptAssignments = await assignmentService.findMany({});
+    const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
+    const assignmentIds = relevantAssignments.map(a => a.id);
+    
+    // Update all feedback for these assignments
+    const allFeedback = await feedbackService.findMany({});
+    const feedbackToUpdate = allFeedback.filter(f => assignmentIds.includes(f.assignmentId));
+    
+    // Update each feedback (Firebase doesn't have nested where clauses)
+    let updated = 0;
+    for (const fb of feedbackToUpdate) {
+      await feedbackService.updateMany({ assignmentId: fb.assignmentId, studentId: fb.studentId }, { isReleased: shouldBeReleased });
+      updated++;
+    }
 
-    return NextResponse.json({ success: true, updated: result.count, isReleased: shouldBeReleased });
+    return NextResponse.json({ success: true, updated, isReleased: shouldBeReleased });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to update release status" }, { status: 500 });
