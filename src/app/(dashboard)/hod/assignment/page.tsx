@@ -4,8 +4,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Select, { MultiValue } from "react-select";
 import { Button } from "@/components/ui-controls";
+import toast from "react-hot-toast";
 
-type StaffRow = { id: string; user: { id: string; name?: string | null; email?: string | null }; subjectIds?: string[] };
+type StaffRow = { id: string; user: { id: string; name?: string | null; email?: string | null } };
 type Subject = { id: string; name: string; subjectCode: string; targetYear: string };
 type Option = { value: string; label: string };
 
@@ -14,83 +15,99 @@ const CURRENT_SEMESTER = "Odd 2025-26";
 export default function AssignmentPage(): React.ReactElement {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [selected, setSelected] = useState<Record<string, string[]>>({});
-  const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
-  const [savedAt, setSavedAt] = useState<Record<string, number | null>>({});
+  const [assignments, setAssignments] = useState<Record<string, string[]>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetchAssignments();
-    fetchSubjects();
+    fetchData();
   }, []);
 
-  async function fetchAssignments() {
+  async function fetchData() {
     try {
-      const res = await fetch("/api/assignments");
-      if (!res.ok) throw new Error("Failed to fetch assignments");
-      const data = (await res.json()) as StaffRow[];
-      setStaff(data || []);
+      // Fetch subjects
+      const subjectsRes = await fetch("/api/subjects");
+      if (!subjectsRes.ok) throw new Error("Failed to fetch subjects");
+      const subjectsData = await subjectsRes.json();
+      setSubjects(subjectsData || []);
 
-      const map: Record<string, string[]> = {};
-      (data || []).forEach((s) => {
-        map[s.id] = Array.isArray(s.subjectIds) ? s.subjectIds : [];
+      // Fetch all staff
+      const staffRes = await fetch("/api/staff");
+      if (!staffRes.ok) throw new Error("Failed to fetch staff");
+      const staffData = await staffRes.json();
+      setStaff(staffData || []);
+
+      // Fetch existing assignments
+      const assignmentsRes = await fetch("/api/hod/faculty-assignments");
+      if (!assignmentsRes.ok) throw new Error("Failed to fetch assignments");
+      const assignmentsData = await assignmentsRes.json();
+      
+      // Convert assignments array to subject -> staffIds mapping
+      const assignmentMap: Record<string, string[]> = {};
+      (subjectsData || []).forEach((subject: Subject) => {
+        assignmentMap[subject.id] = [];
       });
-      setSelected(map);
+      
+      (assignmentsData || []).forEach((assignment: any) => {
+        if (!assignmentMap[assignment.subjectId]) {
+          assignmentMap[assignment.subjectId] = [];
+        }
+        assignmentMap[assignment.subjectId].push(assignment.staffId);
+      });
+      
+      setAssignments(assignmentMap);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load data");
     }
   }
 
-  async function fetchSubjects() {
-    try {
-      const res = await fetch("/api/subjects");
-      if (!res.ok) throw new Error("Failed to fetch subjects");
-      const data = await res.json();
-      setSubjects(data || []);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  const staffOptions = useMemo((): Option[] => {
+    return staff.map((s) => ({ 
+      value: s.id, 
+      label: s.user?.name || s.user?.email || "Unnamed" 
+    }));
+  }, [staff]);
 
-  const subjectOptions = useMemo((): Option[] => {
-    return subjects.map((s) => ({ value: s.id, label: `${s.name} (${s.subjectCode})` }));
-  }, [subjects]);
+  const valueForSubject = useCallback((subjectId: string): Option[] => {
+    const staffIds = assignments[subjectId] || [];
+    return staffOptions.filter((o) => staffIds.includes(o.value));
+  }, [assignments, staffOptions]);
 
-  const valueForStaff = useCallback((staffId: string): Option[] => {
-    const ids = selected[staffId] || [];
-    return subjectOptions.filter((o) => ids.includes(o.value));
-  }, [selected, subjectOptions]);
-
-  const handleChange = useCallback((staffId: string, opts: MultiValue<Option> | null) => {
+  const handleChange = useCallback((subjectId: string, opts: MultiValue<Option> | null) => {
     const picked = opts ? Array.from(opts) as Option[] : [];
     const ids = picked.map((o) => o.value);
-    setSelected((prev) => ({ ...prev, [staffId]: ids }));
+    setAssignments((prev) => ({ ...prev, [subjectId]: ids }));
   }, []);
 
-  const handleSave = useCallback(async (staffId: string) => {
-    const subjectIds = selected[staffId] || [];
-    setIsSaving((prev) => ({ ...prev, [staffId]: true }));
+  const handleSaveAll = useCallback(async () => {
+    setIsSaving(true);
     try {
-      const res = await fetch(`/api/assignments`, {
+      const payload = {
+        semester: CURRENT_SEMESTER,
+        assignments: Object.entries(assignments).flatMap(([subjectId, staffIds]) => 
+          staffIds.map(staffId => ({ subjectId, staffId }))
+        )
+      };
+
+      const res = await fetch(`/api/hod/faculty-assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffId, subjectIds, semester: CURRENT_SEMESTER }),
+        body: JSON.stringify(payload),
       });
 
-      const json = await res.json().catch(() => null);
-
       if (!res.ok) {
-        throw new Error(json?.error || "Failed to save assignments");
+        const error = await res.json();
+        throw new Error(error?.error || "Failed to save assignments");
       }
 
-      setSavedAt((prev) => ({ ...prev, [staffId]: Date.now() }));
-      setTimeout(() => setSavedAt((prev) => ({ ...prev, [staffId]: null })), 3000);
+      toast.success("All assignments saved successfully!");
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Save failed");
+      toast.error((err as Error).message || "Save failed");
     } finally {
-      setIsSaving((prev) => ({ ...prev, [staffId]: false }));
+      setIsSaving(false);
     }
-  }, [selected]);
+  }, [assignments]);
 
   const selectStyles = useMemo(() => ({
     menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
@@ -135,49 +152,62 @@ export default function AssignmentPage(): React.ReactElement {
 
   return (
     <main className="max-w-7xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6" style={{ color: "var(--text-primary)" }}>
-        Assign Faculty for {CURRENT_SEMESTER}
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+            Faculty Assignment for {CURRENT_SEMESTER}
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+            Assign faculty members to subjects. Multiple faculty can be assigned to each subject.
+          </p>
+        </div>
+        <Button onClick={handleSaveAll} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save All Assignments"}
+        </Button>
+      </div>
 
       <div className="table-wrapper">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Faculty Name</th>
-              <th>Assigned Subjects</th>
-              <th>Actions</th>
+              <th style={{ width: "35%" }}>Subject</th>
+              <th>Assigned Faculty</th>
             </tr>
           </thead>
           <tbody>
-            {staff.map((s) => (
-              <tr key={s.id}>
-                <td>{s.user?.name ?? s.user?.email ?? "Unnamed"}</td>
-                <td>
-                  <Select
-                    isMulti
-                    options={subjectOptions}
-                    value={valueForStaff(s.id)}
-                    onChange={(opts) => handleChange(s.id, opts)}
-                    menuPortalTarget={typeof document !== "undefined" ? document.body : null}
-                    styles={selectStyles}
-                  />
-                </td>
-                <td>
-                  <Button
-                    onClick={() => handleSave(s.id)}
-                    disabled={!!isSaving[s.id]}
-                  >
-                    {isSaving[s.id] ? (
-                      "Saving..."
-                    ) : savedAt[s.id] ? (
-                      <span style={{ color: "var(--success)" }}>Saved!</span>
-                    ) : (
-                      "Save"
-                    )}
-                  </Button>
+            {subjects.length === 0 ? (
+              <tr>
+                <td colSpan={2} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
+                  No subjects found. Please add subjects first.
                 </td>
               </tr>
-            ))}
+            ) : (
+              subjects.map((subject) => (
+                <tr key={subject.id}>
+                  <td>
+                    <div>
+                      <div className="font-medium" style={{ color: "var(--text-primary)" }}>
+                        {subject.name}
+                      </div>
+                      <div className="text-sm" style={{ color: "var(--text-muted)" }}>
+                        {subject.subjectCode}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <Select
+                      isMulti
+                      options={staffOptions}
+                      value={valueForSubject(subject.id)}
+                      onChange={(opts) => handleChange(subject.id, opts)}
+                      menuPortalTarget={typeof document !== "undefined" ? document.body : null}
+                      styles={selectStyles}
+                      placeholder="Select faculty members..."
+                    />
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
