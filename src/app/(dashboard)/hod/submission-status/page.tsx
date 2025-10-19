@@ -25,7 +25,7 @@ export default function SubmissionStatusPage() {
       const years = json.academicYears || [];
       setAcademicYears(years);
       // If no year was requested and the API returned available years, auto-select the first one so totals reflect that year
-      if (!yearId && years.length > 0) {
+      if (!yearId && years.length > 0 && years[0]?.id) {
         const defaultId = years[0].id;
         setSelectedYearId(defaultId);
         // fetch again with selected year to get correct totals
@@ -48,7 +48,7 @@ export default function SubmissionStatusPage() {
 
   const yearOptions = [
     { value: "", label: "All Years" },
-    ...academicYears.map((y) => ({ value: y.id, label: y.abbreviation || y.name }))
+    ...academicYears.filter((y) => y && y.id).map((y) => ({ value: y.id, label: y.abbreviation || y.name }))
   ];
 
   return (

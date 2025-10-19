@@ -11,6 +11,7 @@ const adminLinks: Array<{ href: string; label: string; icon: React.ReactNode }> 
   { href: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
   { href: "/admin/departments", label: "Departments", icon: <Building2 size={16} /> },
   { href: "/admin/years", label: "Academic Years", icon: <GraduationCap size={16} /> },
+  { href: "/admin/staff", label: "Staff Management", icon: <Users size={16} /> },
   { href: "/admin/hods", label: "HOD Management", icon: <Users size={16} /> },
   { href: "/profile", label: "My Profile", icon: <User size={16} /> },
 ];

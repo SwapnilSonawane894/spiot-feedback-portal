@@ -2,37 +2,33 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, userService } from "@/lib/firebase-services";
+import { staffService, userService, departmentService } from "@/lib/firebase-services";
 import bcrypt from "bcrypt";
 
 export async function GET(request: Request) {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
-    if (!session || session.user?.role !== "HOD") {
+    if (!session || !["ADMIN", "HOD"].includes(session.user?.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const hodUserId = session.user.id as string;
+    const staff = await staffService.findMany({});
 
-    const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
-    if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
-
-    const departmentId = hodProfile.departmentId;
-
-    const staff = await staffService.findMany({
-      where: { departmentId },
-    });
-
-    // Manually fetch user data and filter by role
     const staffWithUsers = await Promise.all(
-      staff.map(async (s) => {
+      staff.map(async (s: any) => {
         const user = await userService.findUnique({ id: s.userId });
-        return { ...s, user };
+        const department = s.departmentId ? await departmentService.findUnique({ id: s.departmentId }) : null;
+        return { 
+          id: s.id,
+          employeeId: s.employeeId,
+          designation: s.designation,
+          user: user ? { id: user.id, name: user.name, email: user.email } : null,
+          department: department ? { id: department.id, name: department.name, abbreviation: department.abbreviation } : null,
+        };
       })
     );
 
-    // Filter to only include STAFF role
-    const filteredStaff = staffWithUsers.filter((s) => s.user?.role === "STAFF");
+    const filteredStaff = staffWithUsers.filter((s) => s.user);
 
     return NextResponse.json(filteredStaff);
   } catch (error) {
@@ -44,43 +40,39 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
-    if (!session || session.user?.role !== "HOD") {
+    if (!session || session.user?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const hodUserId = session.user.id as string;
-    const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
-    if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
-
     const body = await request.json();
-    const { name, email, password } = body || {};
-    if (!name || !email || !password) {
+    const { name, email, password, employeeId, designation, departmentId } = body;
+
+    if (!name || !email || !password || !departmentId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const existing = await userService.findUnique({ email });
-    if (existing) return NextResponse.json({ error: "User with this email already exists" }, { status: 409 });
+    const existingUser = await userService.findUnique({ email });
+    if (existingUser) {
+      return NextResponse.json({ error: "Email already exists" }, { status: 400 });
+    }
 
-    const hashed = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const createdUser = await userService.create({
+    const user = await userService.create({
       name,
       email,
-      hashedPassword: hashed,
+      hashedPassword,
       role: "STAFF",
     });
 
-    const createdStaff = await staffService.create({
-      userId: createdUser.id,
-      departmentId: hodProfile.departmentId,
+    const staff = await staffService.create({
+      userId: user.id,
+      employeeId: employeeId || "",
+      designation: designation || "",
+      departmentId,
     });
 
-    const staffWithUser = {
-      ...createdStaff,
-      user: createdUser,
-    };
-
-    return NextResponse.json(staffWithUser, { status: 201 });
+    return NextResponse.json({ success: true, staffId: staff.id });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to create staff" }, { status: 500 });

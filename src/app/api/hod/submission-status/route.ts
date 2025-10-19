@@ -14,16 +14,17 @@ export async function GET(request: Request) {
     if (!staff || !staff.departmentId) return NextResponse.json({ error: "HOD or department not found" }, { status: 404 });
     const departmentId = staff.departmentId;
 
-    // Find staff in department, then their assignments
-    const deptStaff = await staffService.findMany({ where: { departmentId } });
-    const staffIds = deptStaff.map(s => s.id);
+    // Get all subjects for this department (not staff) - this allows cross-departmental staff assignments
+    const deptSubjects = await subjectService.findMany({ where: { departmentId } });
+    const subjectIds = deptSubjects.map((s: any) => s.id);
     
+    // Get all assignments for these subjects (regardless of which staff member is assigned)
     const allAssignments = await assignmentService.findMany({});
-    const deptAssignments = allAssignments.filter(a => staffIds.includes(a.staffId));
+    const deptAssignments = allAssignments.filter((a: any) => subjectIds.includes(a.subjectId));
     
-    // Fetch subject data for each assignment
+    // Attach subject data to each assignment
     const assignmentsWithSubjects = await Promise.all(
-      deptAssignments.map(async (a) => {
+      deptAssignments.map(async (a: any) => {
         const subject = await subjectService.findUnique({ id: a.subjectId });
         return { ...a, subject };
       })
@@ -37,8 +38,9 @@ export async function GET(request: Request) {
 
     const semesterAssignments = assignmentsWithSubjects.filter((a) => a.semester === semesterToUse);
     // Determine available academic years present in these assignments
-    const yearIds = Array.from(new Set(semesterAssignments.map((a) => a.subject?.academicYearId).filter(Boolean)));
-    const academicYears = yearIds.length > 0 ? await Promise.all(yearIds.map(id => academicYearService.findUnique({ id }))) : [];
+    const yearIds = Array.from(new Set(semesterAssignments.map((a: any) => a.subject?.academicYearId).filter(Boolean)));
+    const academicYearsRaw = yearIds.length > 0 ? await Promise.all(yearIds.map((id: any) => academicYearService.findUnique({ id }))) : [];
+    const academicYears = academicYearsRaw.filter(y => y !== null);
 
     // Read optional yearId query param to filter subject assignments to a specific academic year
     const url = new URL(request.url);
@@ -47,15 +49,19 @@ export async function GET(request: Request) {
     const filteredSemesterAssignments = yearId ? semesterAssignments.filter((a) => a.subject?.academicYearId === yearId) : semesterAssignments;
     const assignmentIds = filteredSemesterAssignments.map((a) => a.id);
 
-    // Find students in department
-    const students = await userService.findMany({ where: { role: 'STUDENT', departmentId }, select: { id: true, name: true, email: true } });
+    // Find students in department, filtered by academic year if specified
+    const studentFilter: any = { role: 'STUDENT', departmentId };
+    if (yearId) {
+      studentFilter.academicYearId = yearId;
+    }
+    const students = await userService.findMany({ where: studentFilter, select: { id: true, name: true, email: true, academicYearId: true } });
 
     // Get all feedback for these students
     const allFeedback = await feedbackService.findMany({});
     
     const results = [] as any[];
     for (const s of students) {
-      const completed = allFeedback.filter(f => f.studentId === s.id && assignmentIds.includes(f.assignmentId)).length;
+      const completed = allFeedback.filter((f: any) => f.studentId === s.id && assignmentIds.includes(f.assignmentId)).length;
       results.push({ name: s.name || s.email || 'Unknown', email: s.email || '', totalTasks: assignmentIds.length, completedTasks: completed });
     }
 
