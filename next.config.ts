@@ -6,16 +6,17 @@ import type { NextConfig } from "next";
 // and type errors and then remove these flags.
 const nextConfig: NextConfig = {
   eslint: {
-    // Allow builds to succeed even if ESLint reports problems during `next build`.
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Allow builds to succeed even if TypeScript has type errors during build.
-    // Be careful: this hides real type problems — prefer fixing them long term.
     ignoreBuildErrors: true,
   },
-  // Allow cross-origin requests in development for Replit iframe compatibility
   allowedDevOrigins: ["*.repl.co", "*.replit.dev", "*.replit.app"],
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["*.repl.co", "*.replit.dev", "*.replit.app"],
+    },
+  },
 };
 
 export default nextConfig;
