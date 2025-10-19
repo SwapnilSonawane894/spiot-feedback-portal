@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button, Input } from "@/components/ui-controls";
+import { CustomSelect } from "@/components/custom-select";
 
 const params = [
   ["coverage_of_syllabus", "Coverage of syllabus"],
@@ -86,14 +87,14 @@ export default function HodReportsPage() {
         <h2 className="section-title mb-4">Generate Comparative Report</h2>
         <div className="flex items-start flex-col gap-4">
           <div className="w-full sm:w-auto">
-            <label className="input-label">Select Academic Year:</label>
-            <select 
-              value={selectedYear} 
-              onChange={(e) => setSelectedYear(e.target.value)} 
-              className="input-field w-full sm:w-64"
-            >
-              {years.map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}
-            </select>
+            <CustomSelect
+              label="Select Academic Year"
+              options={years.map((y) => ({ value: y.id, label: y.name }))}
+              value={selectedYear}
+              onChange={setSelectedYear}
+              placeholder="Select year"
+              className="w-full sm:w-64"
+            />
           </div>
           <Button onClick={handleDownloadReport}>
             Download Excel Report
@@ -102,16 +103,17 @@ export default function HodReportsPage() {
       </div>
 
       <div className="flex items-center gap-4 mb-6">
-        <select 
-          value={selectedStaff} 
-          onChange={(e) => setSelectedStaff(e.target.value)} 
-          className="input-field"
-        >
-          <option value="">All faculty</option>
-          {staffOptions.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
+        <CustomSelect
+          label="Filter by Faculty"
+          options={[
+            { value: "", label: "All faculty" },
+            ...staffOptions.map((s) => ({ value: s.id, label: s.name }))
+          ]}
+          value={selectedStaff}
+          onChange={setSelectedStaff}
+          placeholder="Select faculty"
+          className="w-full sm:w-80"
+        />
       </div>
 
       {loading ? (
@@ -123,22 +125,52 @@ export default function HodReportsPage() {
         </div>
       ) : selected ? (
         <div>
-          <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>{selected.staffName}</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{selected.staffName}</h2>
+          </div>
           {selected.reports.map((r: any) => (
-            <div key={r.assignmentId} className="card card-body mb-4 hover-lift">
-              <div className="font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
-                {r.subject?.name} — {r.semester}{" "}
-                <span className="text-sm font-normal" style={{ color: "var(--text-secondary)" }}>
-                  (Based on {r.submissionCount ?? r.totalResponses} submissions out of {r.totalStudents ?? 'N/A'} students)
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {params.map(([key, label]) => (
-                  <div key={key} className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--card-border)" }}>
-                    <div className="text-sm" style={{ color: "var(--text-secondary)" }}>{label}</div>
-                    <div className="text-sm font-semibold" style={{ color: "var(--primary)" }}>{r.averages?.[key] ?? 0} / 5</div>
+            <div key={r.assignmentId} className="card card-body mb-5 hover-lift">
+              <div className="flex items-start justify-between mb-5 pb-4" style={{ borderBottom: "2px solid var(--card-border)" }}>
+                <div>
+                  <h3 className="font-bold text-lg mb-1" style={{ color: "var(--text-primary)" }}>
+                    {r.subject?.name}
+                  </h3>
+                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                    {r.semester} • {r.subject?.subjectCode}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Responses</div>
+                  <div className="text-lg font-bold" style={{ color: "var(--primary)" }}>
+                    {r.submissionCount ?? r.totalResponses} / {r.totalStudents ?? 'N/A'}
                   </div>
-                ))}
+                </div>
+              </div>
+              <div className="space-y-4">
+                {params.map(([key, label]) => {
+                  const score = r.averages?.[key] ?? 0;
+                  const percentage = (score / 5) * 100;
+                  const getColor = (pct: number) => {
+                    if (pct >= 80) return "var(--success)";
+                    if (pct >= 60) return "var(--primary)";
+                    if (pct >= 40) return "#FFA500";
+                    return "var(--danger)";
+                  };
+                  return (
+                    <div key={key} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{label}</div>
+                        <div className="text-sm font-bold" style={{ color: getColor(percentage) }}>{score.toFixed(1)} / 5</div>
+                      </div>
+                      <div className="w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
+                        <div 
+                          className="h-full rounded-full transition-all duration-300" 
+                          style={{ width: `${percentage}%`, background: getColor(percentage) }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -148,23 +180,53 @@ export default function HodReportsPage() {
         </div>
       ) : (
         data.map((d) => (
-          <div key={d.staffId} className="mb-6">
-            <h2 className="text-lg font-semibold mb-3" style={{ color: "var(--text-primary)" }}>{d.staffName}</h2>
+          <div key={d.staffId} className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{d.staffName}</h2>
+            </div>
             {d.reports.map((r: any) => (
-              <div key={r.assignmentId} className="card card-body mb-4 hover-lift">
-                <div className="font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
-                  {r.subject?.name} — {r.semester}{" "}
-                  <span className="text-sm font-normal" style={{ color: "var(--text-secondary)" }}>
-                    (Based on {r.submissionCount ?? r.totalResponses} submissions out of {r.totalStudents ?? 'N/A'} students)
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {params.map(([key, label]) => (
-                    <div key={key} className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid var(--card-border)" }}>
-                      <div className="text-sm" style={{ color: "var(--text-secondary)" }}>{label}</div>
-                      <div className="text-sm font-semibold" style={{ color: "var(--primary)" }}>{r.averages?.[key] ?? 0} / 5</div>
+              <div key={r.assignmentId} className="card card-body mb-5 hover-lift">
+                <div className="flex items-start justify-between mb-5 pb-4" style={{ borderBottom: "2px solid var(--card-border)" }}>
+                  <div>
+                    <h3 className="font-bold text-lg mb-1" style={{ color: "var(--text-primary)" }}>
+                      {r.subject?.name}
+                    </h3>
+                    <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                      {r.semester} • {r.subject?.subjectCode}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Responses</div>
+                    <div className="text-lg font-bold" style={{ color: "var(--primary)" }}>
+                      {r.submissionCount ?? r.totalResponses} / {r.totalStudents ?? 'N/A'}
                     </div>
-                  ))}
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {params.map(([key, label]) => {
+                    const score = r.averages?.[key] ?? 0;
+                    const percentage = (score / 5) * 100;
+                    const getColor = (pct: number) => {
+                      if (pct >= 80) return "var(--success)";
+                      if (pct >= 60) return "var(--primary)";
+                      if (pct >= 40) return "#FFA500";
+                      return "var(--danger)";
+                    };
+                    return (
+                      <div key={key} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{label}</div>
+                          <div className="text-sm font-bold" style={{ color: getColor(percentage) }}>{score.toFixed(1)} / 5</div>
+                        </div>
+                        <div className="w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
+                          <div 
+                            className="h-full rounded-full transition-all duration-300" 
+                            style={{ width: `${percentage}%`, background: getColor(percentage) }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
