@@ -16,7 +16,7 @@ if (!process.env.NEXTAUTH_URL) {
   if (replitDomain) {
     process.env.NEXTAUTH_URL = `https://${replitDomain}`;
   } else {
-    process.env.NEXTAUTH_URL = "http://localhost:5000";
+    process.env.NEXTAUTH_URL = "https://771ca17c-b5c4-45b1-9da6-e251ac4b9e9e-00-21v72j2xwgq2z.pike.replit.dev";
   }
 }
 
