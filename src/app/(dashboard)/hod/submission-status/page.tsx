@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { CustomSelect } from "@/components/custom-select";
 
 export default function SubmissionStatusPage() {
   const [data, setData] = useState<any[]>([]);
@@ -45,19 +46,25 @@ export default function SubmissionStatusPage() {
     }
   }
 
+  const yearOptions = [
+    { value: "", label: "All Years" },
+    ...academicYears.map((y) => ({ value: y.id, label: y.abbreviation || y.name }))
+  ];
+
   return (
     <main className="max-w-5xl mx-auto">
-      <div className="flex items-start flex-col gap-1 justify-between mb-4">
-        <h1 className="text-2xl font-semibold">Feedback Submission Status {semester ? `— ${semester}` : ''}</h1>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-gray-600">Filter by Year</label>
-          <select value={selectedYearId || ''} onChange={(e) => { const v = e.target.value || null; setSelectedYearId(v); fetchData(v); }} className="border px-2 py-1 rounded">
-            <option value="">All Years</option>
-            {academicYears.map((y) => (
-              <option key={y.id} value={y.id}>{y.abbreviation || y.name}</option>
-            ))}
-          </select>
-        </div>
+      <div className="flex items-start flex-col gap-4 justify-between mb-6">
+        <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+          Feedback Submission Status {semester ? `— ${semester}` : ''}
+        </h1>
+        <CustomSelect
+          label="Filter by Year"
+          options={yearOptions}
+          value={selectedYearId || ''}
+          onChange={(v) => { const value = v || null; setSelectedYearId(value); fetchData(value); }}
+          placeholder="Select year"
+          className="w-full sm:w-64"
+        />
       </div>
 
       {loading ? <div>Loading...</div> : (
