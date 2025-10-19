@@ -96,11 +96,11 @@ export default function LoginPage(): React.JSX.Element {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8" 
+      className="min-h-screen flex items-center justify-center sm:p-6 md:p-8" 
       style={{ background: "var(--background)" }}
     >
-      <div className="w-full sm:max-w-md fade-in">
-        <div className="card p-6 sm:p-8 md:p-10">
+      <div className="w-full h-full min-h-screen sm:min-h-0 sm:h-auto sm:max-w-md fade-in flex flex-col justify-center">
+        <div className="p-8 sm:p-8 md:p-10 sm:card sm:shadow-lg">
           <div className="flex flex-col items-center mb-8 sm:mb-10">
             <div 
               className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mb-5 transition-transform hover:scale-105" 
@@ -187,7 +187,7 @@ export default function LoginPage(): React.JSX.Element {
           </form>
         </div>
 
-        <div className="text-center text-xs mt-6 sm:mt-8" style={{ color: "var(--text-muted)" }}>
+        <div className="text-center text-xs mt-6 sm:mt-8 px-4" style={{ color: "var(--text-muted)" }}>
           © 2025-26 SPIOT | Student Feedback Portal
         </div>
       </div>
