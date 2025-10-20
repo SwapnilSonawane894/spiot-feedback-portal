@@ -24,11 +24,11 @@ Preferred communication style: Simple, everyday language.
 
 **Framework:** Next.js API Routes.
 
-**Database:** Firebase Firestore (NoSQL) via Firebase Admin SDK v13.5.0, with a custom service layer for operations.
+**Database:** MongoDB (NoSQL) with native MongoDB driver, featuring a custom service layer for all database operations.
 
-**Authentication:** NextAuth v4 using pure JWT-based sessions and a credentials provider. Passwords are hashed with bcrypt (10 rounds). Role-Based Access Control (ADMIN, HOD, STAFF, STUDENT) is enforced at the API level, with users stored in the 'users' Firestore collection.
+**Authentication:** NextAuth v4 using pure JWT-based sessions and a credentials provider. Passwords are hashed with bcrypt (10 rounds). Role-Based Access Control (ADMIN, HOD, STAFF, STUDENT) is enforced at the API level, with users stored in the 'users' MongoDB collection.
 
-**Firestore Collections:**
+**MongoDB Collections:**
 - **users**: Core authentication, roles, department, and academic year.
 - **departments**: Organizational units.
 - **academicYears**: Academic year groupings with optional department assignment for filtering.
@@ -63,8 +63,8 @@ Preferred communication style: Simple, everyday language.
 - `NextAuth v4.24.11` (JWT-only).
 
 **Database:**
-- `Firebase Admin SDK v13.5.0`.
-- `Firebase Firestore`.
+- `MongoDB` native driver.
+- Connection pooling with automatic retry logic.
 
 **UI Libraries:**
 - `lucide-react`: Icons.
@@ -86,4 +86,4 @@ Preferred communication style: Simple, everyday language.
 
 **Deployment:**
 - Configured for Replit autoscale deployment.
-- Requires `FIREBASE_SERVICE_ACCOUNT_KEY`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` environment variables.
+- Requires `MONGODB_URI`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` environment variables.
