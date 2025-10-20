@@ -83,6 +83,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
         const updated = await res.json();
         setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
         setEditingSubject(null);
+        toast.success("Subject updated successfully");
       } else {
         const res = await fetch("/api/subjects", {
           method: "POST",
@@ -103,6 +104,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
         }
         const created = await res.json();
         setSubjects((prev) => [created, ...prev]);
+        toast.success("Subject created successfully");
       }
 
       setIsModalOpen(false);
@@ -123,6 +125,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
       const res = await fetch(`/api/subjects/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       setSubjects((prev) => prev.filter((s) => s.id !== id));
+      toast.success("Subject deleted successfully");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Delete failed");

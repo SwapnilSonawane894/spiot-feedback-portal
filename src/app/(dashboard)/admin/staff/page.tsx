@@ -76,6 +76,7 @@ export default function ManageStaffPage(): React.ReactElement {
       const res = await fetch(`/api/staff/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       setStaff((prev) => prev.filter((s) => s.id !== id));
+      toast.success("Staff member deleted successfully");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Delete failed");
@@ -103,6 +104,7 @@ export default function ManageStaffPage(): React.ReactElement {
           throw new Error(err?.error || "Failed to update staff");
         }
         await fetchStaff();
+        toast.success("Staff member updated successfully");
         setEditingStaff(null);
       } else {
         const res = await fetch("/api/staff", {
@@ -115,6 +117,7 @@ export default function ManageStaffPage(): React.ReactElement {
           throw new Error(err?.error || "Failed to create staff");
         }
         await fetchStaff();
+        toast.success("Staff member created successfully");
       }
 
       setIsModalOpen(false);

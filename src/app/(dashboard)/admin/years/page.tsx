@@ -46,6 +46,7 @@ export default function ManageYearsPage(): React.ReactElement {
       setAbbrev("");
       setShowModal(false);
       fetchYears();
+      toast.success("Academic year created successfully");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Create failed");
@@ -68,6 +69,7 @@ export default function ManageYearsPage(): React.ReactElement {
       setEditingYear(null);
       setShowModal(false);
       fetchYears();
+      toast.success("Academic year updated successfully");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Update failed");
@@ -83,6 +85,7 @@ export default function ManageYearsPage(): React.ReactElement {
       });
       if (!res.ok) throw new Error("Failed to delete");
       fetchYears();
+      toast.success("Academic year deleted successfully");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Delete failed");

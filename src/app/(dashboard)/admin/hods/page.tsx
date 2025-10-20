@@ -61,6 +61,7 @@ export default function ManageHodsPage(): React.ReactElement {
       const res = await fetch(`/api/hods/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       setHods((prev) => prev.filter((h) => h.id !== id));
+      toast.success("HOD account deleted successfully");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Delete failed");
@@ -84,6 +85,7 @@ export default function ManageHodsPage(): React.ReactElement {
         }
         const updated = await res.json();
         setHods((prev) => prev.map((h) => (h.id === updated.id ? updated : h)));
+        toast.success("HOD account updated successfully");
         setEditingHOD(null);
       } else {
         if (!password) return;
@@ -98,6 +100,7 @@ export default function ManageHodsPage(): React.ReactElement {
         }
         const created = await res.json();
         setHods((prev) => [created, ...prev]);
+        toast.success("HOD account created successfully");
       }
 
       setIsModalOpen(false);

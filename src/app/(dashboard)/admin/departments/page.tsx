@@ -59,6 +59,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
         if (!res.ok) throw new Error("Update failed");
         const updated = await res.json();
         setDepartments((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+        toast.success("Department updated successfully");
         setEditingDepartment(null);
       } else {
         // Create new department
@@ -70,6 +71,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
         if (!res.ok) throw new Error("Create failed");
         const created = await res.json();
         setDepartments((prev) => [created, ...prev]);
+        toast.success("Department created successfully");
       }
 
       setIsModalOpen(false);
@@ -91,6 +93,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
       const json = await res.json().catch(() => null);
       if (!res.ok) throw new Error(json?.error || "Delete failed");
       setDepartments((prev) => prev.filter((d) => d.id !== id));
+      toast.success("Department deleted successfully");
       setShowDeleteModal(false);
       setDepartmentToDelete(null);
     } catch (err) {

@@ -56,8 +56,9 @@ export default function ManageStaffPage(): React.ReactElement {
         }
         const updated = await res.json();
         setStaffList((prev) => prev.map((s) => (s.id === updated?.id ? updated : s)));
+        toast.success("Staff member updated successfully");
         setEditingStaff(null);
-      } else {
+      } else{
         if (!name || !email || !password) return;
         const res = await fetch("/api/staff", {
           method: "POST",
@@ -70,6 +71,7 @@ export default function ManageStaffPage(): React.ReactElement {
         }
         const created = await res.json();
         setStaffList((prev) => [created, ...prev]);
+        toast.success("Staff member created successfully");
       }
 
       setIsModalOpen(false);
@@ -115,6 +117,7 @@ export default function ManageStaffPage(): React.ReactElement {
         throw new Error(err?.error || "Failed to delete staff");
       }
       setStaffList((prev) => prev.filter((p) => p.id !== s.id));
+      toast.success("Staff member deleted successfully");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message);

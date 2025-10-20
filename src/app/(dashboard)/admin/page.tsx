@@ -63,7 +63,7 @@ export default function AdminHomePage(): React.ReactElement {
         </>
       ) : (
         <>
-          <div className="stats-grid section-spacing">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 section-spacing">
             <StatCard
               title="Total Departments"
               value={stats.departmentCount}

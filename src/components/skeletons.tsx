@@ -3,10 +3,11 @@ import React from "react";
 export function SkeletonPulse({ className = "" }: { className?: string }) {
   return (
     <div 
-      className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
+      className={`pulse rounded ${className}`}
       style={{ 
-        background: "var(--hover-overlay)",
-        opacity: 0.6
+        background: "linear-gradient(90deg, var(--hover-overlay) 25%, var(--active-overlay) 50%, var(--hover-overlay) 75%)",
+        backgroundSize: "200% 100%",
+        animation: "shimmer 1.5s ease-in-out infinite"
       }}
     />
   );
@@ -130,7 +131,7 @@ export function SkeletonList({ items = 3 }: { items?: number }) {
 
 export function SkeletonDashboardStats() {
   return (
-    <div className="stats-grid section-spacing">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 section-spacing">
       <SkeletonStatCard />
       <SkeletonStatCard />
       <SkeletonStatCard />
