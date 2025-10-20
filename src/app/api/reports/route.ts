@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService } from "@/lib/firebase-services";
+import { staffService, assignmentService } from "@/lib/mongodb-services";
 
 const CURRENT_SEMESTER = "Odd 2025-26";
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { userService, staffService, departmentService, assignmentService } from "@/lib/firebase-services";
+import { userService, staffService, departmentService, assignmentService } from "@/lib/mongodb-services";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService, hodSuggestionService } from "@/lib/firebase-services";
+import { staffService, assignmentService, hodSuggestionService } from "@/lib/mongodb-services";
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 const PARAM_KEYS = [

@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { userService } from '../src/lib/firebase-services';
+import { userService } from "../src/lib/mongodb-services"';
 
 async function testAuthentication() {
   console.log('🔐 Testing Authentication System\n');

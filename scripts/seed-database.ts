@@ -6,7 +6,7 @@ import {
   academicYearService,
   subjectService,
   COLLECTIONS 
-} from '../src/lib/firebase-services';
+} from "../src/lib/mongodb-services"';
 import { firestore } from '../src/lib/firebase';
 
 async function seedDatabase() {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import { userService, staffService, departmentService } from "@/lib/firebase-services";
+import { userService, staffService, departmentService } from "@/lib/mongodb-services";
 import bcrypt from "bcrypt";
 
 export async function GET() {

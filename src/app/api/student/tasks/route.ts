@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import type { Session } from "next-auth";
-import { userService, departmentService, assignmentService, feedbackService } from "@/lib/firebase-services";
+import { userService, departmentService, assignmentService, feedbackService } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {

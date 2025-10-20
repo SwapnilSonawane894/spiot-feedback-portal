@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { departmentService, userService } from "@/lib/firebase-services";
+import { departmentService, userService } from "@/lib/mongodb-services";
 import bcrypt from "bcrypt";
 import Papa from "papaparse";
 

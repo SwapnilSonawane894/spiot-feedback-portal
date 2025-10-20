@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { userService, COLLECTIONS } from '../src/lib/firebase-services';
+import { userService, COLLECTIONS } from "../src/lib/mongodb-services"';
 import { firestore } from '../src/lib/firebase';
 
 async function comprehensiveAuthTest() {
