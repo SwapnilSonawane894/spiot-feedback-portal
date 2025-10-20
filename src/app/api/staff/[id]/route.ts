@@ -28,7 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json();
-    const { name, email, employeeId, designation, departmentId } = body;
+    const { name, email, departmentId } = body;
 
     if (name || email) {
       const updateData: any = {};
@@ -38,13 +38,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       await userService.update({ id: staffProfile.userId }, updateData);
     }
 
-    const staffUpdateData: any = {};
-    if (employeeId !== undefined) staffUpdateData.employeeId = employeeId;
-    if (designation !== undefined) staffUpdateData.designation = designation;
-    if (departmentId !== undefined) staffUpdateData.departmentId = departmentId;
-
-    if (Object.keys(staffUpdateData).length > 0) {
-      await staffService.update({ id }, staffUpdateData);
+    if (departmentId !== undefined) {
+      await staffService.update({ id }, { departmentId });
     }
 
     return NextResponse.json({ success: true });

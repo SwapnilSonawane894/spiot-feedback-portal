@@ -20,8 +20,6 @@ export async function GET(request: Request) {
         const department = s.departmentId ? await departmentService.findUnique({ id: s.departmentId }) : null;
         return { 
           id: s.id,
-          employeeId: s.employeeId,
-          designation: s.designation,
           user: user ? { id: user.id, name: user.name, email: user.email } : null,
           department: department ? { id: department.id, name: department.name, abbreviation: department.abbreviation } : null,
         };
@@ -45,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, email, password, employeeId, designation, departmentId } = body;
+    const { name, email, password, departmentId } = body;
 
     if (!name || !email || !password || !departmentId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -67,8 +65,6 @@ export async function POST(request: Request) {
 
     const staff = await staffService.create({
       userId: user.id,
-      employeeId: employeeId || "",
-      designation: designation || "",
       departmentId,
     });
 
