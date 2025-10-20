@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui-controls";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { SkeletonTable, SkeletonPulse } from "@/components/skeletons";
 
 type Year = { id: string; name: string; abbreviation: string };
 
@@ -119,7 +120,9 @@ export default function ManageYearsPage(): React.ReactElement {
       </div>
 
       {loading ? (
-        <div style={{ color: "var(--text-secondary)" }}>Loading…</div>
+        <div className="table-wrapper">
+          <SkeletonTable rows={5} columns={3} />
+        </div>
       ) : (
         <div className="table-wrapper">
           <table className="data-table">

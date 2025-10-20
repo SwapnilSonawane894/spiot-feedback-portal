@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Trash2, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui-controls";
+import { SkeletonTable } from "@/components/skeletons";
 
 type Department = {
   id: string;
@@ -25,6 +26,7 @@ type Staff = {
 export default function ManageStaffPage(): React.ReactElement {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
 
@@ -42,6 +44,7 @@ export default function ManageStaffPage(): React.ReactElement {
   }, []);
 
   async function fetchStaff() {
+    setLoading(true);
     try {
       const res = await fetch("/api/staff");
       if (!res.ok) throw new Error("Failed to fetch staff");
@@ -49,6 +52,8 @@ export default function ManageStaffPage(): React.ReactElement {
       setStaff(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -169,27 +174,32 @@ export default function ManageStaffPage(): React.ReactElement {
         </Button>
       </div>
 
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Employee ID</th>
-              <th>Designation</th>
-              <th>Department</th>
-              <th className="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staff.length === 0 ? (
+      {loading ? (
+        <div className="table-wrapper">
+          <SkeletonTable rows={6} columns={6} />
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan={6} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
-                  No staff members found
-                </td>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Employee ID</th>
+                <th>Designation</th>
+                <th>Department</th>
+                <th className="text-right">Actions</th>
               </tr>
-            ) : (
-              staff.map((s) => (
+            </thead>
+            <tbody>
+              {staff.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
+                    No staff members found
+                  </td>
+                </tr>
+              ) : (
+                staff.map((s) => (
                 <tr key={s.id}>
                   <td>{s.user?.name || "—"}</td>
                   <td>{s.user?.email || "—"}</td>
@@ -217,10 +227,11 @@ export default function ManageStaffPage(): React.ReactElement {
                   </td>
                 </tr>
               ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>

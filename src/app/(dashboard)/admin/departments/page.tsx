@@ -5,6 +5,7 @@ import ConfirmationModal from "@/components/confirmation-modal";
 import { Edit2, Trash2, Building2, Plus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { SkeletonTable, SkeletonPulse } from "@/components/skeletons";
 
 type Department = {
   id: string;
@@ -14,6 +15,7 @@ type Department = {
 
 export default function ManageDepartmentsPage(): React.ReactElement {
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState("");
   const [departmentAbbreviation, setDepartmentAbbreviation] = useState("");
@@ -27,6 +29,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
   }, []);
 
   async function fetchDepartments() {
+    setLoading(true);
     try {
       const res = await fetch("/api/departments");
       if (!res.ok) throw new Error("Failed to fetch");
@@ -34,6 +37,8 @@ export default function ManageDepartmentsPage(): React.ReactElement {
       setDepartments(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -117,7 +122,11 @@ export default function ManageDepartmentsPage(): React.ReactElement {
         }
       />
 
-      {departments.length === 0 ? (
+      {loading ? (
+        <div className="table-wrapper">
+          <SkeletonTable rows={5} columns={3} />
+        </div>
+      ) : departments.length === 0 ? (
         <EmptyState
           icon={<Building2 size={48} />}
           title="No departments yet"

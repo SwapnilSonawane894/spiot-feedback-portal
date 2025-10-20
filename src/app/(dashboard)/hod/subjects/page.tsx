@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Edit, Trash, Plus } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 import { CustomSelect } from "@/components/custom-select";
+import { SkeletonTable } from "@/components/skeletons";
 
 type Subject = { 
   id: string; 
@@ -14,6 +15,7 @@ type Subject = {
 
 export default function ManageSubjectsPage(): React.ReactElement {
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [name, setName] = useState("");
@@ -28,6 +30,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
   }, []);
 
   async function fetchSubjects() {
+    setLoading(true);
     try {
       const res = await fetch("/api/subjects");
       if (!res.ok) throw new Error("Failed to fetch subjects");
@@ -35,6 +38,8 @@ export default function ManageSubjectsPage(): React.ReactElement {
       setSubjects(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -155,18 +160,23 @@ export default function ManageSubjectsPage(): React.ReactElement {
         </Button>
       </div>
 
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Subject Name</th>
-              <th>Subject Code</th>
-              <th>Target Year</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subjects.map((s) => (
+      {loading ? (
+        <div className="table-wrapper">
+          <SkeletonTable rows={5} columns={4} />
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Subject Name</th>
+                <th>Subject Code</th>
+                <th>Target Year</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subjects.map((s) => (
               <tr key={s.id}>
                 <td>{s.name}</td>
                 <td>{s.subjectCode}</td>
@@ -195,10 +205,11 @@ export default function ManageSubjectsPage(): React.ReactElement {
                   </div>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
