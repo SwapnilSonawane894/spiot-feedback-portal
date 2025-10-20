@@ -6,26 +6,36 @@ import { UserPlus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 import toast from "react-hot-toast";
 
+type Department = {
+  id: string;
+  name: string;
+  abbreviation?: string;
+};
+
 type StaffRow = {
   id: string;
   user: { id: string; name?: string | null; email?: string | null };
   departmentId: string;
+  department?: Department | null;
 };
 
 export default function ManageStaffPage(): React.ReactElement {
   const { data: session } = useSession();
   const currentUserId = (session as any)?.user?.id;
   const [staffList, setStaffList] = useState<StaffRow[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffRow | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStaff();
+    fetchDepartments();
   }, []);
 
   async function fetchStaff() {
@@ -40,6 +50,18 @@ export default function ManageStaffPage(): React.ReactElement {
     }
   }
 
+  async function fetchDepartments() {
+    try {
+      const res = await fetch("/api/departments");
+      if (!res.ok) throw new Error("Failed to fetch departments");
+      const data = await res.json();
+      setDepartments(data);
+      if (data.length > 0) setDepartmentId(data[0].id);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -48,29 +70,27 @@ export default function ManageStaffPage(): React.ReactElement {
         const res = await fetch(`/api/staff/${editingStaff.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email }),
+          body: JSON.stringify({ name, email, departmentId }),
         });
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err?.error || "Failed to update staff");
         }
-        const updated = await res.json();
-        setStaffList((prev) => prev.map((s) => (s.id === updated?.id ? updated : s)));
+        await fetchStaff();
         toast.success("Staff member updated successfully");
         setEditingStaff(null);
       } else{
-        if (!name || !email || !password) return;
+        if (!name || !email || !password || !departmentId) return;
         const res = await fetch("/api/staff", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, password, departmentId }),
         });
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err?.error || "Failed to create staff");
         }
-        const created = await res.json();
-        setStaffList((prev) => [created, ...prev]);
+        await fetchStaff();
         toast.success("Staff member created successfully");
       }
 
@@ -84,23 +104,25 @@ export default function ManageStaffPage(): React.ReactElement {
     } finally {
       setIsSubmitting(false);
     }
-  }, [editingStaff, name, email, password]);
+  }, [editingStaff, name, email, password, departmentId]);
 
   const openCreateModal = useCallback(() => {
     setEditingStaff(null);
     setName("");
     setEmail("");
     setPassword("");
+    if (departments.length > 0) setDepartmentId(departments[0].id);
     setIsModalOpen(true);
-  }, []);
+  }, [departments]);
 
   const openEditModal = useCallback((s: StaffRow) => {
     setEditingStaff(s);
     setName(s.user?.name ?? "");
     setEmail(s.user?.email ?? "");
     setPassword("");
+    setDepartmentId(s.department?.id || (departments.length > 0 ? departments[0].id : ""));
     setIsModalOpen(true);
-  }, []);
+  }, [departments]);
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -251,6 +273,22 @@ export default function ManageStaffPage(): React.ReactElement {
                   />
                 </div>
               )}
+
+              <div>
+                <label className="form-label">Department *</label>
+                <select 
+                  value={departmentId} 
+                  onChange={(e) => setDepartmentId(e.target.value)} 
+                  className="input-field"
+                  required
+                >
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name} {dept.abbreviation ? `(${dept.abbreviation})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={closeModal} className="btn-outline">
