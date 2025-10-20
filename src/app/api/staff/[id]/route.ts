@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import type { Session } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, userService, hodSuggestionService, assignmentService } from "@/lib/mongodb-services";
+import { staffService, userService, hodSuggestionService, assignmentService } from "@/lib/firebase-services";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

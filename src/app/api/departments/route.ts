@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { departmentService } from "@/lib/mongodb-services";
+import { departmentService } from "@/lib/firebase-services";
 
 export async function GET() {
   try {

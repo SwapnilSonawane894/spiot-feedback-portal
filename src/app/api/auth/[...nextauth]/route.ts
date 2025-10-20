@@ -3,7 +3,7 @@ import "../../../../lib/env-config";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import { userService } from "../../../../lib/mongodb-services";
+import { userService } from "../../../../lib/firebase-services";
 
 export const authOptions = {
   providers: [

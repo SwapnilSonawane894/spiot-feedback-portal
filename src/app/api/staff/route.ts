@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, userService, departmentService } from "@/lib/mongodb-services";
+import { staffService, userService, departmentService } from "@/lib/firebase-services";
 import bcrypt from "bcrypt";
 
 export async function GET(request: Request) {
