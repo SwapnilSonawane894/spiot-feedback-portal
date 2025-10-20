@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Trash2, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 import { SkeletonTable } from "@/components/skeletons";
+import toast from "react-hot-toast";
 
 type Department = {
   id: string;
@@ -77,7 +78,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setStaff((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Delete failed");
+      toast.error((err as Error).message || "Delete failed");
     }
   }, []);
 
@@ -85,7 +86,7 @@ export default function ManageStaffPage(): React.ReactElement {
     e.preventDefault();
     if (!name || !email || !departmentId) return;
     if (!editingStaff && !password) {
-      alert("Password is required for new staff");
+      toast.error("Password is required for new staff");
       return;
     }
 
@@ -124,7 +125,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setDesignation("");
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Save failed");
+      toast.error((err as Error).message || "Save failed");
     } finally {
       setIsSubmitting(false);
     }

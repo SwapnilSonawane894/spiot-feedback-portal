@@ -5,6 +5,7 @@ import { Edit, Trash, Plus } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 import { CustomSelect } from "@/components/custom-select";
 import { SkeletonTable } from "@/components/skeletons";
+import toast from "react-hot-toast";
 
 type Subject = { 
   id: string; 
@@ -110,7 +111,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
       setAcademicYearId("");
     } catch (err) {
       console.error(err);
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +125,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
       setSubjects((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Delete failed");
+      toast.error((err as Error).message || "Delete failed");
     }
   }, []);
 

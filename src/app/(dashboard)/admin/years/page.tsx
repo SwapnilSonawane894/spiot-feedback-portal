@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui-controls";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { SkeletonTable, SkeletonPulse } from "@/components/skeletons";
+import toast from "react-hot-toast";
 
 type Year = { id: string; name: string; abbreviation: string };
 
@@ -47,7 +48,7 @@ export default function ManageYearsPage(): React.ReactElement {
       fetchYears();
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Create failed");
+      toast.error((err as Error).message || "Create failed");
     }
   }, [name, abbrev]);
 
@@ -69,7 +70,7 @@ export default function ManageYearsPage(): React.ReactElement {
       fetchYears();
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Update failed");
+      toast.error((err as Error).message || "Update failed");
     }
   }, [name, abbrev, editingYear]);
 
@@ -84,7 +85,7 @@ export default function ManageYearsPage(): React.ReactElement {
       fetchYears();
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Delete failed");
+      toast.error((err as Error).message || "Delete failed");
     }
   }, []);
 

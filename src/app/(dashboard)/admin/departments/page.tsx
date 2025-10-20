@@ -6,6 +6,7 @@ import { Edit2, Trash2, Building2, Plus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonTable, SkeletonPulse } from "@/components/skeletons";
+import toast from "react-hot-toast";
 
 type Department = {
   id: string;
@@ -76,7 +77,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
       setDepartmentAbbreviation("");
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Save failed");
+      toast.error((err as Error).message || "Save failed");
     } finally {
       setIsSubmitting(false);
     }

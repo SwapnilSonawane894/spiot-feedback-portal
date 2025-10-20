@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Edit2, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 import { CustomSelect } from "@/components/custom-select";
+import toast from "react-hot-toast";
 
 type Department = { id: string; name: string; abbreviation: string };
 type Hod = {
@@ -62,7 +63,7 @@ export default function ManageHodsPage(): React.ReactElement {
       setHods((prev) => prev.filter((h) => h.id !== id));
     } catch (err) {
       console.error(err);
-      alert((err as Error).message || "Delete failed");
+      toast.error((err as Error).message || "Delete failed");
     }
   }, []);
 
@@ -106,7 +107,7 @@ export default function ManageHodsPage(): React.ReactElement {
       if (departments.length > 0) setDepartmentId(departments[0].id);
     } catch (err) {
       console.error(err);
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setIsSubmitting(false);
     }

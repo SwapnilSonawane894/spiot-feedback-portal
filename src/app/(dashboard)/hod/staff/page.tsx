@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { UserPlus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui-controls";
+import toast from "react-hot-toast";
 
 type StaffRow = {
   id: string;
@@ -77,7 +78,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setPassword("");
     } catch (err) {
       console.error(err);
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +117,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setStaffList((prev) => prev.filter((p) => p.id !== s.id));
     } catch (err) {
       console.error(err);
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setDeletingId(null);
     }

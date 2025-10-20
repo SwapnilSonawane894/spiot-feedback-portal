@@ -56,8 +56,8 @@ export default function StudentsPage(): React.ReactElement {
 
   const handleUpload = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return alert("Please select a CSV file");
-    if (!academicYearId) return alert("Please select an Academic Year");
+    if (!file) return toast.error("Please select a CSV file");
+    if (!academicYearId) return toast.error("Please select an Academic Year");
 
     setIsUploading(true);
     try {
