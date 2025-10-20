@@ -16,6 +16,8 @@ Preferred communication style: Simple, everyday language.
 
 **UI Design Decisions:** Features a collapsible vertical sidebar for desktop and a bottom tab bar for mobile navigation. Utilizes modular components, client-side validation with `react-hot-toast`, and `Recharts` for data visualization.
 
+**Loading States:** Implements professional skeleton loading screens across all dashboard pages for improved perceived performance. The UI structure renders immediately with animated placeholders while data loads asynchronously, providing a smooth, modern user experience. Skeleton components are reusable and match the final content layout (cards, tables, stats, etc.).
+
 ## Backend Architecture
 
 **Framework:** Next.js API Routes.
@@ -49,6 +51,7 @@ Preferred communication style: Simple, everyday language.
 - **Signout Handling:** Uses `signOut({ redirect: false })` with manual redirect to prevent crashes and ensure smooth logout experience.
 - **Dynamic NEXTAUTH_URL:** Automatically detects Replit domain from environment variables or falls back to localhost for development.
 - **Submission Status Year Filtering:** The submission status page displays students filtered by academic year (SYCO, TYCO, FYCO) with proper year information displayed in the table. Year filtering handles empty results gracefully.
+- **Progressive Loading Pattern:** All client-side pages use skeleton loaders to render UI structure immediately while data loads in the background. This prevents blank screens and reduces perceived loading time, creating a more professional and responsive feel throughout the application.
 
 # External Dependencies
 
