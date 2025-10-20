@@ -751,6 +751,25 @@ export const feedbackService = {
       throw error;
     }
   },
+
+  async updateMany(where: any, data: any) {
+    try {
+      const db = await getDatabase();
+      const query: any = {};
+      
+      Object.entries(where).forEach(([key, value]) => {
+        if (value !== undefined) {
+          query[key] = value;
+        }
+      });
+
+      const result = await db.collection(COLLECTIONS.FEEDBACK).updateMany(query, { $set: data });
+      return { count: result.modifiedCount };
+    } catch (error) {
+      console.error('Error in feedbackService.updateMany:', error);
+      throw error;
+    }
+  },
 };
 
 // ============ HOD SUGGESTION OPERATIONS ============

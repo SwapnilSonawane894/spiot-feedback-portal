@@ -87,3 +87,14 @@ Preferred communication style: Simple, everyday language.
 **Deployment:**
 - Configured for Replit autoscale deployment.
 - Requires `MONGODB_URI`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` environment variables.
+
+# Database Seeding
+
+The system includes a comprehensive seed script (`npm run seed:staff`) that:
+- Clears existing students and staff data from the database
+- Creates or verifies all required departments (CO, EE, CE, ME, NA)
+- Seeds an admin user (email: admin@gmail.com, password: 123)
+- Populates 18 staff members across different departments with their credentials
+- Ensures a clean starting state for the application
+
+Run `npm run seed:staff` to reset the database and populate initial data.
