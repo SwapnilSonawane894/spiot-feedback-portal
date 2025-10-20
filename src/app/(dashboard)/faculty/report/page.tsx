@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-// PDF is now generated server-side via /api/faculty/[staffId]/report.pdf
+import { SkeletonPulse, SkeletonReportCard } from "@/components/skeletons";
 
 const PARAM_LABELS: Record<string, string> = {
   coverage_of_syllabus: "Coverage of syllabus",
@@ -47,7 +47,20 @@ export default function FacultyReportPage() {
 
   // Download is handled server-side via the new pdf endpoint
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading) {
+    return (
+      <main className="max-w-7xl mx-auto">
+        <div className="text-left mb-6">
+          <SkeletonPulse className="h-9 w-96 mb-2" />
+          <SkeletonPulse className="h-5 w-64" />
+        </div>
+        <div className="flex justify-end mb-4">
+          <SkeletonPulse className="h-10 w-40 rounded" />
+        </div>
+        <SkeletonReportCard />
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-7xl mx-auto">

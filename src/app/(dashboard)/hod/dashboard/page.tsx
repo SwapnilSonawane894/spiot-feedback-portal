@@ -5,6 +5,59 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Users, BookOpen, GraduationCap } from "lucide-react";
+import { SkeletonCard, SkeletonPulse, SkeletonMetricRow } from "@/components/skeletons";
+
+function HODDashboardSkeleton() {
+  return (
+    <>
+      <div className="page-header">
+        <SkeletonPulse className="h-8 w-64 mb-2" />
+        <SkeletonPulse className="h-4 w-96" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 mb-6">
+        <SkeletonCard className="hover-lift">
+          <div className="flex items-center justify-between mb-5">
+            <SkeletonPulse className="h-6 w-40" />
+            <SkeletonPulse className="h-6 w-16 rounded-full" />
+          </div>
+          <div className="space-y-4">
+            <SkeletonPulse className="h-4 w-full" />
+            <SkeletonPulse className="h-4 w-3/4" />
+            <SkeletonPulse className="h-10 w-full rounded-lg" />
+          </div>
+        </SkeletonCard>
+
+        <SkeletonCard className="hover-lift">
+          <SkeletonPulse className="h-6 w-40 mb-5" />
+          <div className="space-y-3">
+            <SkeletonMetricRow />
+            <SkeletonMetricRow />
+            <SkeletonMetricRow />
+          </div>
+        </SkeletonCard>
+      </div>
+
+      <SkeletonCard className="mb-6 hover-lift">
+        <div className="flex items-center justify-between mb-5">
+          <SkeletonPulse className="h-6 w-48" />
+          <SkeletonPulse className="h-6 w-24 rounded-full" />
+        </div>
+        <div className="space-y-4">
+          <SkeletonPulse className="h-4 w-full" />
+          <SkeletonPulse className="h-4 w-3/4" />
+          <SkeletonPulse className="h-10 w-48 rounded-lg" />
+        </div>
+      </SkeletonCard>
+
+      <SkeletonCard className="hover-lift">
+        <SkeletonPulse className="h-6 w-40 mb-2" />
+        <SkeletonPulse className="h-4 w-64 mb-6" />
+        <SkeletonPulse className="h-64 w-full rounded-xl" />
+      </SkeletonCard>
+    </>
+  );
+}
 
 export default function HODDashboardPage(): React.ReactElement {
   const { data: session, status } = useSession();
@@ -104,14 +157,7 @@ export default function HODDashboardPage(): React.ReactElement {
   }
 
   if (status === 'loading' || isFeedbackActive === null || reportsReleased === null) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="loading-spinner" style={{ width: "2.5rem", height: "2.5rem" }} />
-          <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <HODDashboardSkeleton />;
   }
   
   if (!session) {

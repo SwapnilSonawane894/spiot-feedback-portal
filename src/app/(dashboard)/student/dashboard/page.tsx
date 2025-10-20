@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ClipboardList, CheckCircle2, FileText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { SkeletonTaskCard } from "@/components/skeletons";
 
 type Task = { assignmentId: string; facultyName: string; subjectName: string; status: string };
 
@@ -37,10 +38,18 @@ export default function StudentDashboard(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="loading-spinner" style={{ width: "2rem", height: "2rem" }} />
-          <p style={{ color: "var(--text-secondary)" }}>Loading your tasks...</p>
+      <div>
+        <PageHeader 
+          title="My Feedback Tasks" 
+          description="Odd Semester 2025-26" 
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <SkeletonTaskCard />
+          <SkeletonTaskCard />
+          <SkeletonTaskCard />
+          <SkeletonTaskCard />
+          <SkeletonTaskCard />
+          <SkeletonTaskCard />
         </div>
       </div>
     );
