@@ -17,13 +17,21 @@ export default async function Page() {
   }
 
   // If logged in, route by role
-  const role = session?.user?.role;
+  const role = (session?.user as any)?.role as string;
   if (role === "ADMIN") {
     redirect("/admin");
   }
 
   if (role === "HOD") {
-    redirect("/hod");
+    redirect("/hod/dashboard");
+  }
+
+  if (role === "FACULTY") {
+    redirect("/faculty/dashboard");
+  }
+
+  if (role === "STUDENT") {
+    redirect("/student/dashboard");
   }
 
   // Fallback
