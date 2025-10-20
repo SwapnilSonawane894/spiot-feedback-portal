@@ -22,13 +22,13 @@ export default function SubmissionStatusPage() {
       if (!res.ok) throw new Error('Failed to load');
       const json = await res.json();
       setSemester(json.semester || null);
+      
       const years = Array.isArray(json.academicYears) ? json.academicYears : [];
       setAcademicYears(years);
-      // If no year was requested and the API returned available years, auto-select the first one so totals reflect that year
+      
       if (!yearId && years.length > 0 && years[0] && years[0].id) {
         const defaultId = years[0].id;
         setSelectedYearId(defaultId);
-        // fetch again with selected year to get correct totals
         setLoading(false);
         await fetchData(defaultId);
         return;
@@ -36,7 +36,6 @@ export default function SubmissionStatusPage() {
 
       setSelectedYearId(json.selectedYearId || null);
       const students = (json.students || []).slice();
-      // sort by completedTasks desc so students who have submitted appear at top
       students.sort((a: any, b: any) => (b.completedTasks || 0) - (a.completedTasks || 0));
       setData(students);
     } catch (err) {

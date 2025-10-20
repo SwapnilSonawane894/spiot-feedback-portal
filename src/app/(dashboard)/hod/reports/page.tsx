@@ -57,7 +57,7 @@ export default function HodReportsPage() {
 
   const fetchYears = useCallback(async () => {
     try {
-      const res = await fetch('/api/years');
+      const res = await fetch('/api/hod/years');
       if (!res.ok) throw new Error('Failed to load years');
       const json = await res.json();
       setYears(json || []);
@@ -81,7 +81,15 @@ export default function HodReportsPage() {
     window.location.href = `/api/hod/comparative-report?year=${selectedYear}`;
   }, [selectedYear]);
 
-  const staffOptions = useMemo(() => data.map((d) => ({ id: d.staffId, name: d.staffName })), [data]);
+  const staffOptions = useMemo(() => {
+    const seen = new Map();
+    data.forEach((d) => {
+      if (!seen.has(d.staffId)) {
+        seen.set(d.staffId, { id: d.staffId, name: d.staffName });
+      }
+    });
+    return Array.from(seen.values());
+  }, [data]);
   const selected = useMemo(() => data.find((d) => d.staffId === selectedStaff) || null, [data, selectedStaff]);
   
   const overallStats = useMemo(() => {
