@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:all": "tsx scripts/seed-database.ts",
-    "add:staff": "tsx scripts/add-staff-members.ts"
+    "add:staff": "tsx scripts/add-staff-members.ts",
+    "seed:staff": "tsx scripts/seed-admin-and-staff.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

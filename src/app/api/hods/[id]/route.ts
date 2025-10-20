@@ -44,7 +44,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     const { id: userId } = await params;
 
-    // Execute deletion logic sequentially (Firebase doesn't support transactions like Prisma)
+    // Execute deletion logic sequentially
     const staff = await staffService.findFirst({ where: { userId } });
     const staffId = staff?.id;
 

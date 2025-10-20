@@ -57,7 +57,7 @@ export async function PATCH(request: Request) {
     const allFeedback = await feedbackService.findMany({});
     const feedbackToUpdate = allFeedback.filter(f => assignmentIds.includes(f.assignmentId));
     
-    // Update each feedback (Firebase doesn't have nested where clauses)
+    // Update each feedback individually
     let updated = 0;
     for (const fb of feedbackToUpdate) {
       await feedbackService.updateMany({ assignmentId: fb.assignmentId, studentId: fb.studentId }, { isReleased: shouldBeReleased });
