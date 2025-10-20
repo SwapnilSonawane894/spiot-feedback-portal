@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui-controls";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { SkeletonTable, SkeletonPulse } from "@/components/skeletons";
+import { SkeletonTable } from "@/components/skeletons";
+import { CustomSelect } from "@/components/custom-select";
 import toast from "react-hot-toast";
 
 type Year = { id: string; name: string; abbreviation: string; departmentId?: string };
@@ -14,10 +15,16 @@ export default function ManageYearsPage(): React.ReactElement {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ open: boolean; yearId: string; yearName: string }>({ 
+    open: false, 
+    yearId: '', 
+    yearName: '' 
+  });
   const [name, setName] = useState("");
   const [abbrev, setAbbrev] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [editingYear, setEditingYear] = useState<Year | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchYears();
@@ -92,9 +99,19 @@ export default function ManageYearsPage(): React.ReactElement {
     }
   }, [name, abbrev, departmentId, editingYear]);
 
-  const handleDelete = useCallback(async (yearId: string, yearName: string) => {
-    if (!confirm(`Are you sure you want to delete "${yearName}"?`)) return;
+  const openDeleteConfirm = useCallback((yearId: string, yearName: string) => {
+    setDeleteConfirmModal({ open: true, yearId, yearName });
+  }, []);
+
+  const closeDeleteConfirm = useCallback(() => {
+    setDeleteConfirmModal({ open: false, yearId: '', yearName: '' });
+  }, []);
+
+  const handleDelete = useCallback(async () => {
+    const { yearId } = deleteConfirmModal;
+    if (!yearId) return;
     
+    setIsDeleting(true);
     try {
       const res = await fetch(`/api/years/${yearId}`, {
         method: "DELETE",
@@ -102,11 +119,14 @@ export default function ManageYearsPage(): React.ReactElement {
       if (!res.ok) throw new Error("Failed to delete");
       fetchYears();
       toast.success("Academic year deleted successfully");
+      closeDeleteConfirm();
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Delete failed");
+    } finally {
+      setIsDeleting(false);
     }
-  }, []);
+  }, [deleteConfirmModal, closeDeleteConfirm]);
 
   const openCreateModal = useCallback(() => {
     setName("");
@@ -174,7 +194,7 @@ export default function ManageYearsPage(): React.ReactElement {
                           <Pencil size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(y.id, y.name)}
+                          onClick={() => openDeleteConfirm(y.id, y.name)}
                           className="btn-icon text-red-600 hover:text-red-700"
                           title="Delete"
                         >
@@ -223,19 +243,19 @@ export default function ManageYearsPage(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="form-label">Department (Optional)</label>
-                <select
+                <CustomSelect
+                  label="Department (Optional)"
+                  options={[
+                    { value: "", label: "All Departments" },
+                    ...departments.map((dept) => ({
+                      value: dept.id,
+                      label: `${dept.name} (${dept.abbreviation})`
+                    }))
+                  ]}
                   value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
-                  className="input-field"
-                >
-                  <option value="">All Departments</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.abbreviation})
-                    </option>
-                  ))}
-                </select>
+                  onChange={setDepartmentId}
+                  placeholder="Select department"
+                />
                 <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
                   Select a department to make this year specific to that department, or leave as "All Departments" for system-wide use
                 </p>
@@ -247,6 +267,36 @@ export default function ManageYearsPage(): React.ReactElement {
                 <Button type="submit">{editingYear ? "Update" : "Create"}</Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirmModal.open && (
+        <div className="modal-overlay" onClick={closeDeleteConfirm}>
+          <div 
+            role="dialog" 
+            aria-modal="true" 
+            className="modal-content w-full max-w-md mx-4 p-6" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+              Delete Academic Year?
+            </h3>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+              Are you sure you want to delete <strong>{deleteConfirmModal.yearName}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={closeDeleteConfirm} className="btn-outline" disabled={isDeleting}>
+                Cancel
+              </button>
+              <Button 
+                onClick={handleDelete} 
+                disabled={isDeleting}
+                style={{ backgroundColor: "var(--danger)", borderColor: "var(--danger)" }}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
           </div>
         </div>
       )}

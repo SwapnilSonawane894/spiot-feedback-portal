@@ -20,8 +20,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await staffService.updateMany({ userId: id }, { departmentId });
 
     const updated = await userService.findUnique({ id });
-    const staffProfile = await staffService.findFirst({ where: { userId: id }, include: { department: true } });
-    return NextResponse.json({ ...updated, staffProfile });
+    const staffProfile = await staffService.findFirst({ where: { userId: id } });
+    const department = staffProfile?.departmentId ? await departmentService.findUnique({ id: staffProfile.departmentId }) : null;
+    
+    return NextResponse.json({ 
+      ...updated, 
+      staffProfile: staffProfile ? {
+        ...staffProfile,
+        department: department ? { id: department.id, name: department.name, abbreviation: department.abbreviation } : null
+      } : null
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to update HOD" }, { status: 500 });

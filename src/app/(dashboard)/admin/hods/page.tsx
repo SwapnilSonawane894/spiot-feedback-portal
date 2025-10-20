@@ -19,12 +19,18 @@ export default function ManageHodsPage(): React.ReactElement {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHOD, setEditingHOD] = useState<Hod | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ open: boolean; hodId: string; hodName: string }>({ 
+    open: false, 
+    hodId: '', 
+    hodName: '' 
+  });
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchHods();
@@ -55,18 +61,32 @@ export default function ManageHodsPage(): React.ReactElement {
     }
   }
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("Delete this HOD account?")) return;
+  const openDeleteConfirm = useCallback((hodId: string, hodName: string) => {
+    setDeleteConfirmModal({ open: true, hodId, hodName });
+  }, []);
+
+  const closeDeleteConfirm = useCallback(() => {
+    setDeleteConfirmModal({ open: false, hodId: '', hodName: '' });
+  }, []);
+
+  const handleDelete = useCallback(async () => {
+    const { hodId } = deleteConfirmModal;
+    if (!hodId) return;
+    
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/hods/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/hods/${hodId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
-      setHods((prev) => prev.filter((h) => h.id !== id));
+      setHods((prev) => prev.filter((h) => h.id !== hodId));
       toast.success("HOD account deleted successfully");
+      closeDeleteConfirm();
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Delete failed");
+    } finally {
+      setIsDeleting(false);
     }
-  }, []);
+  }, [deleteConfirmModal, closeDeleteConfirm]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +196,7 @@ export default function ManageHodsPage(): React.ReactElement {
                         <Edit2 size={16} />
                       </button>
                       <button 
-                        onClick={() => handleDelete(h.id)} 
+                        onClick={() => openDeleteConfirm(h.id, h.name || h.email || 'this HOD')} 
                         type="button" 
                         className="p-2 rounded-lg transition-colors"
                         style={{ color: "var(--danger)" }}
@@ -275,6 +295,36 @@ export default function ManageHodsPage(): React.ReactElement {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirmModal.open && (
+        <div className="modal-overlay" onClick={closeDeleteConfirm}>
+          <div 
+            role="dialog" 
+            aria-modal="true" 
+            className="modal-content w-full max-w-md mx-4 p-6" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+              Delete HOD Account?
+            </h3>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+              Are you sure you want to delete <strong>{deleteConfirmModal.hodName}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={closeDeleteConfirm} className="btn-outline" disabled={isDeleting}>
+                Cancel
+              </button>
+              <Button 
+                onClick={handleDelete} 
+                disabled={isDeleting}
+                style={{ backgroundColor: "var(--danger)", borderColor: "var(--danger)" }}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
