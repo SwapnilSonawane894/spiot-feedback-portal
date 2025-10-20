@@ -14,8 +14,6 @@ type Department = {
 
 type Staff = {
   id: string;
-  employeeId?: string;
-  designation?: string;
   user?: {
     id: string;
     name?: string | null;
@@ -34,8 +32,6 @@ export default function ManageStaffPage(): React.ReactElement {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
-  const [designation, setDesignation] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,7 +93,7 @@ export default function ManageStaffPage(): React.ReactElement {
         const res = await fetch(`/api/staff/${editingStaff.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, employeeId, designation, departmentId }),
+          body: JSON.stringify({ name, email, departmentId }),
         });
         if (!res.ok) {
           const err = await res.json();
@@ -110,7 +106,7 @@ export default function ManageStaffPage(): React.ReactElement {
         const res = await fetch("/api/staff", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password, employeeId, designation, departmentId }),
+          body: JSON.stringify({ name, email, password, departmentId }),
         });
         if (!res.ok) {
           const err = await res.json();
@@ -124,23 +120,19 @@ export default function ManageStaffPage(): React.ReactElement {
       setName("");
       setEmail("");
       setPassword("");
-      setEmployeeId("");
-      setDesignation("");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Save failed");
     } finally {
       setIsSubmitting(false);
     }
-  }, [name, email, password, employeeId, designation, departmentId, editingStaff]);
+  }, [name, email, password, departmentId, editingStaff]);
 
   const openCreateModal = useCallback(() => {
     setEditingStaff(null);
     setName("");
     setEmail("");
     setPassword("");
-    setEmployeeId("");
-    setDesignation("");
     if (departments.length > 0) setDepartmentId(departments[0].id);
     setIsModalOpen(true);
   }, [departments]);
@@ -150,8 +142,6 @@ export default function ManageStaffPage(): React.ReactElement {
     setName(staffMember.user?.name || "");
     setEmail(staffMember.user?.email || "");
     setPassword("");
-    setEmployeeId(staffMember.employeeId || "");
-    setDesignation(staffMember.designation || "");
     setDepartmentId(staffMember.department?.id || (departments.length > 0 ? departments[0].id : ""));
     setIsModalOpen(true);
   }, [departments]);
@@ -162,8 +152,6 @@ export default function ManageStaffPage(): React.ReactElement {
     setName("");
     setEmail("");
     setPassword("");
-    setEmployeeId("");
-    setDesignation("");
   }, []);
 
   return (
@@ -189,8 +177,6 @@ export default function ManageStaffPage(): React.ReactElement {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Employee ID</th>
-                <th>Designation</th>
                 <th>Department</th>
                 <th className="text-right">Actions</th>
               </tr>
@@ -198,7 +184,7 @@ export default function ManageStaffPage(): React.ReactElement {
             <tbody>
               {staff.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
+                  <td colSpan={4} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
                     No staff members found
                   </td>
                 </tr>
@@ -207,8 +193,6 @@ export default function ManageStaffPage(): React.ReactElement {
                 <tr key={s.id}>
                   <td>{s.user?.name || "—"}</td>
                   <td>{s.user?.email || "—"}</td>
-                  <td>{s.employeeId || "—"}</td>
-                  <td>{s.designation || "—"}</td>
                   <td>{s.department?.name || "—"}</td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -300,27 +284,6 @@ export default function ManageStaffPage(): React.ReactElement {
                   className="input-field"
                   required={!editingStaff}
                   placeholder={editingStaff ? "Leave blank to keep current password" : ""}
-                />
-              </div>
-
-              <div>
-                <label className="form-label">Employee ID</label>
-                <input
-                  type="text"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="input-field"
-                />
-              </div>
-
-              <div>
-                <label className="form-label">Designation</label>
-                <input
-                  type="text"
-                  value={designation}
-                  onChange={(e) => setDesignation(e.target.value)}
-                  className="input-field"
-                  placeholder="e.g., Assistant Professor, Professor"
                 />
               </div>
 
