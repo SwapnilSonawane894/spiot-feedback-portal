@@ -6,18 +6,22 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { SkeletonTable, SkeletonPulse } from "@/components/skeletons";
 import toast from "react-hot-toast";
 
-type Year = { id: string; name: string; abbreviation: string };
+type Year = { id: string; name: string; abbreviation: string; departmentId?: string };
+type Department = { id: string; name: string; abbreviation: string };
 
 export default function ManageYearsPage(): React.ReactElement {
   const [years, setYears] = useState<Year[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [abbrev, setAbbrev] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [editingYear, setEditingYear] = useState<Year | null>(null);
 
   useEffect(() => {
     fetchYears();
+    fetchDepartments();
   }, []);
 
   async function fetchYears() {
@@ -33,17 +37,28 @@ export default function ManageYearsPage(): React.ReactElement {
     }
   }
 
+  async function fetchDepartments() {
+    try {
+      const res = await fetch("/api/departments");
+      const data = await res.json();
+      setDepartments(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const handleCreate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await fetch("/api/years", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, abbreviation: abbrev }),
+        body: JSON.stringify({ name, abbreviation: abbrev, departmentId: departmentId || null }),
       });
       if (!res.ok) throw new Error("Failed to create");
       setName("");
       setAbbrev("");
+      setDepartmentId("");
       setShowModal(false);
       fetchYears();
       toast.success("Academic year created successfully");
@@ -51,7 +66,7 @@ export default function ManageYearsPage(): React.ReactElement {
       console.error(err);
       toast.error((err as Error).message || "Create failed");
     }
-  }, [name, abbrev]);
+  }, [name, abbrev, departmentId]);
 
   const handleUpdate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +76,12 @@ export default function ManageYearsPage(): React.ReactElement {
       const res = await fetch(`/api/years/${editingYear.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, abbreviation: abbrev }),
+        body: JSON.stringify({ name, abbreviation: abbrev, departmentId: departmentId || null }),
       });
       if (!res.ok) throw new Error("Failed to update");
       setName("");
       setAbbrev("");
+      setDepartmentId("");
       setEditingYear(null);
       setShowModal(false);
       fetchYears();
@@ -74,7 +90,7 @@ export default function ManageYearsPage(): React.ReactElement {
       console.error(err);
       toast.error((err as Error).message || "Update failed");
     }
-  }, [name, abbrev, editingYear]);
+  }, [name, abbrev, departmentId, editingYear]);
 
   const handleDelete = useCallback(async (yearId: string, yearName: string) => {
     if (!confirm(`Are you sure you want to delete "${yearName}"?`)) return;
@@ -95,6 +111,7 @@ export default function ManageYearsPage(): React.ReactElement {
   const openCreateModal = useCallback(() => {
     setName("");
     setAbbrev("");
+    setDepartmentId("");
     setEditingYear(null);
     setShowModal(true);
   }, []);
@@ -102,6 +119,7 @@ export default function ManageYearsPage(): React.ReactElement {
   const openEditModal = useCallback((year: Year) => {
     setName(year.name);
     setAbbrev(year.abbreviation);
+    setDepartmentId(year.departmentId || "");
     setEditingYear(year);
     setShowModal(true);
   }, []);
@@ -134,34 +152,39 @@ export default function ManageYearsPage(): React.ReactElement {
               <tr>
                 <th>Name</th>
                 <th>Abbreviation</th>
+                <th>Department</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {years.map((y) => (
-                <tr key={y.id}>
-                  <td>{y.name}</td>
-                  <td>{y.abbreviation}</td>
-                  <td>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openEditModal(y)}
-                        className="btn-icon"
-                        title="Edit"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(y.id, y.name)}
-                        className="btn-icon text-red-600 hover:text-red-700"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {years.map((y) => {
+                const dept = departments.find(d => d.id === y.departmentId);
+                return (
+                  <tr key={y.id}>
+                    <td>{y.name}</td>
+                    <td>{y.abbreviation}</td>
+                    <td>{dept ? dept.name : 'All Departments'}</td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openEditModal(y)}
+                          className="btn-icon"
+                          title="Edit"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(y.id, y.name)}
+                          className="btn-icon text-red-600 hover:text-red-700"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -185,6 +208,7 @@ export default function ManageYearsPage(): React.ReactElement {
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
                   className="input-field" 
+                  placeholder="e.g., First Year Computer Engineering"
                   required
                 />
               </div>
@@ -194,8 +218,27 @@ export default function ManageYearsPage(): React.ReactElement {
                   value={abbrev} 
                   onChange={(e) => setAbbrev(e.target.value)} 
                   className="input-field"
+                  placeholder="e.g., FYCO"
                   required
                 />
+              </div>
+              <div>
+                <label className="form-label">Department (Optional)</label>
+                <select
+                  value={departmentId}
+                  onChange={(e) => setDepartmentId(e.target.value)}
+                  className="input-field"
+                >
+                  <option value="">All Departments</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name} ({dept.abbreviation})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                  Select a department to make this year specific to that department, or leave as "All Departments" for system-wide use
+                </p>
               </div>
               <div className="flex gap-3 justify-end pt-4">
                 <button type="button" onClick={closeModal} className="btn-outline">

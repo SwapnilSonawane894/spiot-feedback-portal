@@ -15,14 +15,14 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, abbreviation } = body || {};
+    const { name, abbreviation, departmentId } = body || {};
     if (!name || !abbreviation) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
     const updated = await academicYearService.update(
       { id: params.id },
-      { name, abbreviation }
+      { name, abbreviation, departmentId: departmentId || null }
     );
     return NextResponse.json(updated);
   } catch (error) {

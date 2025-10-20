@@ -22,10 +22,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, abbreviation } = body || {};
+    const { name, abbreviation, departmentId } = body || {};
     if (!name || !abbreviation) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-    const created = await academicYearService.create({ name, abbreviation });
+    const created = await academicYearService.create({ name, abbreviation, departmentId: departmentId || null });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error(error);
