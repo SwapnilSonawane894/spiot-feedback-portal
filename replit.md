@@ -16,7 +16,9 @@ Preferred communication style: Simple, everyday language.
 
 **UI Design Decisions:** Features a collapsible vertical sidebar for desktop and a bottom tab bar for mobile navigation. Utilizes modular components, client-side validation with `react-hot-toast`, and `Recharts` for data visualization.
 
-**Loading States:** Implements professional skeleton loading screens across all dashboard pages for improved perceived performance. The UI structure renders immediately with animated placeholders while data loads asynchronously, providing a smooth, modern user experience. Skeleton components are reusable and match the final content layout (cards, tables, stats, etc.).
+**User Feedback:** All user interactions (create, update, delete operations) provide immediate visual feedback through toast notifications. Error messages use `toast.error()` and success confirmations use `toast.success()` for consistent UX. All browser `alert()` calls have been replaced with proper toast notifications.
+
+**Loading States:** Implements professional skeleton loading screens with shimmer animation across all dashboard pages for improved perceived performance. The UI structure renders immediately with animated placeholders while data loads asynchronously, providing a smooth, modern user experience. Skeleton components are reusable and match the final content layout (cards, tables, stats, etc.). The shimmer effect uses CSS animations for a polished loading experience.
 
 ## Backend Architecture
 
