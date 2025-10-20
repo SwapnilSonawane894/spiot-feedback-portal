@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Trash2, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 import { SkeletonTable } from "@/components/skeletons";
+import { CustomSelect } from "@/components/custom-select";
 import toast from "react-hot-toast";
 
 type Department = {
@@ -224,7 +225,7 @@ export default function ManageStaffPage(): React.ReactElement {
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
           <div 
-            className="modal-content max-w-md w-full mx-4" 
+            className="modal-content max-w-md w-full mx-4 p-6" 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -245,7 +246,7 @@ export default function ManageStaffPage(): React.ReactElement {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="form-label">
                   Name <span style={{ color: "var(--danger)" }}>*</span>
@@ -288,24 +289,23 @@ export default function ManageStaffPage(): React.ReactElement {
               </div>
 
               <div>
-                <label className="form-label">
-                  Department <span style={{ color: "var(--danger)" }}>*</span>
-                </label>
-                <select
+                <CustomSelect
+                  label={
+                    <span>
+                      Department <span style={{ color: "var(--danger)" }}>*</span>
+                    </span>
+                  }
+                  options={departments.map((dept) => ({
+                    value: dept.id,
+                    label: `${dept.name} (${dept.abbreviation})`
+                  }))}
                   value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
-                  className="input-field"
-                  required
-                >
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.abbreviation})
-                    </option>
-                  ))}
-                </select>
+                  onChange={setDepartmentId}
+                  placeholder="Select department"
+                />
               </div>
 
-              <div className="flex gap-3 justify-end pt-4">
+              <div className="flex gap-3 justify-end pt-6">
                 <button type="button" onClick={closeModal} className="btn-outline">
                   Cancel
                 </button>

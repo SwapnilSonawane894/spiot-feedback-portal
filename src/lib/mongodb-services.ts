@@ -359,6 +359,10 @@ export const staffService = {
     }
   },
 
+  async findFirst(params: { where: { id?: string; userId?: string }; include?: any }) {
+    return this.findUnique(params);
+  },
+
   async create(data: any) {
     try {
       const db = await getDatabase();
