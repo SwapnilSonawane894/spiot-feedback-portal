@@ -72,7 +72,7 @@ export async function GET(req: Request) {
 
     // Build ordered list of staff with their assignments
     const matrixStaffs: any[] = staffs
-      .map((s) => ({
+      .map((s: any) => ({
         staffId: s.id,
         staffName: s.user?.name || s.user?.email || "Unknown",
         assignments: (s.assignments || []).map((a: any) => ({
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
           feedbacks: a.feedbacks || [],
         })),
       }))
-      .filter((s) => s.assignments && s.assignments.length > 0);
+      .filter((s: any) => s.assignments && s.assignments.length > 0);
 
     // Build Excel workbook
     const workbook = new ExcelJS.Workbook();

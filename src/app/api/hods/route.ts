@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const users = await userService.findMany({ where: { role: 'HOD' } });
 
-    const hods = await Promise.all(users.map(async (u) => {
+    const hods = await Promise.all(users.map(async (u: any) => {
       const staffProfile = await staffService.findFirst({ where: { userId: u.id } });
       let department = null;
       if (staffProfile && staffProfile.departmentId) {
