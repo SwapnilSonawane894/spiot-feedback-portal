@@ -31,7 +31,7 @@ Preferred communication style: Simple, everyday language.
 **Firestore Collections:**
 - **users**: Core authentication, roles, department, and academic year.
 - **departments**: Organizational units.
-- **academicYears**: Academic year groupings.
+- **academicYears**: Academic year groupings with optional department assignment for filtering.
 - **staff**: Faculty profiles linked to users and departments.
 - **subjects**: Course definitions.
 - **facultyAssignments**: Staff-to-subject mappings by semester.
@@ -54,6 +54,8 @@ Preferred communication style: Simple, everyday language.
 - **Dynamic NEXTAUTH_URL:** Automatically detects Replit domain from environment variables or falls back to localhost for development.
 - **Submission Status Year Filtering:** The submission status page displays students filtered by academic year (SYCO, TYCO, FYCO) with proper year information displayed in the table. Year filtering handles empty results gracefully.
 - **Progressive Loading Pattern:** All client-side pages use skeleton loaders to render UI structure immediately while data loads in the background. This prevents blank screens and reduces perceived loading time, creating a more professional and responsive feel throughout the application.
+- **Academic Year Department Filtering:** Academic years can optionally be assigned to specific departments. HODs only see academic years that are either unassigned (system-wide) or assigned to their department in reports and submission status pages. This prevents confusion with cross-departmental year abbreviations like FYCO, TYCO, SYCO.
+- **Duplicate Prevention in Reports:** The feedback reports page uses deduplication logic to ensure staff members appear only once in the faculty filter dropdown, even when teaching multiple subjects.
 
 # External Dependencies
 
