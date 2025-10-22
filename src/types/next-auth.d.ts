@@ -5,13 +5,13 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       id?: string;
-      role?: "ADMIN" | "HOD" | "STUDENT";
+      role?: "ADMIN" | "HOD" | "STUDENT"| "FACULTY";
     };
   }
 
   interface User {
     id?: string;
-    role?: "ADMIN" | "HOD" | "STUDENT";
+    role?: "ADMIN" | "HOD" | "STUDENT" | "FACULTY"; 
     hashedPassword?: string | null;
   }
 }

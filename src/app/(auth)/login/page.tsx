@@ -40,6 +40,7 @@ export default function LoginPage(): React.JSX.Element {
 
       if (result?.error) {
         setError("Invalid credentials.");
+        
         setIsLoading(false);
         return;
       }
