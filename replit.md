@@ -51,6 +51,8 @@ Preferred communication style: Simple, everyday language.
 - **Student Auto-Password:** Initial student passwords are their enrollment numbers.
 - **Middleware Authentication:** Custom middleware using `getToken` from next-auth/jwt for route protection and role-based access control. Protected routes automatically redirect unauthenticated users to login page.
 - **Role-Based Dashboard Routing:** After successful login, users are automatically redirected to their role-specific dashboard: ADMIN → `/admin`, HOD → `/hod/dashboard`, FACULTY → `/faculty/dashboard`, STUDENT → `/student/dashboard`.
+- **Login Flow:** The login page uses a simplified flow that fetches the session immediately after successful authentication to determine the user's role and redirect accordingly. Error handling ensures users are never stuck on the loading screen by resetting navigation states on session fetch failures.
+- **Login Password Validation:** Password length validation is NOT enforced during login, only during password creation/reset. This allows users with legacy short passwords to login successfully while still maintaining security through bcrypt hashing.
 - **Signout Handling:** Uses `signOut({ redirect: false })` with manual redirect to prevent crashes and ensure smooth logout experience.
 - **Dynamic NEXTAUTH_URL:** Automatically detects Replit domain from environment variables or falls back to localhost for development.
 - **Submission Status Year Filtering:** The submission status page displays students filtered by academic year (SYCO, TYCO, FYCO) with proper year information displayed in the table. Year filtering handles empty results gracefully.

@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Mail, Lock } from "lucide-react";
-import { PrimaryButton, TextInput } from "@/components/ui-controls";
-import { signIn, SignInResponse, useSession } from "next-auth/react";
+import { signIn, SignInResponse } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LoadingOverlay from "@/components/loading-overlay";
 
@@ -16,8 +15,6 @@ export default function LoginPage(): React.JSX.Element {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { data: session, status } = useSession();
-  const [signedIn, setSignedIn] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -40,58 +37,56 @@ export default function LoginPage(): React.JSX.Element {
 
       if (result?.error) {
         setError("Invalid credentials.");
-        
         setIsLoading(false);
         return;
       }
 
       if (result?.ok) {
-        // mark that signIn returned ok and wait for session to become authenticated
-        setSignedIn(true);
-        return;
+        setIsNavigating(true);
+        
+        try {
+          // Fetch the session to get user role
+          const sessionRes = await fetch('/api/auth/session');
+          
+          if (!sessionRes.ok) {
+            throw new Error('Failed to fetch session');
+          }
+          
+          const sessionData = await sessionRes.json();
+          const role = sessionData?.user?.role;
+          
+          // Redirect based on role
+          if (role === "ADMIN") {
+            router.push("/admin");
+          } else if (role === "HOD") {
+            router.push("/hod/dashboard");
+          } else if (role === "FACULTY") {
+            router.push("/faculty/dashboard");
+          } else if (role === "STUDENT") {
+            router.push("/student/dashboard");
+          } else {
+            router.push("/");
+          }
+          return;
+        } catch (sessionErr) {
+          console.error('Session fetch error:', sessionErr);
+          setError("Login successful but failed to load dashboard. Please refresh the page.");
+          setIsNavigating(false);
+          setIsLoading(false);
+          return;
+        }
       }
 
       setError("Login failed. Please try again.");
+      setIsLoading(false);
     } catch (err) {
       console.error(err);
       setError("An unexpected error occurred.");
-    } finally {
       setIsLoading(false);
     }
   }
 
-  useEffect(() => {
-    // when signIn returns ok, wait for session status to become authenticated
-    if (!signedIn) return;
-    if (status !== "authenticated") return;
-
-    setIsNavigating(true);
-    const role = (session as any)?.user?.role;
-    if (role === "ADMIN") {
-      router.push("/admin");
-      return;
-    }
-
-    if (role === "HOD") {
-      router.push("/hod/dashboard");
-      return;
-    }
-
-    if (role === "FACULTY") {
-      router.push("/faculty/dashboard");
-      return;
-    }
-
-    if (role === "STUDENT") {
-      router.push("/student/dashboard");
-      return;
-    }
-
-    router.push("/");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signedIn, status, session]);
-
-  if (isNavigating) {
+  if (isNavigating || isLoading) {
     return <LoadingOverlay />;
   }
 
