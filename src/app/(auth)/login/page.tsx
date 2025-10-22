@@ -76,7 +76,7 @@ export default function LoginPage(): React.JSX.Element {
       return;
     }
 
-    if (role === "FACULTY" || role === "STAFF") {
+    if (role === "FACULTY") {
       router.push("/faculty/dashboard");
       return;
     }
