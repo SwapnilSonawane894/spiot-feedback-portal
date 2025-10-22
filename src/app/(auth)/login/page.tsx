@@ -77,7 +77,7 @@ export default function LoginPage(): React.JSX.Element {
     }
 
     if (role === "STAFF") {
-      router.push("/faculty/report");
+      router.push("/faculty/dashboard");
       return;
     }
 
