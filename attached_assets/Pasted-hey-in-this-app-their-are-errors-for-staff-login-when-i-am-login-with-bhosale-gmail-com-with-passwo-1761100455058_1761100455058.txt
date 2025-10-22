@@ -1,0 +1,74 @@
+hey in this app their are errors for staff login
+when i am login with bhosale@gmail.com, with password bhosale,
+the screen is just flashing you can see the console log for it of srever side. Fix this issue for staff login
+``` GET /api/auth/session 200 in 7580ms
+ GET /api/auth/providers 200 in 64ms
+ GET /api/auth/csrf 200 in 68ms
+ POST /api/auth/callback/credentials 200 in 219ms
+ GET /api/auth/session 200 in 150ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1052ms (995 modules)
+[next-auth][warn][DEBUG_ENABLED] 
+https://next-auth.js.org/warnings#debug_enabled
+ GET / 200 in 1663ms
+ ○ Compiling /faculty/dashboard ...
+ ✓ Compiled /faculty/dashboard in 2.1s (1106 modules)
+[next-auth][warn][DEBUG_ENABLED] 
+https://next-auth.js.org/warnings#debug_enabled
+ GET /faculty/dashboard 200 in 2720ms
+ GET /faculty/dashboard 200 in 2722ms
+ GET / 200 in 130ms
+ GET / 200 in 129ms
+ GET /faculty/dashboard 200 in 180ms
+ GET /faculty/dashboard 200 in 177ms
+ GET / 200 in 127ms
+ GET / 200 in 130ms
+ GET /faculty/dashboard 200 in 173ms
+ GET /faculty/dashboard 200 in 174ms
+ GET / 200 in 162ms
+ GET / 200 in 162ms
+ GET /faculty/dashboard 200 in 160ms
+ GET /faculty/dashboard 200 in 161ms
+ GET / 200 in 127ms
+ GET / 200 in 128ms
+ GET /faculty/dashboard 200 in 213ms
+ GET /faculty/dashboard 200 in 213ms
+ GET / 200 in 194ms
+ GET / 200 in 197ms
+ GET /faculty/dashboard 200 in 181ms
+ GET /faculty/dashboard 200 in 181ms
+ GET / 200 in 108ms
+ GET / 200 in 108ms
+ GET /faculty/dashboard 200 in 144ms
+ GET /faculty/dashboard 200 in 144ms
+ GET / 200 in 97ms
+ GET / 200 in 97ms
+ GET /faculty/dashboard 200 in 276ms
+ GET /faculty/dashboard 200 in 277ms
+ GET / 200 in 206ms
+ GET / 200 in 207ms
+ GET /faculty/dashboard 200 in 114ms
+ GET /faculty/dashboard 200 in 114ms
+ GET / 200 in 121ms
+ GET / 200 in 121ms
+ GET /faculty/dashboard 200 in 185ms
+ GET /faculty/dashboard 200 in 185ms
+ GET / 200 in 160ms
+ GET / 200 in 163ms
+ GET /faculty/dashboard 200 in 265ms
+ GET /faculty/dashboard 200 in 98ms
+ GET / 200 in 106ms
+ GET / 200 in 106ms
+ GET /faculty/dashboard 200 in 241ms
+ GET /faculty/dashboard 200 in 246ms
+ GET / 200 in 120ms
+ GET / 200 in 121ms
+ 
+as well as review the entire app for vulnerabilites properly identify them and fix all 
+also see the security concerns make it most secure app so not easy for hacker to attack on this
+
+and the submission status is not visible for hod 
+means their it is showing empty
+
+as well as when hod is adding a single student it must check the entre enrollment number is 11 digit or not if not then unable to add that student 
+add this pre check for it
