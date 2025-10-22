@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   // Get the token
   const token = await getToken({
     req: request,
-    secret: "4M6PmUDdOTgSuDLaE1+9fAxJFnD0Jbxgklph8RqzheA=",
+    secret: process.env.NEXTAUTH_SECRET,
   });
 
   // Redirect to login if no token
@@ -48,8 +48,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Faculty routes
-  if (pathname.startsWith("/faculty") && role !== "FACULTY") {
+  // Faculty routes (accessible by both FACULTY and STAFF roles)
+  if (pathname.startsWith("/faculty") && role !== "FACULTY" && role !== "STAFF") {
     const url = new URL("/", request.url);
     return NextResponse.redirect(url);
   }
@@ -60,7 +60,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  
+  return response;
 }
 
 // Protect all routes except public ones

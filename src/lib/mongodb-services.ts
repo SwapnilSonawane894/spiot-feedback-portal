@@ -430,6 +430,17 @@ export const staffService = {
       throw error;
     }
   },
+
+  async count(where?: any) {
+    try {
+      const db = await getDatabase();
+      const query: any = where || {};
+      return await db.collection(COLLECTIONS.STAFF).countDocuments(query);
+    } catch (error) {
+      console.error('Error in staffService.count:', error);
+      throw error;
+    }
+  },
 };
 
 // ============ ACADEMIC YEAR OPERATIONS ============
@@ -596,6 +607,17 @@ export const subjectService = {
       return { success: true };
     } catch (error) {
       console.error('Error in subjectService.delete:', error);
+      throw error;
+    }
+  },
+
+  async count(where?: any) {
+    try {
+      const db = await getDatabase();
+      const query: any = where || {};
+      return await db.collection(COLLECTIONS.SUBJECTS).countDocuments(query);
+    } catch (error) {
+      console.error('Error in subjectService.count:', error);
       throw error;
     }
   },

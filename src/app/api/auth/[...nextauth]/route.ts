@@ -4,6 +4,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { userService } from "../../../../lib/mongodb-services";
+import { rateLimit, clearRateLimit, sanitizeString, validatePassword } from "../../../../lib/security-utils";
 
 export const authOptions = {
   providers: [
@@ -14,15 +15,36 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) throw new Error("Invalid credentials");
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Invalid credentials");
+        }
+
+        const email = sanitizeString(credentials.email).toLowerCase();
+        
+        if (!rateLimit(email, 5, 15 * 60 * 1000)) {
+          throw new Error("Too many login attempts. Please try again later.");
+        }
+
+        try {
+          validatePassword(credentials.password);
+        } catch {
+          throw new Error("Invalid credentials");
+        }
 
         const user = await userService.findUnique({ 
-          email: credentials.email
+          email: email
         });
-        if (!user || !user.hashedPassword) throw new Error("Invalid credentials");
+        
+        if (!user || !user.hashedPassword) {
+          throw new Error("Invalid credentials");
+        }
 
         const isCorrectPassword = await bcrypt.compare(credentials.password, user.hashedPassword);
-        if (!isCorrectPassword) throw new Error("Invalid credentials");
+        if (!isCorrectPassword) {
+          throw new Error("Invalid credentials");
+        }
+
+        clearRateLimit(email);
 
         return user as any;
       },
@@ -51,10 +73,30 @@ export const authOptions = {
   },
   session: { 
     strategy: "jwt" as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 24 * 60 * 60,
   },
-  secret: "4M6PmUDdOTgSuDLaE1+9fAxJFnD0Jbxgklph8RqzheA=",
-  debug: process.env.NODE_ENV === "development",
+  cookies: process.env.NODE_ENV === 'production' ? {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+      },
+    },
+  } : {
+    sessionToken: {
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: false,
 };
 
 const handler = (NextAuth as any)(authOptions);

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { staffService, userService } from "@/lib/mongodb-services";
 import bcrypt from "bcrypt";
+import { sanitizeString, sanitizeEnrollmentNumber } from "@/lib/security-utils";
 
 export async function POST(request: Request) {
   try {
@@ -14,19 +15,33 @@ export async function POST(request: Request) {
     const { fullName, enrollment, academicYearId } = body || {};
     if (!fullName || !enrollment || !academicYearId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
+    let sanitizedEnrollment: string;
+    let sanitizedFullName: string;
+    
+    try {
+      sanitizedEnrollment = sanitizeEnrollmentNumber(enrollment);
+      sanitizedFullName = sanitizeString(fullName);
+      
+      if (!sanitizedFullName || sanitizedFullName.length < 2) {
+        return NextResponse.json({ error: "Full name must be at least 2 characters" }, { status: 400 });
+      }
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     const staff = await staffService.findUnique({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
     const deptId = staff.departmentId;
 
-    const existing = await userService.findUnique({ email: enrollment });
+    const existing = await userService.findUnique({ email: sanitizedEnrollment });
     if (existing) return NextResponse.json({ error: "User already exists" }, { status: 409 });
 
-    const hashed = await bcrypt.hash(enrollment, 10);
+    const hashed = await bcrypt.hash(sanitizedEnrollment, 10);
 
     const created = await userService.create({
-      email: enrollment,
-      name: fullName,
+      email: sanitizedEnrollment,
+      name: sanitizedFullName,
       hashedPassword: hashed,
       role: 'STUDENT',
       departmentId: deptId,

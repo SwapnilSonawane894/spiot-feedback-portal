@@ -30,6 +30,10 @@ export default async function Page() {
     redirect("/faculty/dashboard");
   }
 
+  if (role === "STAFF") {
+    redirect("/faculty/dashboard");
+  }
+
   if (role === "STUDENT") {
     redirect("/student/dashboard");
   }

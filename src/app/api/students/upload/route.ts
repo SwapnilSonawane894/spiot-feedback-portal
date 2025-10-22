@@ -5,6 +5,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { departmentService, userService } from "@/lib/mongodb-services";
 import bcrypt from "bcrypt";
 import Papa from "papaparse";
+import { sanitizeString, sanitizeEnrollmentNumber } from "@/lib/security-utils";
 
 // POST: upload CSV and create student users
 export async function POST(request: Request) {
@@ -35,12 +36,25 @@ export async function POST(request: Request) {
     const skipped: { email: string; reason: string }[] = [];
 
     for (const r of rows) {
-      const enrollment = (r.enrollmentNumber || r.enrollment || r.email || "").toString().trim();
-      const fullName = (r.fullName || r.name || "").toString().trim();
+      let enrollment = (r.enrollmentNumber || r.enrollment || r.email || "").toString().trim();
+      let fullName = (r.fullName || r.name || "").toString().trim();
       const deptAbbr = (r.department || r.dept || "").toString().trim();
 
       if (!enrollment || !fullName || !deptAbbr) {
         skipped.push({ email: enrollment || "", reason: "Missing required columns" });
+        continue;
+      }
+
+      try {
+        enrollment = sanitizeEnrollmentNumber(enrollment);
+        fullName = sanitizeString(fullName);
+        
+        if (!fullName || fullName.length < 2) {
+          skipped.push({ email: enrollment, reason: "Full name must be at least 2 characters" });
+          continue;
+        }
+      } catch (error: any) {
+        skipped.push({ email: enrollment, reason: error.message });
         continue;
       }
 
