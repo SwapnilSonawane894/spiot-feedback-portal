@@ -49,12 +49,16 @@ export async function POST(request: Request) {
   const departmentId = hodProfile.departmentId;
 
     const body = await request.json();
-    let { name, subjectCode, academicYearId } = body || {};
+    let { name, subjectCode, academicYearId, semester } = body || {};
     name = typeof name === 'string' ? name.trim() : name;
     subjectCode = typeof subjectCode === 'string' ? subjectCode.trim().toUpperCase() : subjectCode;
 
     if (!name || !subjectCode || !academicYearId) {
       return NextResponse.json({ error: "Missing required fields: name, subjectCode, academicYearId are required" }, { status: 400 });
+    }
+
+    if (semester && (semester < 1 || semester > 6)) {
+      return NextResponse.json({ error: "Semester must be between 1 and 6" }, { status: 400 });
     }
 
     const year = await academicYearService.findUnique({ id: academicYearId });
@@ -71,6 +75,7 @@ export async function POST(request: Request) {
         subjectCode,
         academicYearId,
         departmentId,
+        semester: semester ? Number(semester) : undefined,
       });
       return NextResponse.json(created, { status: 201 });
     } catch (err: any) {

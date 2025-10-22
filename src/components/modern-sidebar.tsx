@@ -20,6 +20,7 @@ import {
   MoreHorizontal,
   Briefcase,
   FileText,
+  Calendar,
 } from "lucide-react";
 import ThemeToggle from "./theme-toggle";
 
@@ -34,6 +35,7 @@ type NavItem = {
 
 const adminLinks: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+  { href: "/admin/semester-settings", label: "Semester Settings", icon: <Calendar size={20} /> },
   { href: "/admin/departments", label: "Departments", icon: <Building2 size={20} /> },
   { href: "/admin/years", label: "Academic Years", icon: <GraduationCap size={20} /> },
   { href: "/admin/hods", label: "HOD Management", icon: <Users size={20} /> },
@@ -288,7 +290,7 @@ export default function ModernSidebar({
           }}
         >
           <div className="flex items-center justify-around h-16">
-            {links.slice(0, 4).map((item) => {
+            {links.slice(0, 3).map((item) => {
               const isActive = !!bestMatch && item.href === bestMatch;
               return (
                 <Link
@@ -304,18 +306,16 @@ export default function ModernSidebar({
                 </Link>
               );
             })}
-            {links.length > 4 && (
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1"
-                style={{
-                  color: mobileMenuOpen ? "var(--primary)" : "var(--text-secondary)",
-                }}
-              >
-                <MoreHorizontal size={20} />
-                <span className="text-xs font-medium">More</span>
-              </button>
-            )}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1"
+              style={{
+                color: mobileMenuOpen ? "var(--primary)" : "var(--text-secondary)",
+              }}
+            >
+              <MoreHorizontal size={20} />
+              <span className="text-xs font-medium">More</span>
+            </button>
           </div>
         </nav>
       )}
@@ -415,7 +415,7 @@ export default function ModernSidebar({
                 </>
               ) : (
                 <>
-                  {links.slice(4).map((item) => (
+                  {links.slice(3).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}

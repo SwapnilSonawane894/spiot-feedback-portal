@@ -13,10 +13,24 @@ export default function StudentDashboard(): React.ReactElement {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentSemester, setCurrentSemester] = useState<string>("Semester 2025-26");
 
   useEffect(() => {
     fetchTasks();
+    fetchSemester();
   }, []);
+
+  async function fetchSemester() {
+    try {
+      const res = await fetch("/api/admin/semester-settings");
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentSemester(data.semesterString || "Semester 2025-26");
+      }
+    } catch (err) {
+      console.error("Failed to fetch semester:", err);
+    }
+  }
 
   async function fetchTasks() {
     setLoading(true);
@@ -41,7 +55,7 @@ export default function StudentDashboard(): React.ReactElement {
       <div>
         <PageHeader 
           title="My Feedback Tasks" 
-          description="Odd Semester 2025-26" 
+          description={currentSemester} 
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <SkeletonTaskCard />
@@ -59,7 +73,7 @@ export default function StudentDashboard(): React.ReactElement {
     <div>
       <PageHeader 
         title="My Feedback Tasks" 
-        description="Odd Semester 2025-26" 
+        description={currentSemester} 
       />
 
       {error ? (

@@ -10,12 +10,11 @@ type StaffRow = { id: string; user: { id: string; name?: string | null; email?: 
 type Subject = { id: string; name: string; subjectCode: string; targetYear: string };
 type Option = { value: string; label: string };
 
-const CURRENT_SEMESTER = "Odd 2025-26";
-
 export default function AssignmentPage(): React.ReactElement {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [assignments, setAssignments] = useState<Record<string, string[]>>({});
+  const [currentSemester, setCurrentSemester] = useState<string>("Loading...");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -24,6 +23,13 @@ export default function AssignmentPage(): React.ReactElement {
 
   async function fetchData() {
     try {
+      // Fetch semester settings
+      const semesterRes = await fetch("/api/admin/semester-settings");
+      if (semesterRes.ok) {
+        const semesterData = await semesterRes.json();
+        setCurrentSemester(semesterData.semesterString || "Semester 2025-26");
+      }
+
       // Fetch subjects
       const subjectsRes = await fetch("/api/subjects");
       if (!subjectsRes.ok) throw new Error("Failed to fetch subjects");
@@ -84,7 +90,7 @@ export default function AssignmentPage(): React.ReactElement {
     setIsSaving(true);
     try {
       const payload = {
-        semester: CURRENT_SEMESTER,
+        semester: currentSemester,
         assignments: Object.entries(assignments).flatMap(([subjectId, staffIds]) =>
           staffIds.map(staffId => ({ subjectId, staffId }))
         )
@@ -108,7 +114,7 @@ export default function AssignmentPage(): React.ReactElement {
     } finally {
       setIsSaving(false);
     }
-  }, [assignments]);
+  }, [assignments, currentSemester]);
 
   const selectStyles = useMemo(() => ({
     menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
@@ -156,7 +162,7 @@ export default function AssignmentPage(): React.ReactElement {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
-            Faculty Assignment for {CURRENT_SEMESTER}
+            Faculty Assignment for {currentSemester}
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
             Assign faculty members to subjects. Multiple faculty can be assigned to each subject.

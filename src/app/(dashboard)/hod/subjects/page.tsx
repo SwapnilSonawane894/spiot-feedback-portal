@@ -11,6 +11,7 @@ type Subject = {
   id: string; 
   name: string; 
   subjectCode: string; 
+  semester?: number;
   academicYear?: { id: string; name: string; abbreviation?: string } 
 };
 
@@ -21,6 +22,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [name, setName] = useState("");
   const [subjectCode, setSubjectCode] = useState("");
+  const [semester, setSemester] = useState<number>(1);
   const [academicYearId, setAcademicYearId] = useState("");
   const [years, setYears] = useState<Array<{ id: string; name: string; abbreviation?: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +60,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !subjectCode || !academicYearId) return;
+    if (!name || !subjectCode || !academicYearId || !semester) return;
 
     setIsSubmitting(true);
     try {
@@ -66,7 +68,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
         const res = await fetch(`/api/subjects/${editingSubject.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, subjectCode, academicYearId }),
+          body: JSON.stringify({ name, subjectCode, academicYearId, semester }),
         });
         if (!res.ok) {
           let errMsg = "Failed to update subject";
@@ -88,7 +90,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
         const res = await fetch("/api/subjects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, subjectCode, academicYearId }),
+          body: JSON.stringify({ name, subjectCode, academicYearId, semester }),
         });
         if (!res.ok) {
           let errMsg = "Failed to create subject";
@@ -110,6 +112,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
       setIsModalOpen(false);
       setName("");
       setSubjectCode("");
+      setSemester(1);
       setAcademicYearId("");
     } catch (err) {
       console.error(err);
@@ -117,7 +120,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
     } finally {
       setIsSubmitting(false);
     }
-  }, [editingSubject, name, subjectCode, academicYearId]);
+  }, [editingSubject, name, subjectCode, semester, academicYearId]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Delete this subject?")) return;
@@ -136,6 +139,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
     setEditingSubject(null);
     setName("");
     setSubjectCode("");
+    setSemester(1);
     setAcademicYearId("");
     setIsModalOpen(true);
   }, []);
@@ -144,6 +148,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
     setEditingSubject(s);
     setName(s.name);
     setSubjectCode(s.subjectCode);
+    setSemester(s.semester || 1);
     setAcademicYearId(s.academicYear?.id ?? "");
     setIsModalOpen(true);
   }, []);
@@ -175,6 +180,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
               <tr>
                 <th>Subject Name</th>
                 <th>Subject Code</th>
+                <th>Semester</th>
                 <th>Target Year</th>
                 <th>Actions</th>
               </tr>
@@ -184,6 +190,17 @@ export default function ManageSubjectsPage(): React.ReactElement {
               <tr key={s.id}>
                 <td>{s.name}</td>
                 <td>{s.subjectCode}</td>
+                <td>
+                  {s.semester ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" 
+                      style={{ 
+                        background: s.semester % 2 === 1 ? "var(--primary-light)" : "var(--info-light)",
+                        color: s.semester % 2 === 1 ? "var(--primary)" : "var(--info)"
+                      }}>
+                      Sem {s.semester} ({s.semester % 2 === 1 ? "Odd" : "Even"})
+                    </span>
+                  ) : "-"}
+                </td>
                 <td>{s.academicYear?.abbreviation ?? s.academicYear?.name ?? "-"}</td>
                 <td>
                   <div className="flex items-center gap-2">
@@ -261,6 +278,20 @@ export default function ManageSubjectsPage(): React.ReactElement {
                   required
                 />
               </div>
+
+              <CustomSelect
+                label="Semester"
+                options={[
+                  { value: 1, label: "1st Semester (Odd)" },
+                  { value: 2, label: "2nd Semester (Even)" },
+                  { value: 3, label: "3rd Semester (Odd)" },
+                  { value: 4, label: "4th Semester (Even)" },
+                  { value: 5, label: "5th Semester (Odd)" },
+                  { value: 6, label: "6th Semester (Even)" },
+                ]}
+                value={semester}
+                onChange={(value) => setSemester(Number(value))}
+              />
 
               <CustomSelect
                 label="Academic Year"

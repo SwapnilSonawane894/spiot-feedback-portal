@@ -29,10 +29,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     // later.
 
     const body = await request.json();
-    const { name, subjectCode, academicYearId } = body || {};
+    const { name, subjectCode, academicYearId, semester } = body || {};
     if (!name || !subjectCode || !academicYearId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-  const updated = await subjectService.update({ id }, { name, subjectCode, academicYearId });
+    if (semester && (semester < 1 || semester > 6)) {
+      return NextResponse.json({ error: "Semester must be between 1 and 6" }, { status: 400 });
+    }
+
+  const updateData: any = { name, subjectCode, academicYearId };
+  if (semester) {
+    updateData.semester = Number(semester);
+  }
+
+  const updated = await subjectService.update({ id }, updateData);
   return NextResponse.json(updated);
   } catch (error) {
     console.error(error);
