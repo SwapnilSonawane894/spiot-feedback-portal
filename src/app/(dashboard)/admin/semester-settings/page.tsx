@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { PageHeader } from "@/components/page-header";
 import { Calendar, Save } from "lucide-react";
-import CustomSelect from "@/components/custom-select";
+import { CustomSelect } from "@/components/custom-select";
 
 export default function SemesterSettingsPage() {
   const [currentSemester, setCurrentSemester] = useState<number>(1);
