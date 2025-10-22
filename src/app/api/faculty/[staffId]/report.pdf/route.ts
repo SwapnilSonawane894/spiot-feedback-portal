@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService, hodSuggestionService } from "@/lib/mongodb-services";
+import { staffService, assignmentService, hodSuggestionService, feedbackService } from "@/lib/mongodb-services";
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 const PARAM_KEYS = [
@@ -60,8 +60,8 @@ export async function GET(req: Request, ctx: { params?: any }) {
   const allowed = session.user?.role === 'HOD' || ((session.user?.role === 'STAFF' || session.user?.role === 'FACULTY') && session.user?.id === staff.userId);
     if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    // fetch assignments + feedbacks
-    const assignments = await assignmentService.findMany({ where: { staffId }, include: { subject: true, feedbacks: true } });
+    // fetch assignments with subjects
+    const assignments = await assignmentService.findMany({ where: { staffId }, include: { subject: true } });
 
   // determine semester (best-effort: use first assignment.semester) and fetch the single HOD suggestion for it
   const semester = assignments?.[0]?.semester || '';
@@ -72,7 +72,14 @@ export async function GET(req: Request, ctx: { params?: any }) {
     const suggestions: string[] = [];
 
     for (const a of assignments) {
-      const feedbacks = (a as any).feedbacks || [];
+      // Fetch feedbacks separately for each assignment
+      const feedbacks = await feedbackService.findMany({ 
+        where: {
+          staffId: a.staffId, 
+          subjectId: a.subjectId, 
+          semester: a.semester
+        }
+      });
       if (!feedbacks || feedbacks.length === 0) continue;
       const avg: Record<string, number> = {};
       PARAM_KEYS.forEach((p: string) => (avg[p] = 0));
