@@ -825,6 +825,24 @@ export const hodSuggestionService = {
     }
   },
 
+  async findUnique(where: { id?: string; staffId_semester?: { staffId: string; semester: string } }) {
+    try {
+      const db = await getDatabase();
+      let query: any = {};
+      if (where.id) {
+        query._id = new ObjectId(where.id);
+      } else if (where.staffId_semester) {
+        const { staffId, semester } = where.staffId_semester;
+        query = { staffId, semester };
+      }
+      const doc = await db.collection(COLLECTIONS.HOD_SUGGESTIONS).findOne(query);
+      return docWithId(doc);
+    } catch (error) {
+      console.error('Error in hodSuggestionService.findUnique:', error);
+      throw error;
+    }
+  },
+
   async deleteMany(where: any) {
     try {
       const db = await getDatabase();

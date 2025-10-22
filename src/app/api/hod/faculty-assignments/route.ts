@@ -58,8 +58,9 @@ export async function POST(request: Request) {
         semester,
       }));
 
-      console.log("Creating new assignments:", createData.length);
-      createResult = await assignmentService.createMany({ data: createData });
+  console.log("Creating new assignments:", createData.length);
+  // assignmentService.createMany expects an array of docs, so pass the array directly
+  createResult = await assignmentService.createMany(createData);
       console.log("Created assignments:", createResult?.count ?? 0);
     }
 

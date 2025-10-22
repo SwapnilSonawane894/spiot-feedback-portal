@@ -6,7 +6,7 @@ import Select, { MultiValue } from "react-select";
 import { Button } from "@/components/ui-controls";
 import toast from "react-hot-toast";
 
-type StaffRow = { id: string; user: { id: string; name?: string | null; email?: string | null } };
+type StaffRow = { id: string; user: { id: string; name?: string | null; email?: string | null }; department?: { id: string; name?: string | null; abbreviation?: string | null } };
 type Subject = { id: string; name: string; subjectCode: string; targetYear: string };
 type Option = { value: string; label: string };
 
@@ -40,20 +40,20 @@ export default function AssignmentPage(): React.ReactElement {
       const assignmentsRes = await fetch("/api/hod/faculty-assignments");
       if (!assignmentsRes.ok) throw new Error("Failed to fetch assignments");
       const assignmentsData = await assignmentsRes.json();
-      
+
       // Convert assignments array to subject -> staffIds mapping
       const assignmentMap: Record<string, string[]> = {};
       (subjectsData || []).forEach((subject: Subject) => {
         assignmentMap[subject.id] = [];
       });
-      
+
       (assignmentsData || []).forEach((assignment: any) => {
         if (!assignmentMap[assignment.subjectId]) {
           assignmentMap[assignment.subjectId] = [];
         }
         assignmentMap[assignment.subjectId].push(assignment.staffId);
       });
-      
+
       setAssignments(assignmentMap);
     } catch (err) {
       console.error(err);
@@ -62,10 +62,11 @@ export default function AssignmentPage(): React.ReactElement {
   }
 
   const staffOptions = useMemo((): Option[] => {
-    return staff.map((s) => ({ 
-      value: s.id, 
-      label: s.user?.name || s.user?.email || "Unnamed" 
-    }));
+    return staff.map((s) => {
+      const name = s.user?.name || s.user?.email || "Unnamed";
+      const deptAbbr = s.department?.abbreviation ? ` (${s.department.abbreviation})` : "";
+      return { value: s.id, label: `${name}${deptAbbr}` };
+    });
   }, [staff]);
 
   const valueForSubject = useCallback((subjectId: string): Option[] => {
@@ -84,7 +85,7 @@ export default function AssignmentPage(): React.ReactElement {
     try {
       const payload = {
         semester: CURRENT_SEMESTER,
-        assignments: Object.entries(assignments).flatMap(([subjectId, staffIds]) => 
+        assignments: Object.entries(assignments).flatMap(([subjectId, staffIds]) =>
           staffIds.map(staffId => ({ subjectId, staffId }))
         )
       };

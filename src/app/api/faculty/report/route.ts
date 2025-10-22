@@ -1,17 +1,37 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService, hodSuggestionService } from "@/lib/mongodb-services";
+import { staffService, assignmentService, hodSuggestionService, subjectService, feedbackService } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (session.user?.role !== "STAFF" && session.user?.role !== "HOD") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Accept both STAFF and FACULTY roles (some accounts use FACULTY string)
+  if (session.user?.role !== "STAFF" && session.user?.role !== "HOD" && session.user?.role !== "FACULTY") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const staff = await staffService.findFirst({ where: { userId: session.user.id } });
-    if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
-    const assignments = await assignmentService.findMany({ where: { staffId: staff.id }, include: { subject: true, feedbacks: true } });
+    if (!staff) {
+      // Provide additional debug info in development to help tracing missing staff profiles
+      if (process.env.NODE_ENV !== 'production') {
+        const staffRows = await staffService.findMany({ where: { userId: session.user.id } });
+        return NextResponse.json({ error: "Staff profile not found", debug: { sessionUserId: session.user.id, staffRows } }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
+    }
+    const assignments = await assignmentService.findMany({ where: { staffId: staff.id } });
+
+    // Batch fetch subjects and feedbacks for these assignments
+    const assignmentIds = assignments.map((a: any) => a.id);
+    const uniqueSubjectIds = Array.from(new Set(assignments.map((a: any) => a.subjectId).filter(Boolean)));
+    const subjects = await Promise.all(uniqueSubjectIds.map((id: any) => subjectService.findUnique({ id })));
+    const subjectMap = new Map(subjects.filter(Boolean).map((s: any) => [s.id, s]));
+    const feedbacks = assignmentIds.length > 0 ? await feedbackService.findMany({ where: { assignmentId: { $in: assignmentIds } } }) : [];
+    const feedbackMap = new Map<string, any[]>();
+    for (const f of feedbacks) {
+      if (!feedbackMap.has(f.assignmentId)) feedbackMap.set(f.assignmentId, []);
+      feedbackMap.get(f.assignmentId)!.push(f);
+    }
 
     const params = [
       "coverage_of_syllabus",
@@ -40,23 +60,24 @@ export async function GET() {
     const suggestions: string[] = [];
 
     for (const a of assignments) {
-      const feedbacks = (a as any).feedbacks || [];
-      if (!feedbacks || feedbacks.length === 0) continue;
+      const fb = feedbackMap.get(a.id) || [];
+
+      if (!fb || fb.length === 0) continue;
 
       const avg: any = {};
       params.forEach((p) => (avg[p] = 0));
-      for (const f of feedbacks) {
+      for (const f of fb) {
         params.forEach((p) => (avg[p] += Number((f as any)[p] ?? 0)));
         const text = (f as any).any_suggestion;
         if (text && typeof text === 'string' && text.trim().length > 0) suggestions.push(text.trim());
       }
-      params.forEach((p) => (avg[p] = parseFloat((avg[p] / feedbacks.length).toFixed(2))));
+      params.forEach((p) => (avg[p] = parseFloat((avg[p] / fb.length).toFixed(2))));
 
       // overall performance percentage
       const total = params.reduce((s, k) => s + (Number(avg[k]) || 0), 0);
       const overallPercentage = parseFloat(((total / (params.length * 5)) * 100).toFixed(2));
 
-      reports.push({ assignmentId: a.id, subject: a.subject, semester: a.semester, averages: avg, totalResponses: feedbacks.length, overallPercentage });
+      reports.push({ assignmentId: a.id, subject: subjectMap.get(a.subjectId), semester: a.semester, averages: avg, totalResponses: fb.length, overallPercentage });
     }
 
   // include staffId (inferred from session) so client can request the PDF
@@ -66,8 +87,8 @@ export async function GET() {
   const semester = reports?.[0]?.semester || '';
   let hodSuggestion = '';
   if (staffProfile?.id && semester) {
-    const row = await hodSuggestionService.findUnique({ staffId_semester: { staffId: staffProfile.id, semester } });
-    hodSuggestion = row?.content || '';
+    const rows = await hodSuggestionService.findMany({ where: { staffId: staffProfile.id, semester } });
+    hodSuggestion = rows && rows.length > 0 ? rows[0].content || '' : '';
   }
 
   return NextResponse.json({ facultyName, academicYear, reports, suggestions, staffId: staffProfile?.id, hodSuggestion });

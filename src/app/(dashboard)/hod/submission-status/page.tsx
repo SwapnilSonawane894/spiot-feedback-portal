@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { CustomSelect } from "@/components/custom-select";
+import { SkeletonTable } from '@/components/skeletons';
 
 export default function SubmissionStatusPage() {
   const [data, setData] = useState<any[]>([]);
@@ -67,8 +68,8 @@ export default function SubmissionStatusPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div style={{ color: "var(--text-muted)" }}>Loading...</div>
+        <div className="py-2">
+          <SkeletonTable rows={6} columns={4} />
         </div>
       ) : (
         <div className="table-wrapper">

@@ -46,6 +46,7 @@ export async function POST(request: Request) {
     const hodUserId = session.user.id as string;
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
+  const departmentId = hodProfile.departmentId;
 
     const body = await request.json();
     let { name, subjectCode, academicYearId } = body || {};
@@ -59,8 +60,8 @@ export async function POST(request: Request) {
     const year = await academicYearService.findUnique({ id: academicYearId });
     if (!year) return NextResponse.json({ error: `AcademicYear not found for id=${academicYearId}` }, { status: 400 });
 
-    const existing = await subjectService.findUnique({ subjectCode });
-    if (existing) {
+    const existing = await subjectService.findMany({ where: { subjectCode } });
+    if (existing && existing.length > 0) {
       return NextResponse.json({ error: `Subject with code '${subjectCode}' already exists.` }, { status: 409 });
     }
 
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
         name,
         subjectCode,
         academicYearId,
+        departmentId,
       });
       return NextResponse.json(created, { status: 201 });
     } catch (err: any) {

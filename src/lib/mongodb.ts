@@ -17,12 +17,20 @@ if (process.env.NODE_ENV === 'development') {
 
   if (!globalWithMongo._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
+    globalWithMongo._mongoClientPromise = client.connect().catch((err) => {
+      console.error('Failed to connect to MongoDB. Check MONGODB_URI, network/DNS and Atlas IP access list. Error:');
+      console.error(err);
+      throw err;
+    });
   }
   clientPromise = globalWithMongo._mongoClientPromise;
 } else {
   client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+  clientPromise = client.connect().catch((err) => {
+    console.error('Failed to connect to MongoDB. Check MONGODB_URI, network/DNS and Atlas IP access list. Error:');
+    console.error(err);
+    throw err;
+  });
 }
 
 export async function getDatabase(): Promise<Db> {

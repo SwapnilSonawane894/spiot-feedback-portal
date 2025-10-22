@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import type { Session } from "next-auth";
-import { userService, departmentService, assignmentService, feedbackService } from "@/lib/mongodb-services";
+import { userService, departmentService, assignmentService, feedbackService, staffService } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
@@ -40,14 +40,20 @@ export async function GET() {
     
     const tasks = await Promise.all(
       assignments.map(async (a: any) => {
-        // Get staff for this assignment
-        const staff = await assignmentService.findUnique({ id: a.id });
-        const staffData = staff ? await assignmentService.findMany({ where: { id: a.id }, include: { subject: true } }) : [];
-        
+        // Get staff for this assignment using staffService
+        let facultyName = "Faculty";
+        try {
+          const staff = await staffService.findUnique({ where: { id: a.staffId }, include: { user: true } });
+          facultyName = staff?.user?.name ?? facultyName;
+        } catch (err) {
+          // fallback to default if staff fetch fails
+          console.error('Failed to fetch staff for assignment', a.id, err);
+        }
+
         const existing = allFeedback.find(f => f.assignmentId === a.id && f.studentId === userId);
         return {
           assignmentId: a.id,
-          facultyName: "Faculty",
+          facultyName,
           subjectName: a.subject?.name,
           status: existing ? "Completed" : "Pending",
         };

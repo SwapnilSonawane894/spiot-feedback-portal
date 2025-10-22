@@ -75,7 +75,7 @@ export default function ModernSidebar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileGroupOpen, setMobileGroupOpen] = useState<string | null>(null);
 
-  const links = role === "HOD" ? hodLinks : role === "STUDENT" ? studentLinks : role === "STAFF" ? staffLinks : adminLinks;
+  const links = role === "HOD" ? hodLinks : role === "STUDENT" ? studentLinks : (role === "STAFF" || role === "FACULTY") ? staffLinks : adminLinks;
 
   const bestMatch = links.reduce<string | null>((best, l) => {
     if (!l.href) return best;
@@ -108,10 +108,10 @@ export default function ModernSidebar({
   };
 
   const getRoleTitle = () => {
-    if (role === "HOD") return "HOD Portal";
-    if (role === "STUDENT") return "Student Portal";
-    if (role === "STAFF") return "Faculty Portal";
-    return "Admin Portal";
+  if (role === "HOD") return "HOD Portal";
+  if (role === "STUDENT") return "Student Portal";
+  if (role === "STAFF" || role === "FACULTY") return "Faculty Portal";
+  return "Admin Portal";
   };
 
   return (

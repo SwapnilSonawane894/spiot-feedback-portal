@@ -1,0 +1,128 @@
+[
+  {
+    "_id": "68f86640f16d44023c9ba5c9",
+    "name": "Basic Mathematics",
+    "subjectCode": "311302",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "createdAt": "2025-10-22T05:06:08.650Z"
+  },
+  {
+    "_id": "68f86655f16d44023c9ba5cb",
+    "name": "Communication Skills (English)",
+    "subjectCode": "311303",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "createdAt": "2025-10-22T05:06:29.694Z"
+  },
+  {
+    "_id": "68f86666f16d44023c9ba5cd",
+    "name": "Basic Science\tPhysics, Chemistry",
+    "subjectCode": "311305",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "createdAt": "2025-10-22T05:06:46.349Z"
+  },
+  {
+    "_id": "68f86676f16d44023c9ba5cf",
+    "name": "Fundamentals Of ICT",
+    "subjectCode": "311001",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "createdAt": "2025-10-22T05:07:02.759Z"
+  },
+  {
+    "_id": "68f86688f16d44023c9ba5d1",
+    "name": "Engineering Workshop Practice (Computer Group)",
+    "subjectCode": "311002",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "createdAt": "2025-10-22T05:07:20.165Z"
+  },
+  {
+    "_id": "68f86696f16d44023c9ba5d3",
+    "name": "Yoga And Meditation",
+    "subjectCode": "311003",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "createdAt": "2025-10-22T05:07:34.662Z"
+  },
+  {
+    "_id": "68f866a3f16d44023c9ba5d5",
+    "name": "Engineering Graphics (Electronics, Computer And Allied Branches)",
+    "subjectCode": "311008",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "createdAt": "2025-10-22T05:07:47.456Z"
+  },
+  {
+    "_id": "68f86740f16d44023c9ba5d7",
+    "name": "Data Structure Using C",
+    "subjectCode": "313301",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "createdAt": "2025-10-22T05:10:24.682Z"
+  },
+  {
+    "_id": "68f86752f16d44023c9ba5d9",
+    "name": "Database Management System",
+    "subjectCode": "313302",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "createdAt": "2025-10-22T05:10:42.377Z"
+  },
+  {
+    "_id": "68f86760f16d44023c9ba5db",
+    "name": "Digital Techniques",
+    "subjectCode": "313303",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "createdAt": "2025-10-22T05:10:56.169Z"
+  },
+  {
+    "_id": "68f8676cf16d44023c9ba5dd",
+    "name": "Object Oriented Programming Using C++",
+    "subjectCode": "313304",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "createdAt": "2025-10-22T05:11:08.586Z"
+  },
+  {
+    "_id": "68f86778f16d44023c9ba5df",
+    "name": "Computer Graphics",
+    "subjectCode": "313001",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "createdAt": "2025-10-22T05:11:20.610Z"
+  },
+  {
+    "_id": "68f86786f16d44023c9ba5e1",
+    "name": "Essence Of Indian Constitution",
+    "subjectCode": "313002",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "createdAt": "2025-10-22T05:11:34.745Z"
+  },
+  {
+    "_id": "68f8689cf16d44023c9ba5e3",
+    "name": "Operating System",
+    "subjectCode": "315319",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-22T05:16:12.290Z"
+  },
+  {
+    "_id": "68f868adf16d44023c9ba5e5",
+    "name": "Software Engineering",
+    "subjectCode": "315323",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-22T05:16:29.627Z"
+  },
+  {
+    "_id": "68f868bcf16d44023c9ba5e7",
+    "name": "Entrepreneurship Development And Startups",
+    "subjectCode": "315002",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-22T05:16:44.359Z"
+  },
+  {
+    "_id": "68f868c9f16d44023c9ba5e9",
+    "name": "Seminar And Project Initiation Course",
+    "subjectCode": "315003",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-22T05:16:57.942Z"
+  },
+  {
+    "_id": "68f868daf16d44023c9ba5eb",
+    "name": "Advance Computer Network",
+    "subjectCode": "315321",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-22T05:17:14.421Z"
+  }
+]

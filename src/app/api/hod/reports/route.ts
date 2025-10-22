@@ -14,13 +14,44 @@ export async function GET() {
 
     const departmentId = staff.departmentId;
 
-    // Get staff list with user data and assignments
-    const staffList = await staffService.findMany({
-      where: { departmentId },
-    });
+    // Get staff list anchored to department, but also include any staff who are assigned to subjects of this department
+    // 1) find subjects for this department
+    const deptSubjects = await subjectService.findMany({ where: { departmentId } });
+    const deptSubjectIds = new Set((deptSubjects || []).map((s: any) => s.id));
 
-    // Get total students count once (not inside loops!)
-    const totalStudents = await userService.count({ role: 'STUDENT', departmentId });
+    // 2) find assignments that point to these subjects and collect staffIds
+    const allAssignments = await assignmentService.findMany({});
+    const assignedStaffIds = new Set<string>();
+    for (const a of (allAssignments || [])) {
+      if (a.subjectId && deptSubjectIds.has(String(a.subjectId))) {
+        if (a.staffId) assignedStaffIds.add(a.staffId);
+      }
+    }
+
+    // 3) fetch department staff and also any assigned staff (avoid duplicates)
+    const deptStaff = await staffService.findMany({ where: { departmentId } });
+    const deptStaffIds = new Set((deptStaff || []).map((d: any) => d.id));
+
+    const extraStaffIds = Array.from(assignedStaffIds).filter((id) => !deptStaffIds.has(id));
+  const extraStaff = extraStaffIds.length > 0 ? await Promise.all(extraStaffIds.map((id) => staffService.findUnique({ where: { id }, include: { user: true, department: true } }))) : [];
+
+  // Merge and dedupe by staff id
+  const staffMap = new Map<string, any>();
+  for (const s of deptStaff) staffMap.set(s.id, s);
+  for (const s of extraStaff) if (s) staffMap.set(s.id, s);
+  const staffList = Array.from(staffMap.values());
+
+    // We'll cache student counts per academicYearId so subject cards show correct totals (avoid counting entire department for every subject)
+    const studentCountByYear: Record<string, number> = {};
+    async function getStudentCountForYear(yearId?: string | null) {
+      const key = yearId ? String(yearId) : 'all';
+      if (studentCountByYear[key] !== undefined) return studentCountByYear[key];
+      const filter: any = { role: 'STUDENT', departmentId };
+      if (yearId) filter.academicYearId = yearId;
+      const cnt = await userService.count(filter);
+      studentCountByYear[key] = cnt;
+      return cnt;
+    }
 
     const reports = await Promise.all(staffList.map(async (s: any) => {
       // Fetch user and assignments for this staff member
@@ -32,9 +63,8 @@ export async function GET() {
         const subject = await subjectService.findUnique({ id: a.subjectId });
         const feedbacks = await feedbackService.findMany({ where: { assignmentId: a.id } });
         
-        if (!feedbacks || feedbacks.length === 0) {
-          return null; // Skip assignments with no feedback
-        }
+        // If no feedbacks yet, still include the assignment with zeroed metrics
+        const hasFeedback = feedbacks && feedbacks.length > 0;
 
         // Compute averages for 16 params
         const paramKeys = [
@@ -61,25 +91,29 @@ export async function GET() {
           avg[k] = 0;
         });
 
-        feedbacks.forEach((f: any) => {
-          paramKeys.forEach((k) => {
-            avg[k] += f[k] ?? 0;
+        if (hasFeedback) {
+          feedbacks.forEach((f: any) => {
+            paramKeys.forEach((k) => {
+              avg[k] += f[k] ?? 0;
+            });
           });
-        });
 
-        paramKeys.forEach((k) => {
-          avg[k] = parseFloat((avg[k] / feedbacks.length).toFixed(2));
-        });
+          paramKeys.forEach((k) => {
+            avg[k] = parseFloat((avg[k] / feedbacks.length).toFixed(2));
+          });
+        }
+
+        const totalStudentsForSubject = await getStudentCountForYear(subject?.academicYearId);
 
         return {
           assignmentId: a.id,
           semester: a.semester,
           subject: subject,
           averages: avg,
-          submissionCount: feedbacks.length,
-          totalResponses: feedbacks.length,
-          totalStudents,
-          isReleased: feedbacks.every((ff: any) => ff.isReleased),
+          submissionCount: feedbacks.length || 0,
+          totalResponses: feedbacks.length || 0,
+          totalStudents: totalStudentsForSubject,
+          isReleased: hasFeedback ? feedbacks.every((ff: any) => ff.isReleased) : false,
         };
       }));
       

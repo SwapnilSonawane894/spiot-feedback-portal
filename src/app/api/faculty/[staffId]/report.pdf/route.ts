@@ -56,7 +56,8 @@ export async function GET(req: Request, ctx: { params?: any }) {
     const staff = await staffService.findUnique({ where: { id: staffId }, include: { user: true } });
     if (!staff) return NextResponse.json({ error: 'Staff not found' }, { status: 404 });
 
-    const allowed = session.user?.role === 'HOD' || (session.user?.role === 'STAFF' && session.user?.id === staff.userId);
+  // allow HODs or the staff member themselves; accept both 'STAFF' and 'FACULTY' roles
+  const allowed = session.user?.role === 'HOD' || ((session.user?.role === 'STAFF' || session.user?.role === 'FACULTY') && session.user?.id === staff.userId);
     if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // fetch assignments + feedbacks
