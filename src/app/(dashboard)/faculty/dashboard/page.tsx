@@ -35,7 +35,7 @@ export default function FacultyDashboardPage(): React.ReactElement {
     if (status === "loading") return;
     if (!session) return;
     const role = (session as any).user?.role;
-    if (role !== "STAFF" && role !== "HOD") {
+    if (role !== "STAFF" && role !== "FACULTY") {
       // unauthorized for this view
       router.replace("/");
       return;

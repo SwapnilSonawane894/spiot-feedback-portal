@@ -109,8 +109,26 @@ export async function GET(req: Request, ctx: { params?: any }) {
   page.drawText(`Name of staff: ${staff.user?.name || 'Faculty'}`, { x: leftX, y, size: 10, font: times });
   page.drawText(`Academic Year / Semester: ${semester}`, { x: leftX, y: y - 14, size: 10, font: times });
   const subjects = reports.map(r => r.subject?.name).filter(Boolean).join(', ');
-  page.drawText(`Subjects: ${subjects}`, { x: rightX, y, size: 10, font: times });
+  
+  // Wrap subjects if too long
+  const subjectsWrapped = wrapPdfText(`Subjects: ${subjects}`, pageWidth - rightX - 40, times, 10);
+  for (let i = 0; i < subjectsWrapped.length; i++) {
+    page.drawText(subjectsWrapped[i], { x: rightX, y: y - (i * 14), size: 10, font: times });
+  }
   y -= 38;
+
+  // Add introductory paragraph
+  const introParagraph = "This is informed to you,as per student Feedback Analysis & student performance report you are requested to correct your deficiencies and give the submit the action for those points to the Department based on the feedback.";
+  const introWrapped = wrapPdfText(introParagraph, pageWidth - 80, times, 10);
+  for (const line of introWrapped) {
+    page.drawText(line, { x: leftX, y, size: 10, font: times });
+    y -= 14;
+    if (y < 60) {
+      page = pdfDoc.addPage([595.28, 841.89]);
+      y = page.getHeight() - 40;
+    }
+  }
+  y -= 10;
 
     // draw table as a full bordered grid
     const tableX = 40;
@@ -238,6 +256,32 @@ export async function GET(req: Request, ctx: { params?: any }) {
 
     y = tableYStart - tableHeight - 18;
 
+    // Add "You need to improve" section with bullet points from student suggestions
+    if (suggestions.length > 0) {
+      y -= 8;
+      page.drawText('You need to improve your following points  that,', { x: tableX, y, size: 11, font: times });
+      y -= 16;
+      
+      // Limit to first 5 unique suggestions to avoid overcrowding
+      const uniqueSuggestions = [...new Set(suggestions)].slice(0, 5);
+      for (const suggestion of uniqueSuggestions) {
+        // Draw bullet point
+        page.drawText('•', { x: tableX + 6, y, size: 10, font: times });
+        
+        // Wrap suggestion text
+        const suggestionWrapped = wrapPdfText(suggestion, pageWidth - 100, times, 10);
+        for (let i = 0; i < suggestionWrapped.length; i++) {
+          page.drawText(suggestionWrapped[i], { x: tableX + 20, y, size: 10, font: times });
+          y -= 14;
+          if (y < 60) {
+            page = pdfDoc.addPage([595.28, 841.89]);
+            y = page.getHeight() - 40;
+          }
+        }
+      }
+      y -= 6;
+    }
+
     y -= 8;
     // Space before HOD suggestion
     page.drawText('HOD Suggestions:', { x: tableX, y, size: 11, font: times });
@@ -247,17 +291,17 @@ export async function GET(req: Request, ctx: { params?: any }) {
       // show semester label then the single suggestion content
       page.drawText(`Semester: ${hs.semester}`, { x: tableX + 4, y, size: 9, font: times, color: rgb(0.2,0.2,0.2) });
       y -= 12;
-      const wrapped = wrapText(hs.content || '', 90);
+      const wrapped = wrapPdfText(hs.content || '', pageWidth - 100, times, 10);
       for (const line of wrapped) {
-        page.drawText(line, { x: tableX + 6, y, size: 9, font: times });
-        y -= 12;
+        page.drawText(line, { x: tableX + 6, y, size: 10, font: times });
+        y -= 14;
         if (y < 60) {
           page = pdfDoc.addPage([595.28, 841.89]);
           y = page.getHeight() - 40;
         }
       }
-    } else if (suggestions.length === 0) {
-      page.drawText('No suggestions submitted.', { x: tableX, y, size: 9, font: times });
+    } else {
+      page.drawText('No suggestions from HOD yet.', { x: tableX + 6, y, size: 9, font: times });
     }
 
   // serialize
@@ -271,18 +315,3 @@ export async function GET(req: Request, ctx: { params?: any }) {
   }
 }
 
-function wrapText(text: string, maxChars: number) {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let cur = '';
-  for (const w of words) {
-    if ((cur + ' ' + w).trim().length > maxChars) {
-      lines.push(cur.trim());
-      cur = w;
-    } else {
-      cur = (cur + ' ' + w).trim();
-    }
-  }
-  if (cur.trim().length > 0) lines.push(cur.trim());
-  return lines;
-}
