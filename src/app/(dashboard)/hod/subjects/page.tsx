@@ -158,11 +158,16 @@ export default function ManageSubjectsPage(): React.ReactElement {
   }, []);
 
   return (
-    <main className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
-          Manage Department Subjects
-        </h1>
+    <main className="max-w-7xl mx-auto px-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+            Manage Department Subjects
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+            Add and manage subjects for your department
+          </p>
+        </div>
         <Button onClick={openCreateModal} className="gap-2">
           <Plus size={18} />
           Add New Subject

@@ -442,12 +442,15 @@ body {
   @apply overflow-x-auto rounded-xl;
   border: 1px solid var(--card-border);
   background: var(--card-bg);
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .data-table {
   @apply w-full;
   border-collapse: separate;
   border-spacing: 0;
+  min-width: 100%;
 }
 
 .data-table thead th {
@@ -461,6 +464,7 @@ body {
   @apply px-4 py-3.5 text-sm;
   color: var(--text-primary);
   border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
 }
 
 .data-table tbody tr:last-child td {
@@ -477,6 +481,22 @@ body {
 
 .data-table tbody tr:active {
   background: var(--active-overlay);
+}
+
+/* Mobile-specific table improvements */
+@media (max-width: 768px) {
+  .data-table {
+    font-size: 13px;
+  }
+  
+  .data-table thead th,
+  .data-table tbody td {
+    @apply px-3 py-2.5;
+  }
+  
+  .data-table thead th {
+    font-size: 11px;
+  }
 }
 
 /* ============================================
@@ -683,6 +703,20 @@ html {
 
 .desktop-only {
   @apply hidden md:block;
+}
+
+/* Prevent horizontal overflow on mobile */
+@media (max-width: 768px) {
+  main {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .max-w-7xl,
+  .max-w-6xl {
+    @apply px-4;
+    max-width: 100%;
+  }
 }
 
 /* ============================================

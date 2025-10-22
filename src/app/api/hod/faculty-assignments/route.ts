@@ -2,9 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService } from "@/lib/mongodb-services";
-
-const CURRENT_SEMESTER = "Odd 2025-26";
+import { staffService, assignmentService, semesterSettingsService } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
@@ -17,9 +15,16 @@ export async function GET() {
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
+    // Get current semester from settings
+    const semesterSettings = await semesterSettingsService.get();
+    const semesterString = semesterSettingsService.getCurrentSemesterString(
+      semesterSettings.currentSemester,
+      semesterSettings.academicYear
+    );
+
     // Fetch all assignments for the current semester
     const allAssignments = await assignmentService.findMany({
-      where: { semester: CURRENT_SEMESTER },
+      where: { semester: semesterString },
     });
 
     return NextResponse.json(allAssignments);
@@ -37,7 +42,17 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const semester = body?.semester ?? CURRENT_SEMESTER;
+    
+    // Get current semester from settings if not provided
+    let semester = body?.semester;
+    if (!semester) {
+      const semesterSettings = await semesterSettingsService.get();
+      semester = semesterSettingsService.getCurrentSemesterString(
+        semesterSettings.currentSemester,
+        semesterSettings.academicYear
+      );
+    }
+    
     const assignments = Array.isArray(body?.assignments) ? body.assignments : [];
 
     const hodUserId = session.user.id as string;

@@ -158,8 +158,8 @@ export default function AssignmentPage(): React.ReactElement {
   }), []);
 
   return (
-    <main className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <main className="max-w-7xl mx-auto px-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
             Faculty Assignment for {currentSemester}

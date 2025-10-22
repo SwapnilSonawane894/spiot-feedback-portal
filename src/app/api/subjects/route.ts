@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, subjectService, academicYearService } from "@/lib/mongodb-services";
+import { staffService, subjectService, academicYearService, semesterSettingsService } from "@/lib/mongodb-services";
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +17,22 @@ export async function GET(request: Request) {
 
     const departmentId = hodProfile.departmentId;
 
+  // Get URL parameters for optional filtering
+  const { searchParams } = new URL(request.url);
+  const filterByCurrentSemester = searchParams.get('currentSemester') === 'true';
+
+  // Build query
+  const where: any = { departmentId };
+  
+  // Add semester filter if requested
+  if (filterByCurrentSemester) {
+    const semesterSettings = await semesterSettingsService.get();
+    where.semester = semesterSettings.currentSemester;
+  }
+
+  // Filter subjects by HOD's department (and optionally by current semester)
   const subjects = await subjectService.findMany({
+    where,
     orderBy: { name: "asc" },
   });
 

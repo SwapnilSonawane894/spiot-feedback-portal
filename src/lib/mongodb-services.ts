@@ -912,7 +912,7 @@ export const semesterSettingsService = {
     const isOdd = semesterNumber % 2 === 1;
     const semesterType = isOdd ? 'Odd' : 'Even';
     const academicYear = year || new Date().getFullYear() + '-' + (new Date().getFullYear() + 1).toString().slice(-2);
-    return `${semesterType} Semester ${academicYear}`;
+    return `${semesterType} ${academicYear}`;
   },
 };
 
