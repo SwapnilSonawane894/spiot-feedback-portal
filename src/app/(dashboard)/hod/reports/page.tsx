@@ -345,11 +345,16 @@ function FacultyReportView({ staff, compact = false }: { staff: any; compact?: b
                       <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                         Overall Performance
                       </span>
-                      <div className="flex items-center gap-2">
-                        <div className="text-2xl font-bold" style={{ color: getScoreColor(overallScore) }}>
-                          {overallScore.toFixed(1)}
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="text-2xl font-bold" style={{ color: getScoreColor(overallScore) }}>
+                            {overallScore.toFixed(1)}
+                          </div>
+                          <span className="text-sm" style={{ color: "var(--text-muted)" }}>/5.0</span>
                         </div>
-                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>/5.0</span>
+                        <div className="text-xs font-medium" style={{ color: getScoreColor(overallScore) }}>
+                          {((overallScore / 5) * 100).toFixed(1)}%
+                        </div>
                       </div>
                     </div>
                     <div className="mt-2 w-full h-2 rounded-full" style={{ background: "var(--card-border)" }}>
