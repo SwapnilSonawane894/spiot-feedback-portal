@@ -4,7 +4,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { userService } from "../../../../lib/mongodb-services";
-import { rateLimit, clearRateLimit, sanitizeString, validatePassword } from "../../../../lib/security-utils";
+import { rateLimit, clearRateLimit, sanitizeString } from "../../../../lib/security-utils";
 
 export const authOptions = {
   providers: [
@@ -23,12 +23,6 @@ export const authOptions = {
         
         if (!rateLimit(email, 5, 15 * 60 * 1000)) {
           throw new Error("Too many login attempts. Please try again later.");
-        }
-
-        try {
-          validatePassword(credentials.password);
-        } catch {
-          throw new Error("Invalid credentials");
         }
 
         const user = await userService.findUnique({ 
