@@ -43,18 +43,18 @@ export default function LoginPage(): React.JSX.Element {
 
       if (result?.ok) {
         setIsNavigating(true);
-        
+
         try {
           // Fetch the session to get user role
           const sessionRes = await fetch('/api/auth/session');
-          
+
           if (!sessionRes.ok) {
             throw new Error('Failed to fetch session');
           }
-          
+
           const sessionData = await sessionRes.json();
           const role = sessionData?.user?.role;
-          
+
           // Redirect based on role
           if (role === "ADMIN") {
             router.push("/admin");
@@ -91,26 +91,26 @@ export default function LoginPage(): React.JSX.Element {
   }
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center sm:p-6 md:p-8" 
+    <div
+      className="min-h-screen flex items-center justify-center sm:p-6 md:p-8"
       style={{ background: "var(--background)" }}
     >
       <div className="w-full min-h-screen sm:min-h-0 sm:max-w-md fade-in flex flex-col justify-center">
         <div className="login-card p-8 sm:p-8 md:p-10">
           <div className="flex flex-col items-center mb-8 sm:mb-10">
-            <div 
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mb-5 transition-transform hover:scale-105" 
-              style={{ background: "var(--primary-light)" }}
-            >
-              <Image 
-                src="/logo.png" 
-                alt="SPIOT logo" 
-                width={80} 
-                height={80} 
-                priority
-                style={{ objectFit: "contain", width: "auto", height: "auto", maxWidth: "80%", maxHeight: "80%" }} 
-              />
-            </div>
+            <div className="flex justify-center mb-6">
+  <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48">
+    <Image
+      src="/logo.png"
+      alt="SPIOT logo"
+      fill
+      priority
+      className="object-contain"
+    />
+  </div>
+</div>
+
+
             <h1 className="text-center text-xl sm:text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
               SPIOT Feedback Portal
             </h1>
@@ -121,8 +121,8 @@ export default function LoginPage(): React.JSX.Element {
 
           <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div 
-                className="px-4 py-3 rounded-lg text-sm font-medium slide-in-right" 
+              <div
+                className="px-4 py-3 rounded-lg text-sm font-medium slide-in-right"
                 style={{ background: "var(--danger-light)", color: "var(--danger)" }}
               >
                 {error}
@@ -167,9 +167,9 @@ export default function LoginPage(): React.JSX.Element {
               </div>
             </div>
 
-            <button 
-              type="submit" 
-              disabled={isLoading} 
+            <button
+              type="submit"
+              disabled={isLoading}
               className="btn-primary w-full py-3.5 text-base font-semibold mt-6"
             >
               {isLoading ? (
