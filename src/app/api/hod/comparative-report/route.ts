@@ -257,13 +257,14 @@ export async function GET(req: Request) {
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
-    return new Response(buffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="Feedback-Report.xlsx"',
-      },
-    });
+    const contentLength = (buffer && (buffer as any).byteLength) ? String((buffer as any).byteLength) : undefined;
+    const headers: any = {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="Feedback-Report.xlsx"',
+      'Cache-Control': 'no-store',
+    };
+    if (contentLength) headers['Content-Length'] = contentLength;
+    return new Response(buffer, { status: 200, headers });
   } catch (error) {
     console.error('comparative-report error', error);
     return NextResponse.json({ error: 'Failed to generate report' }, { status: 500 });

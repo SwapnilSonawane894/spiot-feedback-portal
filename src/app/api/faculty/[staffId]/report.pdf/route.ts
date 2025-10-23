@@ -52,12 +52,17 @@ export async function GET(req: Request, ctx: { params?: any }) {
     const session = (await getServerSession(authOptions as any)) as any;
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // allow HODs or the staff member themselves
-    const staff = await staffService.findUnique({ where: { id: staffId }, include: { user: true } });
+  // allow HODs or the staff member themselves
+  const staff = await staffService.findUnique({ where: { id: staffId }, include: { user: true } });
     if (!staff) return NextResponse.json({ error: 'Staff not found' }, { status: 404 });
 
-    const allowed = session.user?.role === 'HOD' || (session.user?.role === 'STAFF' && session.user?.id === staff.userId);
-    if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  // Accept both STAFF and FACULTY roles for faculty users
+  const viewerRole = session.user?.role;
+  const viewerId = session.user?.id;
+  const viewerIsHod = viewerRole === 'HOD';
+  const viewerIsSelf = (viewerRole === 'STAFF' || viewerRole === 'FACULTY') && viewerId === staff.userId;
+  const allowed = viewerIsHod || viewerIsSelf;
+  if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // fetch assignments (subject) then fetch feedbacks explicitly so we always get the latest feedback docs
     const assignments = await assignmentService.findMany({ where: { staffId }, include: { subject: true } });
@@ -71,10 +76,11 @@ export async function GET(req: Request, ctx: { params?: any }) {
     const suggestions: string[] = [];
 
     for (const a of assignments) {
-      const feedbacks = await (async () => {
-        const fb = await (await import('@/lib/mongodb-services')).feedbackService.findMany({ where: { assignmentId: a.id } });
-        return fb || [];
-      })();
+      const fbService = (await import('@/lib/mongodb-services')).feedbackService;
+      const fbWhere: any = { assignmentId: a.id };
+      // If the viewer is not an HOD, only include feedbacks that HOD has released
+      if (!viewerIsHod) fbWhere.isReleased = true;
+      const feedbacks = await fbService.findMany({ where: fbWhere });
       if (!feedbacks || feedbacks.length === 0) continue;
       const avg: Record<string, number> = {};
       PARAM_KEYS.forEach((p: string) => (avg[p] = 0));
@@ -311,7 +317,10 @@ export async function GET(req: Request, ctx: { params?: any }) {
   const pdfBytes = await pdfDoc.save();
   // pdfBytes is a Uint8Array; use its underlying ArrayBuffer for Response
   const arrayBuffer = pdfBytes.buffer as ArrayBuffer;
-  return new Response(arrayBuffer, { status: 200, headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="faculty-report-${staff.user?.name || staffId}.pdf"` } });
+  const contentLength = (pdfBytes && pdfBytes.length) ? String(pdfBytes.length) : undefined;
+  const headers: any = { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="faculty-report-${staff.user?.name || staffId}.pdf"`, 'Cache-Control': 'no-store' };
+  if (contentLength) headers['Content-Length'] = contentLength;
+  return new Response(arrayBuffer, { status: 200, headers });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
