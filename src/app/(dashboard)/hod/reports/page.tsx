@@ -78,7 +78,14 @@ export default function HodReportsPage() {
       toast.error('Select a year');
       return;
     }
-    window.location.href = `/api/hod/comparative-report?year=${selectedYear}`;
+    // Open the comparative report in a new tab to avoid navigating away from the HOD page
+    const url = `/api/hod/comparative-report?year=${selectedYear}`;
+    try {
+      window.open(url, '_blank');
+    } catch (err) {
+      // fallback to location change if window.open is blocked
+      window.location.href = url;
+    }
   }, [selectedYear]);
 
   const staffOptions = useMemo(() => {

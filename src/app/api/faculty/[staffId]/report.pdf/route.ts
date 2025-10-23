@@ -67,6 +67,22 @@ export async function GET(req: Request, ctx: { params?: any }) {
     // fetch assignments (subject) then fetch feedbacks explicitly so we always get the latest feedback docs
     const assignments = await assignmentService.findMany({ where: { staffId }, include: { subject: true } });
 
+    // debug mode: return diagnostics instead of binary PDF
+    const url = new URL(req.url);
+    const debugMode = url.searchParams.get('debug') === '1';
+    if (debugMode) {
+      // compute counts
+      const fbService = (await import('@/lib/mongodb-services')).feedbackService;
+      const counts = [] as any[];
+      for (const a of assignments) {
+        const fbWhere: any = { assignmentId: a.id };
+        if (session.user?.role !== 'HOD') fbWhere.isReleased = true;
+        const fbs = await fbService.findMany({ where: fbWhere });
+        counts.push({ assignmentId: a.id, subject: a.subject?.name, feedbackCount: (fbs || []).length });
+      }
+      return NextResponse.json({ success: true, staffId, viewerRole: session.user?.role, allowed: allowed, assignmentCount: assignments.length, counts });
+    }
+
   // determine semester (best-effort: use first assignment.semester) and fetch the single HOD suggestion for it
   const semester = assignments?.[0]?.semester || '';
   const hodSuggestion = await hodSuggestionService.findUnique({ staffId_semester: { staffId, semester } });
