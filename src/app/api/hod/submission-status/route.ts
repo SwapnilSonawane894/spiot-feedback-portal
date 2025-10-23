@@ -45,8 +45,20 @@ export async function GET(request: Request) {
       subjects.forEach((s: any) => { if (s) subjectsMap.set(String(s.id), s); });
     }
     const assignmentsWithSubjects = deptAssignments.map((a: any) => ({ ...a, subject: subjectsMap.get(String(a.subjectId)) }));
-    
-    if (!assignmentsWithSubjects || assignmentsWithSubjects.length === 0) {
+
+    // Deduplicate assignments that point to the same staff+subject+semester
+    // (some documents differ only by semester string formatting and were inserted twice).
+    const dedupeMap = new Map<string, any>();
+    for (const a of assignmentsWithSubjects) {
+      const staffId = a.staffId || '';
+      const subjectId = a.subjectId || '';
+      const sem = a.semester || '';
+      const key = `${staffId}::${subjectId}::${sem}`;
+      if (!dedupeMap.has(key)) dedupeMap.set(key, a);
+    }
+    const uniqueAssignmentsWithSubjects = Array.from(dedupeMap.values());
+
+    if (!uniqueAssignmentsWithSubjects || uniqueAssignmentsWithSubjects.length === 0) {
       return NextResponse.json({ 
         semester: null, 
         academicYears: [], 
@@ -57,25 +69,29 @@ export async function GET(request: Request) {
 
     // Previously we picked a single semester which could give misleading totals.
     // Use all assignments for the department (across semesters) and let the UI optionally filter by academic year.
-    const semesterToUse = null;
-    const semesterAssignments = assignmentsWithSubjects;
+  const semesterToUse = null;
+  // use deduped assignments for all counting and diagnostics
+  const semesterAssignments = uniqueAssignmentsWithSubjects;
     // Determine available academic years present in these assignments (batched)
     // Normalize academicYearId to string to avoid ObjectId vs string mismatches
-    const yearIds = Array.from(new Set(semesterAssignments.map((a: any) => a.subject?.academicYearId && String(a.subject.academicYearId)).filter(Boolean)));
-  const academicYearsRaw = yearIds.length > 0 ? await Promise.all(yearIds.map((id: any) => academicYearService.findUnique({ id }))) : [];
-  const academicYears = academicYearsRaw.filter(y => y !== null);
+    // Determine academic years that belong to this department (via subject.academicYearId) and fetch them
+    const yearIds = Array.from(new Set(semesterAssignments.map((a: any) => a.subject?.academicYearId && String(a.subject?.academicYearId)).filter(Boolean)));
+    const academicYearsRaw = yearIds.length > 0 ? await Promise.all(yearIds.map((id: any) => academicYearService.findUnique({ id }))) : [];
+    // Filter to only academic years that are associated with this department (avoid showing other-department years)
+    const academicYears = academicYearsRaw.filter((y: any) => y && (!y.departmentId || String(y.departmentId) === String(departmentId))).filter(y => y !== null);
 
   // Read optional yearId query param to filter subject assignments to a specific academic year
     const url = new URL(request.url);
     let yearId = url.searchParams.get('yearId');
 
-    // If no yearId provided, default to the first academic year (if available) so the initial response is already filtered
+    // If no yearId provided, default to the first academic year (if available from department-specific years)
     if (!yearId && academicYears.length > 0 && academicYears[0] && academicYears[0].id) {
       yearId = academicYears[0].id;
     }
 
   const filteredSemesterAssignments = yearId ? semesterAssignments.filter((a) => String(a.subject?.academicYearId) === String(yearId)) : semesterAssignments;
-    const assignmentIds = filteredSemesterAssignments.map((a) => a.id);
+  // assignmentIds are from deduped assignments
+  const assignmentIds = filteredSemesterAssignments.map((a) => a.id);
 
     // Find students in department, filtered by academic year if specified (single query)
     const studentFilter: any = { role: 'STUDENT', departmentId };
@@ -125,7 +141,7 @@ export async function GET(request: Request) {
     // Diagnostic metadata to help debug mismatched totals
     const assignmentCountsByYear: Record<string, number> = {};
     for (const a of semesterAssignments) {
-      const y = a.subject?.academicYearId ? String(a.subject.academicYearId) : 'unknown';
+      const y = a.subject?.academicYearId ? String(a.subject?.academicYearId) : 'unknown';
       assignmentCountsByYear[y] = (assignmentCountsByYear[y] || 0) + 1;
     }
 

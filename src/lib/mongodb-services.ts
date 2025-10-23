@@ -15,10 +15,44 @@ export const COLLECTIONS = {
 };
 
 // Helper to convert MongoDB _id to id
+// Convert a MongoDB document's _id to id (string) and normalize any ObjectId fields to strings
 const docWithId = (doc: any) => {
   if (!doc) return null;
   const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
+  // Convert any ObjectId values in the rest to strings so callers get consistent types
+  Object.keys(rest).forEach((k) => {
+    const v = rest[k];
+    if (v && typeof v === 'object') {
+      // single ObjectId
+      if (v instanceof ObjectId) rest[k] = v.toString();
+      // arrays containing ObjectId
+      else if (Array.isArray(v)) {
+        rest[k] = v.map((it: any) => (it instanceof ObjectId ? it.toString() : it));
+      }
+    }
+  });
+  return { id: _id?.toString(), ...rest };
+};
+
+// Helper to build a mongo query from a flexible `where` object.
+// If `where.id` is present we query by _id ObjectId. Otherwise the keys are passed through.
+const buildQueryFromWhere = (where: any) => {
+  const query: any = {};
+  if (!where) return query;
+  if (where.id) {
+    try {
+      query._id = new ObjectId(where.id);
+      return query;
+    } catch (e) {
+      // fallthrough - if id isn't a valid ObjectId, leave as string match
+      query._id = where.id;
+      return query;
+    }
+  }
+  Object.entries(where).forEach(([key, value]) => {
+    if (value !== undefined) query[key] = value;
+  });
+  return query;
 };
 
 // Helper to handle date objects
@@ -26,6 +60,27 @@ const timestampToDate = (timestamp: any) => {
   if (!timestamp) return null;
   if (timestamp instanceof Date) return timestamp;
   return new Date(timestamp);
+};
+
+// Normalize semester strings into a canonical format: "Odd Semester 2025-26" or "Even Semester 2025-26"
+export const normalizeSemester = (semester: any) => {
+  if (!semester && semester !== 0) return semester;
+  let s = String(semester).trim();
+  // If it's already like 'Odd Semester 2025-26' normalize spacing
+  const m = s.match(/(Odd|Even)\s*(?:Semester)?\s*(\d{4}(?:-|–)\d{2})/i);
+  if (m) {
+    const type = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+    const year = m[2];
+    return `${type} Semester ${year}`;
+  }
+  // If it is numeric like 1..6, attempt to map to Odd/Even with current year
+  const num = parseInt(s, 10);
+  if (!isNaN(num) && num >= 1 && num <= 6) {
+    const isOdd = num % 2 === 1;
+    const yearStr = `${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}`;
+    return `${isOdd ? 'Odd' : 'Even'} Semester ${yearStr}`;
+  }
+  return s;
 };
 
 // ============ USER OPERATIONS ============
@@ -286,7 +341,23 @@ export const staffService = {
   async findMany(params?: { where?: any; include?: any; orderBy?: any }) {
     try {
       const db = await getDatabase();
-      const query: any = params?.where || {};
+      // Coerce where filters: if a filter key endsWith 'Id' and the value is a 24-char hex string,
+      // convert it to an ObjectId so it matches documents that store references as ObjectId.
+      const query: any = {};
+      if (params?.where) {
+        Object.entries(params.where).forEach(([key, value]) => {
+          if (value === undefined) return;
+          if (typeof value === 'string' && /Id$/.test(key) && /^[0-9a-fA-F]{24}$/.test(value)) {
+            try {
+                query[key] = { $in: [ new ObjectId(value), value ] };
+            } catch (e) {
+              query[key] = value;
+            }
+          } else {
+            query[key] = value;
+          }
+        });
+      }
 
       if (query.userId) {
         query.userId = query.userId;
@@ -336,7 +407,17 @@ export const staffService = {
       if (params.where.id) {
         query._id = new ObjectId(params.where.id);
       } else if (params.where.userId) {
-        query.userId = params.where.userId;
+        // allow match when staff.userId is stored as ObjectId or as string
+        const uid = params.where.userId;
+        if (typeof uid === 'string' && /^[0-9a-fA-F]{24}$/.test(uid)) {
+          try {
+            query.userId = { $in: [ new ObjectId(uid), uid ] };
+          } catch (e) {
+            query.userId = uid;
+          }
+        } else {
+          query.userId = uid;
+        }
       }
 
       const doc = await db.collection(COLLECTIONS.STAFF).findOne(query);
@@ -529,7 +610,22 @@ export const subjectService = {
   async findMany(params?: { where?: any; include?: any; orderBy?: any }) {
     try {
       const db = await getDatabase();
-      const query: any = params?.where || {};
+      // Build query and coerce '*Id' filters to match ObjectId or string
+      const query: any = {};
+      if (params?.where) {
+        Object.entries(params.where).forEach(([key, value]) => {
+          if (value === undefined) return;
+          if (typeof value === 'string' && /Id$/.test(key) && /^[0-9a-fA-F]{24}$/.test(value)) {
+            try {
+              query[key] = { $in: [ new ObjectId(value), value ] };
+            } catch (e) {
+              query[key] = value;
+            }
+          } else {
+            query[key] = value;
+          }
+        });
+      }
 
       let cursor = db.collection(COLLECTIONS.SUBJECTS).find(query);
 
@@ -567,6 +663,17 @@ export const subjectService = {
       return docWithId(doc);
     } catch (error) {
       console.error('Error in subjectService.findUnique:', error);
+      throw error;
+    }
+  },
+  // allow lookup by subjectCode
+  async findUniqueByCode(subjectCode: string) {
+    try {
+      const db = await getDatabase();
+      const doc = await db.collection(COLLECTIONS.SUBJECTS).findOne({ subjectCode });
+      return docWithId(doc);
+    } catch (error) {
+      console.error('Error in subjectService.findUniqueByCode:', error);
       throw error;
     }
   },
@@ -627,13 +734,21 @@ export const subjectService = {
 // ============ ASSIGNMENT OPERATIONS ============
 
 export const assignmentService = {
-  async createMany(data: any[]) {
+  async createMany(payload: any) {
     try {
       const db = await getDatabase();
-      const docs = data.map(item => ({
+      // payload may be an array or an object like { data: [] }
+      const dataArray = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+      // normalize semester at write time to prevent semantically-duplicate documents
+      const docs = dataArray.map((item: any) => ({
         ...item,
+        semester: normalizeSemester(item.semester),
+        // ensure id-like fields are stored as strings
+        staffId: item.staffId ? String(item.staffId) : item.staffId,
+        subjectId: item.subjectId ? String(item.subjectId) : item.subjectId,
         createdAt: new Date(),
       }));
+      if (docs.length === 0) return { count: 0 };
       const result = await db.collection(COLLECTIONS.FACULTY_ASSIGNMENTS).insertMany(docs);
       return { count: Object.keys(result.insertedIds).length };
     } catch (error) {
@@ -645,10 +760,31 @@ export const assignmentService = {
   async findMany(params?: { where?: any; include?: any }) {
     try {
       const db = await getDatabase();
-      const query: any = params?.where || {};
+      // Build query with coercion for '*Id' fields to ObjectId when appropriate
+      const query: any = {};
+      if (params?.where) {
+        Object.entries(params.where).forEach(([key, value]) => {
+          if (value === undefined) return;
+          if (key === 'semester') {
+            query.semester = normalizeSemester(value);
+            return;
+          }
+          if (typeof value === 'string' && /Id$/.test(key) && /^[0-9a-fA-F]{24}$/.test(value)) {
+            try {
+                query[key] = { $in: [ new ObjectId(value), value ] };
+            } catch (e) {
+              query[key] = value;
+            }
+          } else {
+            query[key] = value;
+          }
+        });
+      }
 
       const results = await db.collection(COLLECTIONS.FACULTY_ASSIGNMENTS).find(query).toArray();
       let assignments = results.map(docWithId);
+  // normalize semester field on returned assignments
+  assignments = assignments.map((a: any) => ({ ...a, semester: normalizeSemester(a.semester) }));
 
       if (params?.include) {
         for (const assignment of assignments) {
@@ -681,7 +817,7 @@ export const assignmentService = {
       
       Object.entries(where).forEach(([key, value]) => {
         if (value !== undefined) {
-          query[key] = value;
+          query[key] = key === 'semester' ? normalizeSemester(value) : value;
         }
       });
 
@@ -870,14 +1006,15 @@ export const semesterSettingsService = {
       const db = await getDatabase();
       const doc = await db.collection(COLLECTIONS.SETTINGS).findOne({ type: 'semester' });
       if (!doc) {
-        const defaultSettings = {
+        const defaultSettings: any = {
           type: 'semester',
           currentSemester: 1,
-          academicYear: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1).toString().slice(-2),
+          academicYear: `${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}`,
           updatedAt: new Date(),
         };
-        await db.collection(COLLECTIONS.SETTINGS).insertOne(defaultSettings);
-        return { ...defaultSettings, id: defaultSettings._id?.toString() };
+        const result = await db.collection(COLLECTIONS.SETTINGS).insertOne(defaultSettings);
+        defaultSettings.id = result.insertedId.toString();
+        return defaultSettings;
       }
       return docWithId(doc);
     } catch (error) {
@@ -893,9 +1030,7 @@ export const semesterSettingsService = {
         currentSemester: data.currentSemester,
         updatedAt: new Date(),
       };
-      if (data.academicYear) {
-        updateData.academicYear = data.academicYear;
-      }
+      if (data.academicYear) updateData.academicYear = data.academicYear;
       await db.collection(COLLECTIONS.SETTINGS).updateOne(
         { type: 'semester' },
         { $set: updateData },
@@ -909,10 +1044,10 @@ export const semesterSettingsService = {
   },
 
   getCurrentSemesterString(semesterNumber: number, year?: string) {
-    const isOdd = semesterNumber % 2 === 1;
+    const isOdd = Number(semesterNumber) % 2 === 1;
     const semesterType = isOdd ? 'Odd' : 'Even';
-    const academicYear = year || new Date().getFullYear() + '-' + (new Date().getFullYear() + 1).toString().slice(-2);
-    return `${semesterType} ${academicYear}`;
+    const academicYear = year || `${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}`;
+    return `${semesterType} Semester ${academicYear}`;
   },
 };
 

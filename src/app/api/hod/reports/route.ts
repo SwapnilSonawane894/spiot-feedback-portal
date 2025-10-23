@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { staffService, userService, assignmentService, subjectService, feedbackService } from "@/lib/mongodb-services";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,29 +17,55 @@ export async function GET() {
     // Get staff list anchored to department, but also include any staff who are assigned to subjects of this department
     // 1) find subjects for this department
     const deptSubjects = await subjectService.findMany({ where: { departmentId } });
-    const deptSubjectIds = new Set((deptSubjects || []).map((s: any) => s.id));
+  const deptSubjectIds = new Set((deptSubjects || []).map((s: any) => s.id));
 
     // 2) find assignments that point to these subjects and collect staffIds
     const allAssignments = await assignmentService.findMany({});
     const assignedStaffIds = new Set<string>();
+    // Normalize assignment.semester before use and detect subject matches
     for (const a of (allAssignments || [])) {
-      if (a.subjectId && deptSubjectIds.has(String(a.subjectId))) {
-        if (a.staffId) assignedStaffIds.add(a.staffId);
+      // normalize semester strings so "Odd 2025-26" and "Odd Semester 2025-26" are treated the same
+      const normalizeSemester = (await import('@/lib/mongodb-services')).normalizeSemester;
+      a.semester = normalizeSemester(a.semester);
+      const subjId = a.subjectId ? String(a.subjectId) : null;
+      const staffId = a.staffId ? String(a.staffId) : null;
+      if (subjId && deptSubjectIds.has(subjId)) {
+        if (staffId) assignedStaffIds.add(staffId);
       }
     }
 
-    // 3) fetch department staff and also any assigned staff (avoid duplicates)
-    const deptStaff = await staffService.findMany({ where: { departmentId } });
-    const deptStaffIds = new Set((deptStaff || []).map((d: any) => d.id));
+    // 3) Build staff list robustly:
+    // - include all staff who have assignments for subjects of this department (even if their department differs)
+    // - include all staff who belong to this department (even if they don't currently have assignments)
 
-    const extraStaffIds = Array.from(assignedStaffIds).filter((id) => !deptStaffIds.has(id));
-  const extraStaff = extraStaffIds.length > 0 ? await Promise.all(extraStaffIds.map((id) => staffService.findUnique({ where: { id }, include: { user: true, department: true } }))) : [];
+    // Fetch assignments that point to dept subjects (we already scanned allAssignments above)
+    const assignmentsForDeptSubj = (allAssignments || []).filter((a: any) => {
+      const subjId = a.subjectId ? String(a.subjectId) : null;
+      return subjId && deptSubjectIds.has(subjId);
+    });
 
-  // Merge and dedupe by staff id
-  const staffMap = new Map<string, any>();
-  for (const s of deptStaff) staffMap.set(s.id, s);
-  for (const s of extraStaff) if (s) staffMap.set(s.id, s);
+    const staffIdsFromAssignments = new Set<string>();
+    for (const a of assignmentsForDeptSubj) {
+      if (a.staffId) staffIdsFromAssignments.add(String(a.staffId));
+    }
+
+    // Fetch staff records for these staff ids
+    const staffFromAssignments = (Array.from(staffIdsFromAssignments).length > 0)
+      ? await Promise.all(Array.from(staffIdsFromAssignments).map((id) => staffService.findUnique({ where: { id }, include: { user: true, department: true } })))
+      : [];
+
+    // Fetch department staff
+    const deptStaff = await staffService.findMany({ where: { departmentId }, include: { user: true, department: true } });
+
+    // Merge and dedupe by staff id (prefer dept staff record when available)
+    const staffMap = new Map<string, any>();
+    for (const s of staffFromAssignments) if (s) staffMap.set(s.id, s);
+    for (const s of deptStaff) if (s) staffMap.set(s.id, s);
   const staffList = Array.from(staffMap.values());
+
+  // debug flag: ?debug=1 will include internal counts to help diagnose missing staff
+  const url = new URL(req.url);
+  const debug = url.searchParams.get('debug');
 
     // We'll cache student counts per academicYearId so subject cards show correct totals (avoid counting entire department for every subject)
     const studentCountByYear: Record<string, number> = {};
@@ -53,10 +79,30 @@ export async function GET() {
       return cnt;
     }
 
+    const normalizeSemester = (await import('@/lib/mongodb-services')).normalizeSemester;
+
     const reports = await Promise.all(staffList.map(async (s: any) => {
       // Fetch user and assignments for this staff member
       const user = await userService.findUnique({ id: s.userId });
-      const assignments = await assignmentService.findMany({ where: { staffId: s.id } });
+      let assignments = await assignmentService.findMany({ where: { staffId: s.id }, include: { subject: true } });
+
+      // Only keep assignments that belong to subjects in this HOD's department
+      assignments = (assignments || []).filter((a: any) => {
+        const subjId = a.subjectId ? String(a.subjectId) : null;
+        return subjId && deptSubjectIds.has(subjId);
+      });
+
+      // dedupe assignments by subjectId + normalized semester to avoid duplicates caused by inconsistent semester strings
+      const seen = new Set<string>();
+      assignments = assignments.filter((a: any) => {
+        const sem = normalizeSemester(a.semester || '');
+        const key = `${a.subjectId || ''}::${sem}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        // ensure assignment.semester is normalized for display
+        a.semester = sem;
+        return true;
+      });
       
       const staffReports = await Promise.all(assignments.map(async (a: any) => {
         // Fetch subject and feedbacks for this assignment
@@ -126,7 +172,25 @@ export async function GET() {
       };
     }));
 
-    return NextResponse.json({ reports });
+    const resp: any = { reports };
+    if (debug) {
+      // attempt to fetch subjects directly for debugging (bypass subjectService.findMany behavior)
+      const directSubjects = await (await import('@/lib/mongodb-services')).subjectService.findMany({ where: { departmentId } });
+      resp._debug = {
+        departmentId: String(departmentId),
+        deptSubjectsCount: deptSubjectIds.size,
+        assignmentsForDeptSubjectsCount: assignmentsForDeptSubj.length,
+        assignmentsForDeptSubjectsSample: assignmentsForDeptSubj.slice(0, 10).map((a: any) => ({ id: a.id, subjectId: String(a.subjectId), staffId: String(a.staffId), semester: a.semester })),
+        requestedStaffFromAssignments: Array.from(staffIdsFromAssignments).length,
+        foundStaffFromAssignments: staffFromAssignments.filter(Boolean).length,
+        deptStaffCount: (deptStaff || []).length,
+        mergedStaffCount: staffList.length,
+        directSubjectsCount: directSubjects.length,
+        directSubjectsSample: directSubjects.slice(0, 5),
+      };
+    }
+
+    return NextResponse.json(resp);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch reports" }, { status: 500 });

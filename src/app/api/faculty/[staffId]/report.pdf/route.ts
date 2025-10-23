@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService, hodSuggestionService, feedbackService } from "@/lib/mongodb-services";
+import { staffService, assignmentService, hodSuggestionService } from "@/lib/mongodb-services";
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 const PARAM_KEYS = [
@@ -56,11 +56,10 @@ export async function GET(req: Request, ctx: { params?: any }) {
     const staff = await staffService.findUnique({ where: { id: staffId }, include: { user: true } });
     if (!staff) return NextResponse.json({ error: 'Staff not found' }, { status: 404 });
 
-  // allow HODs or the staff member themselves; accept both 'STAFF' and 'FACULTY' roles
-  const allowed = session.user?.role === 'HOD' || ((session.user?.role === 'STAFF' || session.user?.role === 'FACULTY') && session.user?.id === staff.userId);
+    const allowed = session.user?.role === 'HOD' || (session.user?.role === 'STAFF' && session.user?.id === staff.userId);
     if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    // fetch assignments with subjects
+    // fetch assignments (subject) then fetch feedbacks explicitly so we always get the latest feedback docs
     const assignments = await assignmentService.findMany({ where: { staffId }, include: { subject: true } });
 
   // determine semester (best-effort: use first assignment.semester) and fetch the single HOD suggestion for it
@@ -72,14 +71,10 @@ export async function GET(req: Request, ctx: { params?: any }) {
     const suggestions: string[] = [];
 
     for (const a of assignments) {
-      // Fetch feedbacks separately for each assignment
-      const feedbacks = await feedbackService.findMany({ 
-        where: {
-          staffId: a.staffId, 
-          subjectId: a.subjectId, 
-          semester: a.semester
-        }
-      });
+      const feedbacks = await (async () => {
+        const fb = await (await import('@/lib/mongodb-services')).feedbackService.findMany({ where: { assignmentId: a.id } });
+        return fb || [];
+      })();
       if (!feedbacks || feedbacks.length === 0) continue;
       const avg: Record<string, number> = {};
       PARAM_KEYS.forEach((p: string) => (avg[p] = 0));

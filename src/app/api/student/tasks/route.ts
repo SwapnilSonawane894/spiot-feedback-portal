@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import type { Session } from "next-auth";
-import { userService, departmentService, assignmentService, feedbackService, staffService } from "@/lib/mongodb-services";
+import { userService, departmentService, assignmentService, feedbackService, staffService, normalizeSemester } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
@@ -33,7 +33,18 @@ export async function GET() {
 
     // Find all assignments where subject.academicYearId == student's academicYearId
     const allAssignments = await assignmentService.findMany({ include: { subject: true } });
-    const assignments = allAssignments.filter(a => a.subject?.academicYearId === academicYearId);
+    let assignments = allAssignments.filter(a => a.subject?.academicYearId === academicYearId);
+
+    // Deduplicate assignments by staffId + subjectId + normalized semester to avoid duplicate cards
+    const dedupe = new Map<string, any>();
+    for (const a of assignments) {
+      const staffId = a.staffId || '';
+      const subjectId = a.subjectId || '';
+      const sem = normalizeSemester(a.semester || '');
+      const key = `${staffId}::${subjectId}::${sem}`;
+      if (!dedupe.has(key)) dedupe.set(key, { ...a, semester: sem });
+    }
+    assignments = Array.from(dedupe.values());
     
     // Get staff details for each assignment
     const allFeedback = await feedbackService.findMany({});

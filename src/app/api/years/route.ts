@@ -2,12 +2,27 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { academicYearService } from "@/lib/mongodb-services";
+import { academicYearService, staffService } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
-    const years = await academicYearService.findMany({ orderBy: { name: "asc" } });
-    return NextResponse.json(years);
+    const session = (await getServerSession(authOptions as any)) as any;
+
+    const allYears = await academicYearService.findMany({ orderBy: { name: "asc" } });
+
+    // If requester is an HOD, return only academic years belonging to their department
+    // (exclude global years without departmentId so HODs don't see other-department years)
+    if (session && session.user?.role === 'HOD') {
+      const staff = await staffService.findFirst({ where: { userId: session.user.id } });
+      if (!staff || !staff.departmentId) {
+        return NextResponse.json({ error: "HOD or department not found" }, { status: 404 });
+      }
+      const departmentId = staff.departmentId;
+      const filtered = allYears.filter((y: any) => y.departmentId && y.departmentId === departmentId);
+      return NextResponse.json(filtered);
+    }
+
+    return NextResponse.json(allYears);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch academic years" }, { status: 500 });

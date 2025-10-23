@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService } from "@/lib/mongodb-services";
+import { staffService, assignmentService, subjectService, feedbackService } from "@/lib/mongodb-services";
 import ExcelJS from "exceljs";
 
 const PARAM_KEYS = [
@@ -58,31 +58,51 @@ export async function GET(req: Request) {
     if (!hodStaff || !hodStaff.departmentId) return NextResponse.json({ error: "HOD or department not found" }, { status: 404 });
     const departmentId = hodStaff.departmentId;
 
-    // fetch staff in department with assignments for the requested academic year
-    const staffs = await staffService.findMany({
-      where: { departmentId },
-      include: {
-        user: true,
-        assignments: {
-          where: { subject: { academicYearId: yearId } },
-          include: { subject: true, feedbacks: true },
-        },
-      },
-    });
+    // fetch subjects for this department + year
+    const deptSubjects = await subjectService.findMany({ where: { departmentId, academicYearId: yearId } });
+    const subjectIds = deptSubjects.map((s: any) => String(s.id));
 
-    // Build ordered list of staff with their assignments
-    const matrixStaffs: any[] = staffs
-      .map((s: any) => ({
-        staffId: s.id,
-        staffName: s.user?.name || s.user?.email || "Unknown",
-        assignments: (s.assignments || []).map((a: any) => ({
-          assignmentId: a.id,
-          semester: a.semester,
-          subject: { id: a.subject.id, name: a.subject.name },
-          feedbacks: a.feedbacks || [],
-        })),
-      }))
-      .filter((s: any) => s.assignments && s.assignments.length > 0);
+    // fetch all assignments for these subjects and attach subject and feedbacks
+    const allAssignments = await assignmentService.findMany({ include: { subject: true } });
+    // Only keep assignments for our subjects, and dedupe by staffId+subjectId+semester to avoid duplicate columns
+    const rawFiltered = (allAssignments || []).filter((a: any) => a.subjectId && subjectIds.includes(String(a.subjectId)));
+    const seenAssign = new Set<string>();
+    const filteredAssignments: any[] = [];
+    for (const a of rawFiltered) {
+      const key = `${String(a.staffId || '')}::${String(a.subjectId || '')}::${String(a.semester || '')}`;
+      if (seenAssign.has(key)) continue;
+      seenAssign.add(key);
+      filteredAssignments.push(a);
+    }
+
+    // collect unique staffIds
+    const staffIds = Array.from(new Set(filteredAssignments.map((a: any) => String(a.staffId)).filter(Boolean)));
+    const staffRecords = staffIds.length ? await Promise.all(staffIds.map(id => staffService.findUnique({ where: { id }, include: { user: true } }))) : [];
+    const staffById = new Map<string, any>();
+    staffRecords.forEach((s: any) => { if (s) staffById.set(s.id, s); });
+
+    // Build matrixStaffs by grouping assignments under staff
+    const matrixStaffs: any[] = [];
+    for (const sid of staffIds) {
+      const staffRec = staffById.get(sid);
+      const assignmentsForStaff = filteredAssignments.filter((a: any) => String(a.staffId) === String(sid));
+      const detailedAssignments: any[] = [];
+      for (const a of assignmentsForStaff) {
+        const feedbacks = await feedbackService.findMany({ where: { assignmentId: a.id } });
+        detailedAssignments.push({ assignmentId: a.id, semester: a.semester, subject: { id: a.subject?.id, name: a.subject?.name }, feedbacks: feedbacks || [] });
+      }
+      if (detailedAssignments.length > 0) {
+        matrixStaffs.push({ staffId: sid, staffName: staffRec?.user?.name || staffRec?.user?.email || 'Unknown', assignments: detailedAssignments });
+      }
+    }
+
+    // If caller asked for debug, return JSON diagnostics instead of generating an Excel file.
+    const debugMode = url.searchParams.get('debug') === '1';
+    if (debugMode) {
+      const sampleAssignments = filteredAssignments.slice(0, 200).map((a: any) => ({ id: a.id, staffId: a.staffId, subjectId: a.subjectId, semester: a.semester }));
+      const matrixSummary = matrixStaffs.map((s: any) => ({ staffId: s.staffId, staffName: s.staffName, assignmentCount: s.assignments.length, assignments: s.assignments.map((aa: any) => ({ assignmentId: aa.assignmentId, subjectName: aa.subject?.name, feedbackCount: (aa.feedbacks || []).length })) }));
+      return NextResponse.json({ success: true, deptSubjectsCount: deptSubjects.length, subjectIdsCount: subjectIds.length, rawFilteredCount: rawFiltered.length, filteredAssignmentsCount: filteredAssignments.length, staffIdsCount: staffIds.length, matrixStaffCount: matrixStaffs.length, matrixSummary, sampleAssignments });
+    }
 
     // Build Excel workbook
     const workbook = new ExcelJS.Workbook();

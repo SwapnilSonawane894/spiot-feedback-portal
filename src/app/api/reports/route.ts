@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService } from "@/lib/mongodb-services";
+import { staffService, assignmentService, subjectService } from "@/lib/mongodb-services";
 
 const CURRENT_SEMESTER = "Odd 2025-26";
 
@@ -17,16 +17,25 @@ export async function GET() {
       const hodProfile = await staffService.findUnique({ where: { userId: session.user.id } });
       if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-      // fetch staff in department, then filter assignments
-      const deptStaff = await staffService.findMany({ where: { departmentId: hodProfile.departmentId }, include: { user: true } });
-      const staffIds = deptStaff.map(s => s.id);
+      // Get all subjects for this HOD's department. This ensures subjects owned by the department appear
+      // even if the assigned staff belongs to another department (NA, ME, etc.).
+  const deptSubjects = await subjectService.findMany({ where: { departmentId: hodProfile.departmentId } });
+      const subjectIds = deptSubjects.map((s: any) => s.id);
+
+      // Get all assignments for these subjects for the current semester
       const allAssignments = await assignmentService.findMany({ where: { semester: CURRENT_SEMESTER }, include: { subject: true, feedbacks: true } });
-      const assignments = allAssignments.filter(a => staffIds.includes(a.staffId)).map(a => ({
+      const assignments = allAssignments.filter((a: any) => subjectIds.includes(a.subjectId));
+
+      // Fetch staff for assignments when possible
+      const staffIds = Array.from(new Set(assignments.map((a: any) => a.staffId).filter(Boolean)));
+      const staffList = staffIds.length ? await staffService.findMany({ where: { /* note: staffService will accept departmentId or userId, but we can pass nothing to fetch all and filter */ }, include: { user: true } }) : [];
+
+      const assignmentsWithStaff = assignments.map((a: any) => ({
         ...a,
-        staff: deptStaff.find(s => s.id === a.staffId)
+        staff: staffList.find((s: any) => s.id === a.staffId) || null,
       }));
 
-      const reports = assignmentsWithStaff.map((a: any) => {
+  const reports = assignmentsWithStaff.map((a: any) => {
         const averages: any = {};
         const params = [
           "coverage_of_syllabus",
@@ -54,7 +63,7 @@ export async function GET() {
         }
 
         return {
-          facultyName: a.staff?.user?.name || a.staff?.user?.email,
+          facultyName: a.staff?.user?.name || a.staff?.user?.email || 'Unknown',
           subjectName: a.subject?.name,
           assignmentId: a.id,
           averages,

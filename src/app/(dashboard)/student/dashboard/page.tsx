@@ -22,7 +22,7 @@ export default function StudentDashboard(): React.ReactElement {
 
   async function fetchSemester() {
     try {
-      const res = await fetch("/api/admin/semester-settings");
+      const res = await fetch("/api/semester");
       if (res.ok) {
         const data = await res.json();
         setCurrentSemester(data.semesterString || "Semester 2025-26");

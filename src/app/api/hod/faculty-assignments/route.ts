@@ -2,7 +2,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService, semesterSettingsService } from "@/lib/mongodb-services";
+import { staffService, assignmentService } from "@/lib/mongodb-services";
+
+const CURRENT_SEMESTER = "Odd 2025-26";
 
 export async function GET() {
   try {
@@ -11,23 +13,22 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const hodUserId = session.user.id as string;
-    const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
-    if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
+  const hodUserId = session.user.id as string;
+  const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
+  if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    // Get current semester from settings
-    const semesterSettings = await semesterSettingsService.get();
-    const semesterString = semesterSettingsService.getCurrentSemesterString(
-      semesterSettings.currentSemester,
-      semesterSettings.academicYear
-    );
+  const departmentId = hodProfile.departmentId;
 
-    // Fetch all assignments for the current semester
-    const allAssignments = await assignmentService.findMany({
-      where: { semester: semesterString },
-    });
+    // Fetch all assignments for the current semester then filter to department subjects
+    const allAssignments = await assignmentService.findMany({ where: { semester: CURRENT_SEMESTER } });
 
-    return NextResponse.json(allAssignments);
+    // Get subjects for this HOD's department
+    const deptSubjects = await (await import('@/lib/mongodb-services')).subjectService.findMany({ where: { departmentId } });
+    const deptSubjectIds = new Set(deptSubjects.map((s: any) => String(s.id)));
+
+    const deptAssignments = allAssignments.filter((a: any) => a.subjectId && deptSubjectIds.has(String(a.subjectId)));
+
+    return NextResponse.json(deptAssignments);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch assignments" }, { status: 500 });
@@ -42,40 +43,37 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    
-    // Get current semester from settings if not provided
-    let semester = body?.semester;
-    if (!semester) {
-      const semesterSettings = await semesterSettingsService.get();
-      semester = semesterSettingsService.getCurrentSemesterString(
-        semesterSettings.currentSemester,
-        semesterSettings.academicYear
-      );
-    }
-    
+    const semester = body?.semester ?? CURRENT_SEMESTER;
     const assignments = Array.isArray(body?.assignments) ? body.assignments : [];
 
     const hodUserId = session.user.id as string;
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    // Delete all existing assignments for this semester
-    console.log("Deleting all existing assignments for semester:", semester);
-    const deleteResult = await assignmentService.deleteMany({ semester });
-    console.log("Deleted assignments:", deleteResult.count);
+  const departmentId = hodProfile.departmentId;
+
+  // Delete existing assignments for this semester limited to this HOD's department subjects
+  const deptSubjects = await (await import('@/lib/mongodb-services')).subjectService.findMany({ where: { departmentId } });
+  const deptSubjectIds = deptSubjects.map((s: any) => String(s.id));
+  // build $in array including string ids
+  const deleteFilter: any = { semester };
+  if (deptSubjectIds.length) deleteFilter.subjectId = { $in: deptSubjectIds };
+
+  console.log("Deleting existing assignments for semester (department-limited):", semester);
+  const deleteResult = await assignmentService.deleteMany(deleteFilter);
+  console.log("Deleted assignments:", deleteResult.count);
 
     // Create new assignments
     let createResult = null;
     if (assignments.length > 0) {
-      const createData = assignments.map((a: any) => ({
-        staffId: a.staffId,
-        subjectId: a.subjectId,
-        semester,
-      }));
+      // Only create assignments for subjects that belong to this HOD's department
+      const deptSubjectSet = new Set(deptSubjectIds);
+      const createData = assignments
+        .filter((a: any) => deptSubjectSet.has(String(a.subjectId)))
+        .map((a: any) => ({ staffId: a.staffId, subjectId: a.subjectId, semester }));
 
-  console.log("Creating new assignments:", createData.length);
-  // assignmentService.createMany expects an array of docs, so pass the array directly
-  createResult = await assignmentService.createMany(createData);
+      console.log("Creating new assignments:", createData.length);
+      createResult = await assignmentService.createMany({ data: createData });
       console.log("Created assignments:", createResult?.count ?? 0);
     }
 

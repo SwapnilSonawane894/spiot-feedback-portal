@@ -60,7 +60,10 @@ export async function GET() {
     const suggestions: string[] = [];
 
     for (const a of assignments) {
-      const fb = feedbackMap.get(a.id) || [];
+      let fb = feedbackMap.get(a.id) || [];
+      // If the viewer is not an HOD, only include feedbacks that have been released by HOD
+      const viewerIsHod = session.user?.role === 'HOD';
+      if (!viewerIsHod) fb = fb.filter((f: any) => f.isReleased === true);
 
       if (!fb || fb.length === 0) continue;
 

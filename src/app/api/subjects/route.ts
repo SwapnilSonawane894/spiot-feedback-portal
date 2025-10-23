@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, subjectService, academicYearService, semesterSettingsService } from "@/lib/mongodb-services";
+import { staffService, subjectService, academicYearService } from "@/lib/mongodb-services";
 
 export async function GET(request: Request) {
   try {
@@ -17,22 +17,9 @@ export async function GET(request: Request) {
 
     const departmentId = hodProfile.departmentId;
 
-  // Get URL parameters for optional filtering
-  const { searchParams } = new URL(request.url);
-  const filterByCurrentSemester = searchParams.get('currentSemester') === 'true';
-
-  // Build query
-  const where: any = { departmentId };
-  
-  // Add semester filter if requested
-  if (filterByCurrentSemester) {
-    const semesterSettings = await semesterSettingsService.get();
-    where.semester = semesterSettings.currentSemester;
-  }
-
-  // Filter subjects by HOD's department (and optionally by current semester)
+  // Only return subjects for this HOD's department
   const subjects = await subjectService.findMany({
-    where,
+    where: { departmentId },
     orderBy: { name: "asc" },
   });
 
@@ -61,10 +48,9 @@ export async function POST(request: Request) {
     const hodUserId = session.user.id as string;
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
-  const departmentId = hodProfile.departmentId;
 
     const body = await request.json();
-    let { name, subjectCode, academicYearId, semester } = body || {};
+    let { name, subjectCode, academicYearId } = body || {};
     name = typeof name === 'string' ? name.trim() : name;
     subjectCode = typeof subjectCode === 'string' ? subjectCode.trim().toUpperCase() : subjectCode;
 
@@ -72,15 +58,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields: name, subjectCode, academicYearId are required" }, { status: 400 });
     }
 
-    if (semester && (semester < 1 || semester > 6)) {
-      return NextResponse.json({ error: "Semester must be between 1 and 6" }, { status: 400 });
-    }
-
     const year = await academicYearService.findUnique({ id: academicYearId });
     if (!year) return NextResponse.json({ error: `AcademicYear not found for id=${academicYearId}` }, { status: 400 });
 
-    const existing = await subjectService.findMany({ where: { subjectCode } });
-    if (existing && existing.length > 0) {
+  const existing = await subjectService.findUniqueByCode(subjectCode);
+    if (existing) {
       return NextResponse.json({ error: `Subject with code '${subjectCode}' already exists.` }, { status: 409 });
     }
 
@@ -89,8 +71,7 @@ export async function POST(request: Request) {
         name,
         subjectCode,
         academicYearId,
-        departmentId,
-        semester: semester ? Number(semester) : undefined,
+        departmentId: hodProfile.departmentId,
       });
       return NextResponse.json(created, { status: 201 });
     } catch (err: any) {
