@@ -9,11 +9,43 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const stored = localStorage.getItem("theme") as "light" | "dark" | null;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const prefersDark = media.matches;
     const initialTheme = stored || (prefersDark ? "dark" : "light");
     setTheme(initialTheme);
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
     setMounted(true);
+
+    // Listen for OS-level theme changes and apply them automatically only
+    // when the user hasn't set an explicit site preference (i.e. nothing in localStorage).
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      try {
+        const hasStored = !!localStorage.getItem("theme");
+        if (hasStored) return; // user's explicit choice takes precedence
+        const newTheme = (e as MediaQueryListEvent).matches ? "dark" : "light";
+        setTheme(newTheme);
+        document.documentElement.classList.toggle("dark", newTheme === "dark");
+      } catch (err) {
+        // ignore errors accessing localStorage in some environments
+      }
+    };
+
+    // Prefer modern API but fall back for older browsers
+    if (typeof media.addEventListener === "function") {
+      // @ts-ignore - lib.dom typings vary between environments
+      media.addEventListener("change", handleChange);
+    } else if (typeof (media as any).addListener === "function") {
+      (media as any).addListener(handleChange);
+    }
+
+    return () => {
+      if (typeof media.removeEventListener === "function") {
+        // @ts-ignore
+        media.removeEventListener("change", handleChange);
+      } else if (typeof (media as any).removeListener === "function") {
+        (media as any).removeListener(handleChange);
+      }
+    };
   }, []);
 
   const toggleTheme = () => {

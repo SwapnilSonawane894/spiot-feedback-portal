@@ -101,7 +101,7 @@ export default function LoginPage(): React.JSX.Element {
             <div className="flex justify-center mb-6">
   <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48">
     <Image
-      src="/logo.png"
+      src={`/logo.png?v=${process.env.NEXT_PUBLIC_ASSET_VERSION ?? "1"}`}
       alt="SPIOT logo"
       fill
       priority
