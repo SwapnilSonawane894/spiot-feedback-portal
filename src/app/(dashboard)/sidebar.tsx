@@ -5,26 +5,26 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LayoutDashboard, Building2, Users, User, Book, Clipboard, LogOut, ClipboardList, GraduationCap, School } from "lucide-react";
+import { LayoutDashboard, Building2, Users, User, BookOpen, Clipboard, LogOut, ClipboardList, GraduationCap, School, Calendar, UserCog, UserCheck, UserCircle, UserPlus, ClipboardCheck, FileCheck, CircleUser } from "lucide-react";
 
 const adminLinks: Array<{ href: string; label: string; icon: React.ReactNode }> = [
   { href: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
+  { href: "/admin/semester-settings", label: "Semester Settings", icon: <Calendar size={16} /> },
   { href: "/admin/departments", label: "Departments", icon: <Building2 size={16} /> },
   { href: "/admin/years", label: "Academic Years", icon: <GraduationCap size={16} /> },
-  { href: "/admin/staff", label: "Staff Management", icon: <Users size={16} /> },
   { href: "/admin/hods", label: "HOD Management", icon: <Users size={16} /> },
-  { href: "/profile", label: "My Profile", icon: <User size={16} /> },
+  { href: "/admin/staff", label: "Staff Management", icon: <UserCog size={16} /> },
+  { href: "/profile", label: "My Profile", icon: <CircleUser size={16} /> },
 ];
 
 const hodLinks: Array<{ href: string; label: string; icon: React.ReactNode }> = [
   { href: "/hod/dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-  { href: "/hod/staff", label: "Staff Management", icon: <User size={16} /> },
-  { href: "/hod/subjects", label: "Subject Management", icon: <Book size={16} /> },
-    { href: "/hod/assignment", label: "Faculty Assignment", icon: <ClipboardList size={16} /> },
-    { href: "/hod/students", label: "Student Management", icon: <School size={16} /> },
-    { href: "/hod/reports", label: "Feedback Reports", icon: <Clipboard size={16} /> },
-    { href: "/hod/submission-status", label: "Submission Status", icon: <ClipboardList size={16} /> },
-    { href: "/profile", label: "My Profile", icon: <User size={16} /> },
+  { href: "/hod/subjects", label: "Subject Management", icon: <BookOpen size={16} /> },
+  { href: "/hod/students", label: "Student Management", icon: <Users size={16} /> },
+  { href: "/hod/assignment", label: "Faculty Assignment", icon: <UserPlus size={16} /> },
+  { href: "/hod/reports", label: "Feedback Reports", icon: <ClipboardCheck size={16} /> },
+  { href: "/hod/submission-status", label: "Submission Status", icon: <FileCheck size={16} /> },
+  { href: "/profile", label: "My Profile", icon: <UserCircle size={16} /> },
 ];
 
 const studentLinks: Array<{ href: string; label: string; icon: React.ReactNode }> = [
