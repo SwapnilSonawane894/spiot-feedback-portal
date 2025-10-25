@@ -4,30 +4,30 @@
    THEME VARIABLES
    ============================================ */
 :root {
-  /* Light Theme - WhatsApp-inspired clean palette */
-  --background: #f0f2f5;
-  --foreground: #111b21;
+  /* Light Theme - modern light blue palette (Notion/Linear-inspired) */
+  --background: #f6fbff; /* very light sky blue */
+  --foreground: #07213a; /* deep navy for text */
   --card-bg: #ffffff;
-  --card-border: #e9edef;
+  --card-border: #e6f0fb; /* soft blue-gray */
   --sidebar-bg: #ffffff;
-  --sidebar-border: #e9edef;
-  --primary: #00a884;
-  --primary-hover: #008f6e;
-  --primary-light: #e7f6f3;
-  --secondary: #667781;
-  --secondary-hover: #54656f;
-  --danger: #ea4335;
-  --danger-hover: #d33426;
-  --danger-light: #fef2f2;
-  --success: #00a884;
-  --success-hover: #008f6e;
-  --success-light: #e7f6f3;
-  --text-primary: #111b21;
-  --text-secondary: #667781;
-  --text-muted: #8696a0;
+  --sidebar-border: #e6f0fb;
+  --primary: #0ea5ff; /* sky blue */
+  --primary-hover: #0284c7; /* deeper blue for hover */
+  --primary-light: #e6f9ff; /* very pale blue background for active */
+  --secondary: #6b82a8; /* muted desaturated blue */
+  --secondary-hover: #556783;
+  --danger: #ef4444; /* accessible red */
+  --danger-hover: #dc2626;
+  --danger-light: #fff4f5;
+  --success: #10b981; /* green/teal success */
+  --success-hover: #059669;
+  --success-light: #ecfdf5;
+  --text-primary: #07213a;
+  --text-secondary: #6b82a8;
+  --text-muted: #8b98ab;
   --input-bg: #ffffff;
-  --input-border: #d1d7db;
-  --input-focus-border: #00a884;
+  --input-border: #dbeaf6; /* subtle blue border */
+  --input-focus-border: #0ea5ff; /* tie focus to primary */
   --shadow-sm: 0 1px 2px rgba(11, 20, 26, 0.04);
   --shadow-md: 0 2px 8px rgba(11, 20, 26, 0.08);
   --shadow-lg: 0 4px 16px rgba(11, 20, 26, 0.12);
@@ -36,35 +36,35 @@
 }
 
 .dark {
-  /* Dark Theme - WhatsApp dark mode inspired */
-  --background: #0b141a;
-  --foreground: #e9edef;
-  --card-bg: #1f2c33;
-  --card-border: #2a3942;
-  --sidebar-bg: #1f2c33;
-  --sidebar-border: #2a3942;
-  --primary: #00a884;
-  --primary-hover: #06cf9c;
-  --primary-light: #0b3e34;
-  --secondary: #8696a0;
-  --secondary-hover: #aebac1;
-  --danger: #f15c5c;
-  --danger-hover: #f47373;
-  --danger-light: #3a1f1f;
-  --success: #00a884;
-  --success-hover: #06cf9c;
-  --success-light: #0b3e34;
-  --text-primary: #e9edef;
-  --text-secondary: #aebac1;
-  --text-muted: #667781;
-  --input-bg: #2a3942;
-  --input-border: #3b4a54;
-  --input-focus-border: #00a884;
+  /* Dark Theme - deep navy with muted cyan accents */
+  --background: #071425; /* very dark navy */
+  --foreground: #e6f6ff; /* soft cyan/very light for high contrast */
+  --card-bg: #0e2a3a; /* deep slate/navy card */
+  --card-border: #153544;
+  --sidebar-bg: #0e2a3a;
+  --sidebar-border: #153544;
+  --primary: #19b5e5; /* muted cyan accent */
+  --primary-hover: #0b95c4;
+  --primary-light: #072a35; /* darker background tint for primary-light usage */
+  --secondary: #7fb6d9; /* muted desaturated cyan */
+  --secondary-hover: #9fc9e8;
+  --danger: #ff7b7b;
+  --danger-hover: #ff8b8b;
+  --danger-light: #2b1515;
+  --success: #2dd4bf; /* teal success accent */
+  --success-hover: #14b8a6;
+  --success-light: #053232;
+  --text-primary: #e6f6ff;
+  --text-secondary: #c3e6f8;
+  --text-muted: #9fb3c4;
+  --input-bg: #15303a;
+  --input-border: #23434f;
+  --input-focus-border: #19b5e5;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --hover-overlay: rgba(255, 255, 255, 0.05);
-  --active-overlay: rgba(255, 255, 255, 0.08);
+  --hover-overlay: rgba(255, 255, 255, 0.02);
+  --active-overlay: rgba(255, 255, 255, 0.04);
 }
 
 @theme inline {
