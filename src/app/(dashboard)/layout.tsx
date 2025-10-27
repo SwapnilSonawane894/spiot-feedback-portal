@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import React from "react";
 // Import the client-side DashboardShell directly. It's a client component so Next will handle it correctly.
 import DashboardShell from "@/components/dashboard-shell";

@@ -2,15 +2,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import type { Session } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { staffService, userService, hodSuggestionService, assignmentService } from "@/lib/mongodb-services";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, context: any) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
 
     const session = (await getServerSession(authOptions as any)) as Session | null;
-    if (!session || !["ADMIN", "HOD"].includes(session.user?.role)) {
+    const role = session?.user?.role as string | undefined;
+    if (!session || !role || !["ADMIN", "HOD"].includes(role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -49,11 +50,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, context: any) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const session = (await getServerSession(authOptions as any)) as Session | null;
-    if (!session || !["ADMIN", "HOD"].includes(session.user?.role)) {
+    const role = session?.user?.role as string | undefined;
+    if (!session || !role || !["ADMIN", "HOD"].includes(role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

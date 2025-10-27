@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import type { Session } from "next-auth";
-import { userService, departmentService, assignmentService, feedbackService, staffService, normalizeSemester } from "@/lib/mongodb-services";
+import { userService, departmentService, departmentSubjectsService, assignmentService, feedbackService, staffService, normalizeSemester } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
@@ -23,6 +23,17 @@ export async function GET() {
       return NextResponse.json({ error: "Student academic year not set" }, { status: 400 });
     }
 
+    // DEBUG: student info
+    try {
+      console.log('🔍 STUDENT TASKS DEBUG:');
+      console.log(`  Student ID: ${student.id}`);
+      console.log(`  Department ID: ${student.departmentId}`);
+      console.log(`  Academic Year ID: ${academicYearId}`);
+      console.log(`  Semester: ${student.semester}`);
+    } catch (e) {
+      console.log('🔍 STUDENT TASKS DEBUG: failed to stringify student info', e);
+    }
+
     // CRITICAL CHECK: ensure department feedback window is active
     const department = await departmentService.findUnique({ id: student.departmentId as any });
     if (!department) return NextResponse.json({ error: "Student department not found" }, { status: 404 });
@@ -31,9 +42,51 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    // Find all assignments where subject.academicYearId == student's academicYearId
-    const allAssignments = await assignmentService.findMany({ include: { subject: true } });
-    let assignments = allAssignments.filter(a => a.subject?.academicYearId === academicYearId);
+  // Find departmentSubjects (junctions + master subjects) so we can include shared subjects
+  const deptSubjects = await departmentSubjectsService.findSubjectsForDepartment(student.departmentId as string, { include: { academicYear: true } });
+  const possibleSubjectIds = Array.from(new Set([
+    ...deptSubjects.map((s: any) => String(s._junctionId)).filter(Boolean),
+    ...deptSubjects.map((s: any) => String(s.id)).filter(Boolean),
+  ]));
+
+  // DEBUG: show what we'll fetch
+  console.log(`  Student dept subjects: ${deptSubjects.length}, possibleSubjectIds: ${possibleSubjectIds.length}`);
+
+  // Fetch assignments owned by student's department (existing behavior)
+  const deptAssignments = await assignmentService.findMany({ include: { subject: true }, where: { departmentId: student.departmentId } });
+
+  // Fetch assignments that reference any of the possible subject ids (these may be owned by other departments — shared subjects)
+  const sharedAssignments: any[] = [];
+  for (const sid of possibleSubjectIds) {
+    try {
+      const as = await assignmentService.findMany({ include: { subject: true }, where: { subjectId: sid } });
+      if (as && as.length) sharedAssignments.push(...as);
+    } catch (e) {
+      // ignore fetch errors for individual ids
+      console.debug('failed to fetch assignments for subjectId', sid, e);
+    }
+  }
+
+  // Merge and dedupe fetched assignments by _id (assignment.id)
+  const mergedMap = new Map<string, any>();
+  for (const a of [...deptAssignments, ...sharedAssignments]) mergedMap.set(a.id, a);
+  const allAssignments = Array.from(mergedMap.values());
+  // Match assignments by subject.academicYearId when available, otherwise fall back to the assignment.academicYearId field
+  // Match assignments by subject.academicYearId when available, otherwise fall back to the assignment.academicYearId field
+  let assignments = allAssignments.filter(a => {
+    const subjectYear = a.subject?.academicYearId;
+    const assignmentYear = (a as any).academicYearId;
+    return (subjectYear && subjectYear === academicYearId) || (assignmentYear && assignmentYear === academicYearId);
+  });
+
+  // DEBUG: log assignment counts and samples
+  try {
+    console.log(`  Found ${assignments.length} faculty assignments after filtering by academicYearId`);
+    console.log(`  Sample assignment IDs: ${assignments.slice(0,5).map(a => a.id).join(', ')}`);
+    console.log(`  Sample subject IDs: ${assignments.slice(0,5).map(a => a.subjectId).join(', ')}`);
+  } catch (e) {
+    console.log('  Failed to log assignment samples', e);
+  }
 
     // Deduplicate assignments by staffId + subjectId + normalized semester to avoid duplicate cards
     const dedupe = new Map<string, any>();

@@ -300,7 +300,7 @@ export default function ManageStaffPage(): React.ReactElement {
                     label: `${dept.name} (${dept.abbreviation})`
                   }))}
                   value={departmentId}
-                  onChange={setDepartmentId}
+                  onChange={(val) => setDepartmentId(String(val))}
                   placeholder="Select department"
                 />
               </div>

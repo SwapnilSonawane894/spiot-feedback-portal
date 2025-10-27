@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { staffService, feedbackService, assignmentService } from "@/lib/mongodb-services";
 
 export async function GET() {
@@ -17,8 +17,9 @@ export async function GET() {
     // Get all staff in department, then their assignments, then feedback
     const deptStaff = await staffService.findMany({ where: { departmentId: staff.departmentId } });
     const staffIds = deptStaff.map(s => s.id);
-    const deptAssignments = await assignmentService.findMany({});
-    const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
+  // Fetch assignments scoped to this department
+  const deptAssignments = await assignmentService.findMany({ where: { departmentId: staff.departmentId } });
+  const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
     const assignmentIds = relevantAssignments.map(a => a.id);
     
     const allFeedback = await feedbackService.findMany({});
@@ -49,8 +50,9 @@ export async function PATCH(request: Request) {
     // Get all staff in department, then their assignments, then bulk update feedback
     const deptStaff = await staffService.findMany({ where: { departmentId: staff.departmentId } });
     const staffIds = deptStaff.map(s => s.id);
-    const deptAssignments = await assignmentService.findMany({});
-    const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
+  // Fetch assignments scoped to this department
+  const deptAssignments = await assignmentService.findMany({ where: { departmentId: staff.departmentId } });
+  const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
     const assignmentIds = relevantAssignments.map(a => a.id);
     
     // Update all feedback for these assignments

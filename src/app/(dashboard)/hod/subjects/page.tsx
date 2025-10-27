@@ -26,6 +26,7 @@ export default function ManageSubjectsPage(): React.ReactElement {
   const [academicYearId, setAcademicYearId] = useState("");
   const [years, setYears] = useState<Array<{ id: string; name: string; abbreviation?: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
 
   useEffect(() => {
     fetchSubjects();
@@ -104,9 +105,24 @@ export default function ManageSubjectsPage(): React.ReactElement {
           }
           throw new Error(errMsg);
         }
-        const created = await res.json();
-        setSubjects((prev) => [created, ...prev]);
-        toast.success("Subject created successfully");
+        const payload = await res.json();
+        // Server may return structured payload: { subject, created, attachedToDepartment }
+        if (res.status === 201) {
+          // The server returns { subject, created: true, attachedToDepartment: true }
+          // Ensure we extract the actual subject object when present.
+          const created = payload?.subject || payload;
+          setSubjects((prev) => [created, ...prev]);
+          toast.success("Subject created successfully");
+        } else if (res.status === 200) {
+          const returned = payload.subject || payload;
+          // Add or update returned subject in list
+          setSubjects((prev) => [returned, ...prev.filter(s => s.id !== returned.id)]);
+          if (payload.attachedToDepartment) {
+            toast.success("Subject already exists — linked to your department.");
+          } else {
+            toast("Subject already exists and is already linked to your department.");
+          }
+        }
       }
 
       setIsModalOpen(false);
@@ -123,12 +139,29 @@ export default function ManageSubjectsPage(): React.ReactElement {
   }, [editingSubject, name, subjectCode, semester, academicYearId]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("Delete this subject?")) return;
+    // user-facing warning clarifying scope of deletion
+    const confirmed = confirm(
+      "This will remove this subject from YOUR department only. Other departments using this subject will NOT be affected.\n\nDo you want to continue?"
+    );
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/subjects/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
-      setSubjects((prev) => prev.filter((s) => s.id !== id));
-      toast.success("Subject deleted successfully");
+      if (!res.ok) {
+        let errMsg = 'Delete failed';
+        try {
+          const payload = await res.json();
+          errMsg = payload?.error || errMsg;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+
+      // remove any subjects in the UI that match either the master id or the removed junction
+      setSubjects((prev) => prev.filter((s) => {
+        const sAny = s as any;
+        const junctionId = sAny._junctionId || null;
+        return !(s.id === id || junctionId === id);
+      }));
+      toast.success("Subject removed from your department");
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Delete failed");
@@ -191,47 +224,56 @@ export default function ManageSubjectsPage(): React.ReactElement {
               </tr>
             </thead>
             <tbody>
-              {subjects.map((s) => (
-              <tr key={s.id}>
-                <td>{s.name}</td>
-                <td>{s.subjectCode}</td>
-                <td>
-                  {s.semester ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" 
-                      style={{ 
-                        background: s.semester % 2 === 1 ? "var(--primary-light)" : "var(--info-light)",
-                        color: s.semester % 2 === 1 ? "var(--primary)" : "var(--info)"
-                      }}>
-                      Sem {s.semester} ({s.semester % 2 === 1 ? "Odd" : "Even"})
-                    </span>
-                  ) : "-"}
-                </td>
-                <td>{s.academicYear?.abbreviation ?? s.academicYear?.name ?? "-"}</td>
-                <td>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openEditModal(s)}
-                      className="p-2 rounded-lg transition-colors hover:bg-[var(--hover-overlay)]"
-                      style={{ color: "var(--text-secondary)" }}
-                      aria-label="Edit"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(s.id)} 
-                      type="button" 
-                      className="p-2 rounded-lg transition-colors"
-                      style={{ color: "var(--danger)" }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                      aria-label="Delete"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              ))}
+              {subjects.map((s) => {
+                const sAny = s as any;
+                const rowKey = sAny._junctionId || `${s.id}-${sAny.academicYearId || (sAny.academicYear && sAny.academicYear.id) || 'no-ay'}`;
+                return (
+                  <tr key={rowKey}>
+                    <td>{s.name}</td>
+                    <td>{s.subjectCode}</td>
+                    <td>
+                      {s.semester ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" 
+                          style={{ 
+                            background: s.semester % 2 === 1 ? "var(--primary-light)" : "var(--info-light)",
+                            color: s.semester % 2 === 1 ? "var(--primary)" : "var(--info)"
+                          }}>
+                          Sem {s.semester} ({s.semester % 2 === 1 ? "Odd" : "Even"})
+                        </span>
+                      ) : "-"}
+                    </td>
+                    <td>{sAny.academicYear?.abbreviation ?? sAny.academicYear?.name ?? "-"}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(s)}
+                          className="p-2 rounded-lg transition-colors hover:bg-[var(--hover-overlay)]"
+                          style={{ color: "var(--text-secondary)" }}
+                          aria-label="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const sAny = s as any;
+                            // Prefer passing the junction id when available so server deletes only that junction
+                            const targetId = sAny._junctionId || s.id;
+                            handleDelete(targetId);
+                          }} 
+                          type="button" 
+                          className="p-2 rounded-lg transition-colors"
+                          style={{ color: "var(--danger)" }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--danger-light)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                          aria-label="Delete"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -287,14 +329,14 @@ export default function ManageSubjectsPage(): React.ReactElement {
               <CustomSelect
                 label="Semester"
                 options={[
-                  { value: 1, label: "1st Semester (Odd)" },
-                  { value: 2, label: "2nd Semester (Even)" },
-                  { value: 3, label: "3rd Semester (Odd)" },
-                  { value: 4, label: "4th Semester (Even)" },
-                  { value: 5, label: "5th Semester (Odd)" },
-                  { value: 6, label: "6th Semester (Even)" },
+                  { value: "1", label: "1st Semester (Odd)" },
+                  { value: "2", label: "2nd Semester (Even)" },
+                  { value: "3", label: "3rd Semester (Odd)" },
+                  { value: "4", label: "4th Semester (Even)" },
+                  { value: "5", label: "5th Semester (Odd)" },
+                  { value: "6", label: "6th Semester (Even)" },
                 ]}
-                value={semester}
+                value={String(semester)}
                 onChange={(value) => setSemester(Number(value))}
               />
 
@@ -307,6 +349,8 @@ export default function ManageSubjectsPage(): React.ReactElement {
                 value={academicYearId}
                 onChange={setAcademicYearId}
               />
+
+              {/* Removed: Link to existing subject checkbox (handled automatically by backend) */}
 
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={closeModal} className="btn-outline">

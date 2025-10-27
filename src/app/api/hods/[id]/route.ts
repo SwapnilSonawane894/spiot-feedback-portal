@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { userService, staffService, departmentService, assignmentService } from "@/lib/mongodb-services";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

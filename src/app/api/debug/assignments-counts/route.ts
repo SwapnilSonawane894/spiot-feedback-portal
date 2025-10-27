@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { staffService, subjectService, assignmentService, academicYearService } from "@/lib/mongodb-services";
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';

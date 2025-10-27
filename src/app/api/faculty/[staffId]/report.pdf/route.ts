@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { staffService, assignmentService, hodSuggestionService } from "@/lib/mongodb-services";
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
@@ -65,7 +65,16 @@ export async function GET(req: Request, ctx: { params?: any }) {
   if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // fetch assignments (subject) then fetch feedbacks explicitly so we always get the latest feedback docs
-    const assignments = await assignmentService.findMany({ where: { staffId }, include: { subject: true } });
+    // Scope assignments by department depending on viewer: HOD sees assignments for their department, staff sees assignments for their own department
+    let deptFilter: any = {};
+    if (viewerIsHod) {
+      const hodProfile = await (await import('@/lib/mongodb-services')).staffService.findUnique({ where: { userId: viewerId } });
+      if (hodProfile && hodProfile.departmentId) deptFilter.departmentId = hodProfile.departmentId;
+    } else if (viewerIsSelf) {
+      if (staff.departmentId) deptFilter.departmentId = staff.departmentId;
+    }
+
+    const assignments = await assignmentService.findMany({ where: { staffId, ...deptFilter }, include: { subject: true } });
 
     // debug mode: return diagnostics instead of binary PDF
     const url = new URL(req.url);

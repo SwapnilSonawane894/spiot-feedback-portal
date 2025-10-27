@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { staffService, assignmentService, userService } from "@/lib/mongodb-services";
 
 const CURRENT_SEMESTER = "Odd 2025-26";
@@ -24,8 +24,9 @@ export async function GET() {
     const result = await Promise.all(
       staff.map(async (s: any) => {
         const user = await userService.findUnique({ id: s.userId });
+        // Only fetch assignments that belong to the HOD's department
         const assignments = await assignmentService.findMany({
-          where: { staffId: s.id, semester: CURRENT_SEMESTER },
+          where: { staffId: s.id, semester: CURRENT_SEMESTER, departmentId: hodProfile.departmentId },
         });
         
         return {
@@ -72,7 +73,13 @@ export async function POST(request: Request) {
 
     // Allow cross-departmental faculty assignments (removed department restriction)
 
-    const createData = subjectIds.map((subjId: string) => ({ staffId, subjectId: subjId, semester }));
+    // Attach departmentId from HOD profile so assignments are scoped to the HOD's department
+    const createData = subjectIds.map((subjId: string) => ({
+      staffId,
+      subjectId: subjId,
+      semester,
+      departmentId: hodProfile.departmentId,
+    }));
 
     console.log("API /assignments POST - deleting existing assignments for staffId", staffId, "semester", semester);
     const deleteResult = await assignmentService.deleteMany({ staffId, semester });

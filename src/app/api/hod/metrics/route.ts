@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, subjectService, userService, assignmentService, feedbackService } from "@/lib/mongodb-services";
+import { authOptions } from "@/lib/auth-options";
+import { staffService, subjectService, userService, assignmentService, feedbackService, departmentSubjectsService } from "@/lib/mongodb-services";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  // authOptions is an untyped object in our codebase; cast to any to satisfy TypeScript's getServerSession signature
+  const session = (await getServerSession(authOptions as any)) as any;
   if (!session?.user || (session.user as any).role !== "HOD") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -26,9 +27,9 @@ export async function GET() {
     const deptStaff = await staffService.findMany({ where: { departmentId } });
     const staffIds = deptStaff.map(s => s.id);
 
-    // Get all assignments for this department in this semester
-    const allAssignments = await assignmentService.findMany({ where: { semester } });
-    const deptAssignments = allAssignments.filter(a => staffIds.includes(a.staffId));
+  // Get all assignments for this department in this semester
+  const allAssignments = await assignmentService.findMany({ where: { semester, departmentId } });
+  const deptAssignments = allAssignments; // already department-scoped
     const assignmentIds = deptAssignments.map(a => a.id);
 
     // Get all feedback for these assignments
@@ -38,7 +39,8 @@ export async function GET() {
     // OPTIMIZED: Run all counts in parallel
     const [totalStaff, totalSubjects, totalStudents] = await Promise.all([
       staffService.count({ departmentId }),
-      subjectService.count({}),
+  // Count only subjects that belong to this department (via departmentSubjects)
+  departmentSubjectsService.countSubjectsForDepartment(departmentId),
       userService.count({ departmentId, role: "STUDENT" }),
     ]);
 

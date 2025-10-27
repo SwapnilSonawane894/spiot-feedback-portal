@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { staffService, assignmentService, feedbackService } from "@/lib/mongodb-services";
 
 export async function POST(request: Request) {
@@ -16,8 +16,9 @@ export async function POST(request: Request) {
     const staffList = await staffService.findMany({ where: { departmentId: staff.departmentId } });
     const staffIds = staffList.map((s) => s.id);
 
-    const allAssignments = await assignmentService.findMany({});
-    const assignments = allAssignments.filter(a => staffIds.includes(a.staffId));
+  // Fetch assignments scoped to this HOD's department
+  const allAssignments = await assignmentService.findMany({ where: { departmentId: staff.departmentId } });
+  const assignments = allAssignments.filter(a => staffIds.includes(a.staffId));
     const assignmentIds = assignments.map((a) => a.id);
 
     if (assignmentIds.length === 0) return NextResponse.json({ success: true, released: 0 });

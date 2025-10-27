@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { staffService, assignmentService, subjectService } from "@/lib/mongodb-services";
+import { authOptions } from "@/lib/auth-options";
+import { staffService, assignmentService, subjectService, departmentSubjectsService } from "@/lib/mongodb-services";
 
 const CURRENT_SEMESTER = "Odd 2025-26";
 
@@ -17,18 +17,17 @@ export async function GET() {
       const hodProfile = await staffService.findUnique({ where: { userId: session.user.id } });
       if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-      // Get all subjects for this HOD's department. This ensures subjects owned by the department appear
-      // even if the assigned staff belongs to another department (NA, ME, etc.).
-  const deptSubjects = await subjectService.findMany({ where: { departmentId: hodProfile.departmentId } });
-      const subjectIds = deptSubjects.map((s: any) => s.id);
+    // Get all subjects for this HOD's department via departmentSubjects junction
+  const deptSubjects = await departmentSubjectsService.findSubjectsForDepartment(hodProfile.departmentId);
+    const subjectIds = (deptSubjects || []).map((s: any) => s.id);
 
-      // Get all assignments for these subjects for the current semester
-      const allAssignments = await assignmentService.findMany({ where: { semester: CURRENT_SEMESTER }, include: { subject: true, feedbacks: true } });
-      const assignments = allAssignments.filter((a: any) => subjectIds.includes(a.subjectId));
+  // Get all assignments for these subjects for the current semester (scope to subjectIds)
+  const allAssignments = await assignmentService.findMany({ where: { semester: CURRENT_SEMESTER, subjectId: subjectIds }, include: { subject: true, feedbacks: true } });
+  const assignments = allAssignments; // already filtered by subjectId
 
       // Fetch staff for assignments when possible
-      const staffIds = Array.from(new Set(assignments.map((a: any) => a.staffId).filter(Boolean)));
-      const staffList = staffIds.length ? await staffService.findMany({ where: { /* note: staffService will accept departmentId or userId, but we can pass nothing to fetch all and filter */ }, include: { user: true } }) : [];
+  const staffIds = Array.from(new Set(assignments.map((a: any) => a.staffId).filter(Boolean)));
+  const staffList = staffIds.length ? await staffService.findMany({ where: { id: staffIds }, include: { user: true } }) : [];
 
       const assignmentsWithStaff = assignments.map((a: any) => ({
         ...a,

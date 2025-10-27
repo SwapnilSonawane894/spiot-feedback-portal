@@ -43,7 +43,7 @@ export default function HodReportsPage() {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/hod/reports");
+      const res = await fetch(`/api/hod/reports`);
       if (!res.ok) throw new Error("Failed to load reports");
       const json = await res.json();
       setData(json.reports || []);
@@ -207,7 +207,8 @@ export default function HodReportsPage() {
 
       {/* Filter Section */}
       <div className="mb-6">
-        <CustomSelect
+        <div className="flex items-center gap-4 flex-wrap">
+          <CustomSelect
           label="Filter by Faculty Member"
           options={[
             { value: "", label: "All Faculty Members" },
@@ -218,6 +219,9 @@ export default function HodReportsPage() {
           placeholder="Select faculty"
           className="w-full sm:w-96"
         />
+
+          {/* checkbox for including external faculty removed to restore previous UI */}
+        </div>
       </div>
 
       {loading ? (

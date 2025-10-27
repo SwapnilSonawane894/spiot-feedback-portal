@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { staffService, assignmentService, hodSuggestionService, subjectService, feedbackService } from "@/lib/mongodb-services";
 
 export async function GET() {
@@ -19,7 +19,8 @@ export async function GET() {
       }
       return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
     }
-    const assignments = await assignmentService.findMany({ where: { staffId: staff.id } });
+  // Limit assignments to those that belong to the staff's department
+  const assignments = await assignmentService.findMany({ where: { staffId: staff.id, departmentId: staff.departmentId } });
 
     // Batch fetch subjects and feedbacks for these assignments
     const assignmentIds = assignments.map((a: any) => a.id);

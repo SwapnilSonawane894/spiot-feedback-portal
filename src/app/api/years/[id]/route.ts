@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { academicYearService } from "@/lib/mongodb-services";
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, context: any) {
   try {
+    const { id } = await context.params;
     const session = (await getServerSession(authOptions as any)) as any;
     if (!session || session.user?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,7 +19,7 @@ export async function PATCH(
     }
 
     const updated = await academicYearService.update(
-      { id: params.id },
+      { id },
       { name, abbreviation, departmentId: departmentId || null }
     );
     return NextResponse.json(updated);
@@ -31,17 +29,14 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, context: any) {
   try {
+    const { id } = await context.params;
     const session = (await getServerSession(authOptions as any)) as any;
     if (!session || session.user?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    await academicYearService.delete({ id: params.id });
+    await academicYearService.delete({ id });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);

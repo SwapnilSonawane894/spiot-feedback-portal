@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import Select, { MultiValue } from "react-select";
 import { Button } from "@/components/ui-controls";
 import toast from "react-hot-toast";
@@ -14,8 +15,11 @@ export default function AssignmentPage(): React.ReactElement {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [assignments, setAssignments] = useState<Record<string, string[]>>({});
+  const [rawAssignmentsData, setRawAssignmentsData] = useState<any[]>([]);
+  const rowKeyToSubjectIdRef = React.useRef<Record<string, string>>({});
   const [currentSemester, setCurrentSemester] = useState<string>("Loading...");
   const [isSaving, setIsSaving] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     fetchData();
@@ -47,25 +51,116 @@ export default function AssignmentPage(): React.ReactElement {
       if (!assignmentsRes.ok) throw new Error("Failed to fetch assignments");
       const assignmentsData = await assignmentsRes.json();
 
-      // Convert assignments array to subject -> staffIds mapping
-      const assignmentMap: Record<string, string[]> = {};
-      (subjectsData || []).forEach((subject: Subject) => {
-        assignmentMap[subject.id] = [];
-      });
-
-      (assignmentsData || []).forEach((assignment: any) => {
-        if (!assignmentMap[assignment.subjectId]) {
-          assignmentMap[assignment.subjectId] = [];
-        }
-        assignmentMap[assignment.subjectId].push(assignment.staffId);
-      });
-
-      setAssignments(assignmentMap);
+  // Save raw assignments for downstream mapping (mapping is done in a useMemo to avoid timing issues)
+  setRawAssignmentsData(assignmentsData || []);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load data");
     }
   }
+
+  // Determine department-scoped assignments (memoized to avoid timing issues)
+  const departmentAssignments = useMemo(() => {
+    const hodDepartmentIdFromSession = session && (session.user as any) && (session.user as any).departmentId
+      ? String((session.user as any).departmentId)
+      : undefined;
+
+    const inferredDepartmentId = (rawAssignmentsData && rawAssignmentsData.length > 0 && rawAssignmentsData[0].departmentId)
+      ? String(rawAssignmentsData[0].departmentId)
+      : undefined;
+
+    const hodDepartmentId = hodDepartmentIdFromSession || inferredDepartmentId;
+
+  // no debug logs in production
+
+    const deps = hodDepartmentId
+      ? (rawAssignmentsData || []).filter((a: any) => String(a.departmentId) === hodDepartmentId)
+      : (rawAssignmentsData || []);
+
+  // no debug logs in production
+
+    return deps;
+  }, [rawAssignmentsData, session]);
+
+  // Build assignments mapping after subjects and departmentAssignments are available
+  const assignmentsBySubjectId = useMemo(() => {
+    if (!subjects || subjects.length === 0) {
+      console.log('⚠️ Subjects not loaded yet, skipping mapping');
+      return {} as Record<string, string[]>;
+    }
+
+    if (!departmentAssignments || departmentAssignments.length === 0) {
+      console.log('⚠️ No assignments to map');
+      return {} as Record<string, string[]>;
+    }
+
+    const map: Record<string, string[]> = {};
+
+    // Build subject ID lookup (subject._id -> junction id)
+    const subjectIdToJunctionId: Record<string, string> = {};
+    subjects.forEach((subject) => {
+      const subjOid = (subject as any)._id;
+      if (subjOid) subjectIdToJunctionId[String(subjOid)] = String((subject as any).id);
+    });
+
+  // subject ID mapping built
+
+    (departmentAssignments || []).forEach((assignment: any) => {
+      const subjectId = String(assignment.subjectId);
+
+      if (!map[subjectId]) map[subjectId] = [];
+      map[subjectId].push(assignment.staffId);
+
+      const junctionId = subjectIdToJunctionId[subjectId];
+      if (junctionId && junctionId !== subjectId) {
+        if (!map[junctionId]) map[junctionId] = [];
+        map[junctionId].push(assignment.staffId);
+      }
+    });
+
+    // ALSO attempt to map by subjectCode when assignments include it (handles shared subjects across departments)
+    const subjectCodeToIds: Record<string, string[]> = {};
+    subjects.forEach((subject: any) => {
+      const code = subject.subjectCode;
+      if (!code) return;
+      if (!subjectCodeToIds[code]) subjectCodeToIds[code] = [];
+      subjectCodeToIds[code].push(String(subject.id));
+    });
+
+    (departmentAssignments || []).forEach((assignment: any) => {
+      const code = assignment.subjectCode || assignment.subject?.subjectCode;
+      if (!code) return;
+      const ids = subjectCodeToIds[code] || [];
+      ids.forEach((sid) => {
+        if (!map[sid]) map[sid] = [];
+        map[sid].push(assignment.staffId);
+      });
+    });
+
+  // assignment mapping built
+
+    // Debug per subject
+    subjects.forEach((subject: any) => {
+      const assignmentsFor = map[subject.id] || [];
+      if (assignmentsFor.length === 0 && subject.name) {
+        // intentionally silent in production
+      }
+    });
+
+    return map;
+  }, [subjects, departmentAssignments]);
+
+  // When subjects or mapping change, populate the row-keyed assignments state
+  useEffect(() => {
+    const assignmentMap: Record<string, string[]> = {};
+    rowKeyToSubjectIdRef.current = {};
+    (subjects || []).forEach((subject: Subject & any) => {
+      const rowKey = subject._junctionId || `${subject.id}-${subject.academicYearId || (subject.academicYear && subject.academicYear.id) || 'no-ay'}`;
+      rowKeyToSubjectIdRef.current[rowKey] = subject.id;
+      assignmentMap[rowKey] = assignmentsBySubjectId[subject.id] ? Array.from(new Set(assignmentsBySubjectId[subject.id])) : [];
+    });
+    setAssignments(assignmentMap);
+  }, [subjects, assignmentsBySubjectId]);
 
   const staffOptions = useMemo((): Option[] => {
     return staff.map((s) => {
@@ -75,15 +170,15 @@ export default function AssignmentPage(): React.ReactElement {
     });
   }, [staff]);
 
-  const valueForSubject = useCallback((subjectId: string): Option[] => {
-    const staffIds = assignments[subjectId] || [];
+  const valueForSubject = useCallback((rowKey: string): Option[] => {
+    const staffIds = assignments[rowKey] || [];
     return staffOptions.filter((o) => staffIds.includes(o.value));
   }, [assignments, staffOptions]);
 
-  const handleChange = useCallback((subjectId: string, opts: MultiValue<Option> | null) => {
+  const handleChange = useCallback((rowKey: string, opts: MultiValue<Option> | null) => {
     const picked = opts ? Array.from(opts) as Option[] : [];
     const ids = picked.map((o) => o.value);
-    setAssignments((prev) => ({ ...prev, [subjectId]: ids }));
+    setAssignments((prev) => ({ ...prev, [rowKey]: ids }));
   }, []);
 
   const handleSaveAll = useCallback(async () => {
@@ -91,9 +186,11 @@ export default function AssignmentPage(): React.ReactElement {
     try {
       const payload = {
         semester: currentSemester,
-        assignments: Object.entries(assignments).flatMap(([subjectId, staffIds]) =>
-          staffIds.map(staffId => ({ subjectId, staffId }))
-        )
+        // Convert rowKey back to subjectId for the API payload
+        assignments: Object.entries(assignments).flatMap(([rowKey, staffIds]) => {
+          const subjectId = rowKeyToSubjectIdRef.current[rowKey] || rowKey.split('-')[0];
+          return staffIds.map(staffId => ({ subjectId, staffId }));
+        })
       };
 
       const res = await fetch(`/api/hod/faculty-assignments`, {
@@ -189,31 +286,35 @@ export default function AssignmentPage(): React.ReactElement {
                 </td>
               </tr>
             ) : (
-              subjects.map((subject) => (
-                <tr key={subject.id}>
-                  <td>
-                    <div>
-                      <div className="font-medium" style={{ color: "var(--text-primary)" }}>
-                        {subject.name}
+              subjects.map((subject) => {
+                const sAny = subject as any;
+                const rowKey = sAny._junctionId || `${subject.id}-${sAny.academicYearId || (sAny.academicYear && sAny.academicYear.id) || 'no-ay'}`;
+                return (
+                  <tr key={rowKey}>
+                    <td>
+                      <div>
+                        <div className="font-medium" style={{ color: "var(--text-primary)" }}>
+                          {subject.name}
+                        </div>
+                        <div className="text-sm" style={{ color: "var(--text-muted)" }}>
+                          {subject.subjectCode}
+                        </div>
                       </div>
-                      <div className="text-sm" style={{ color: "var(--text-muted)" }}>
-                        {subject.subjectCode}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <Select
-                      isMulti
-                      options={staffOptions}
-                      value={valueForSubject(subject.id)}
-                      onChange={(opts) => handleChange(subject.id, opts)}
-                      menuPortalTarget={typeof document !== "undefined" ? document.body : null}
-                      styles={selectStyles}
-                      placeholder="Select faculty members..."
-                    />
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td>
+                      <Select
+                        isMulti
+                        options={staffOptions}
+                        value={valueForSubject(rowKey)}
+                        onChange={(opts) => handleChange(rowKey, opts)}
+                        menuPortalTarget={typeof document !== "undefined" ? document.body : null}
+                        styles={selectStyles}
+                        placeholder="Select faculty members..."
+                      />
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

@@ -8,6 +8,7 @@ export const COLLECTIONS = {
   STAFF: 'staff',
   ACADEMIC_YEARS: 'academicYears',
   SUBJECTS: 'subjects',
+  DEPARTMENT_SUBJECTS: 'departmentSubjects',
   FACULTY_ASSIGNMENTS: 'facultyAssignments',
   FEEDBACK: 'feedback',
   HOD_SUGGESTIONS: 'hodSuggestions',
@@ -405,7 +406,13 @@ export const staffService = {
       let query: any = {};
       
       if (params.where.id) {
-        query._id = new ObjectId(params.where.id);
+        // tolerate ids that are not valid ObjectId strings
+        try {
+          query._id = new ObjectId(params.where.id);
+        } catch (e) {
+          // fallback to string match if not a 24-char hex
+          query._id = params.where.id;
+        }
       } else if (params.where.userId) {
         // allow match when staff.userId is stored as ObjectId or as string
         const uid = params.where.userId;
@@ -615,6 +622,22 @@ export const subjectService = {
       if (params?.where) {
         Object.entries(params.where).forEach(([key, value]) => {
           if (value === undefined) return;
+          // Special-case departmentId: allow matching either a single departmentId field or membership in departmentIds array
+          if (key === 'departmentId') {
+            // build a clause that matches either departmentId === value OR departmentIds contains value
+            if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
+              try {
+                const obj = new ObjectId(value);
+                query['$or'] = [{ departmentId: { $in: [obj, value] } }, { departmentIds: { $in: [obj, value] } }];
+              } catch (e) {
+                query['$or'] = [{ departmentId: value }, { departmentIds: value }];
+              }
+            } else {
+              query['$or'] = [{ departmentId: value }, { departmentIds: value }];
+            }
+            return;
+          }
+
           if (typeof value === 'string' && /Id$/.test(key) && /^[0-9a-fA-F]{24}$/.test(value)) {
             try {
               query[key] = { $in: [ new ObjectId(value), value ] };
@@ -670,7 +693,7 @@ export const subjectService = {
   async findUniqueByCode(subjectCode: string) {
     try {
       const db = await getDatabase();
-      const doc = await db.collection(COLLECTIONS.SUBJECTS).findOne({ subjectCode });
+  const doc = await db.collection(COLLECTIONS.SUBJECTS).findOne({ subjectCode });
       return docWithId(doc);
     } catch (error) {
       console.error('Error in subjectService.findUniqueByCode:', error);
@@ -682,10 +705,14 @@ export const subjectService = {
     try {
       const db = await getDatabase();
       const { id, ...rest } = data;
-      const result = await db.collection(COLLECTIONS.SUBJECTS).insertOne({
-        ...rest,
-        createdAt: new Date(),
-      });
+      // If a departmentId is provided, store both legacy `departmentId` and a `departmentIds` array
+      const docToInsert: any = { ...rest, createdAt: new Date() };
+      if (rest.departmentId) {
+        docToInsert.departmentId = rest.departmentId;
+        docToInsert.departmentIds = Array.isArray(rest.departmentIds) ? Array.from(new Set([...(rest.departmentIds || []), rest.departmentId])) : [rest.departmentId];
+      }
+
+      const result = await db.collection(COLLECTIONS.SUBJECTS).insertOne(docToInsert);
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
       console.error('Error in subjectService.create:', error);
@@ -722,7 +749,37 @@ export const subjectService = {
   async count(where?: any) {
     try {
       const db = await getDatabase();
-      const query: any = where || {};
+      // Coerce '*Id' filters to match ObjectId or string (keeps behavior consistent with findMany)
+      const query: any = {};
+      if (where) {
+        Object.entries(where).forEach(([key, value]) => {
+          if (value === undefined) return;
+          if (key === 'departmentId') {
+            if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
+              try {
+                const obj = new ObjectId(value);
+                query['$or'] = [{ departmentId: { $in: [obj, value] } }, { departmentIds: { $in: [obj, value] } }];
+              } catch (e) {
+                query['$or'] = [{ departmentId: value }, { departmentIds: value }];
+              }
+            } else {
+              query['$or'] = [{ departmentId: value }, { departmentIds: value }];
+            }
+            return;
+          }
+
+          if (typeof value === 'string' && /Id$/.test(key) && /^[0-9a-fA-F]{24}$/.test(value)) {
+            try {
+              query[key] = { $in: [ new ObjectId(value), value ] };
+            } catch (e) {
+              query[key] = value;
+            }
+          } else {
+            query[key] = value;
+          }
+        });
+      }
+
       return await db.collection(COLLECTIONS.SUBJECTS).countDocuments(query);
     } catch (error) {
       console.error('Error in subjectService.count:', error);
@@ -730,6 +787,236 @@ export const subjectService = {
     }
   },
 };
+
+// ============ DEPARTMENT-SUBJECT JUNCTION OPERATIONS ============
+
+// Normalize academicYearId values: convert the string 'null' to actual null
+const normalizeAcademicYearId = (ay: any) => {
+  if (ay === undefined || ay === null) return null;
+  if (typeof ay === 'string') {
+    const trimmed = ay.trim();
+    if (trimmed === '' || trimmed.toLowerCase() === 'null') return null;
+    return trimmed;
+  }
+  return ay;
+};
+
+export const departmentSubjectsService = {
+  // Return subject documents for a department. options may include { include: { academicYear: true } }
+  async findSubjectsForDepartment(departmentId: string, options?: { include?: any }) {
+    try {
+      const db = await getDatabase();
+      if (!departmentId) return [];
+      const depIdStr = String(departmentId);
+
+      // Early debug logging to trace why newly-created junction rows may not be found
+      try {
+        console.log('🔍 findSubjectsForDepartment CALLED:');
+        console.log('  Department ID:', departmentId);
+        console.log('  Options:', JSON.stringify(options));
+        console.log('  DepIdStr:', depIdStr);
+      } catch (e) {
+        // ignore logging errors
+      }
+
+      // 1) fetch all departmentSubjects rows for this department
+      const rows = await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS).find({ departmentId: depIdStr }).toArray();
+      if (!rows || rows.length === 0) return [];
+
+      // 2) fetch all subject docs referenced by those rows (unique set)
+      const subjectIdStrs = Array.from(new Set(rows.map((r: any) => String(r.subjectId)).filter(Boolean)));
+      const objectIds: any[] = [];
+      const stringIds: any[] = [];
+      for (const sid of subjectIdStrs) {
+        if (/^[0-9a-fA-F]{24}$/.test(sid)) {
+          try { objectIds.push(new ObjectId(sid)); } catch (e) { stringIds.push(sid); }
+        } else {
+          stringIds.push(sid);
+        }
+      }
+
+      const orClauses: any[] = [];
+      if (objectIds.length) orClauses.push({ _id: { $in: objectIds } });
+      if (stringIds.length) orClauses.push({ _id: { $in: stringIds } });
+
+      const subjectsRaw = (orClauses.length === 0) ? [] : await db.collection(COLLECTIONS.SUBJECTS).find(orClauses.length === 1 ? orClauses[0] : { $or: orClauses }).toArray();
+      const subjectMap: any = {};
+      subjectsRaw.forEach((s: any) => { subjectMap[s._id?.toString() || s.id] = docWithId(s); });
+
+      // 3) optionally fetch academic years referenced in rows OR on the master subject
+      const academicYearMap: any = {};
+      if (options?.include?.academicYear) {
+        // include academicYearIds from junction rows
+        const rowAyIds = rows.map(r => normalizeAcademicYearId(r.academicYearId)).filter(Boolean);
+        // include academicYearIds from the master subject documents as a fallback source
+        const subjectAyIds = subjectsRaw.map((s: any) => normalizeAcademicYearId(s.academicYearId)).filter(Boolean);
+        const ayIds = Array.from(new Set([...rowAyIds, ...subjectAyIds]));
+        const ayObjectIds: any[] = [];
+        const ayStringIds: any[] = [];
+        for (const aid of ayIds) {
+          if (/^[0-9a-fA-F]{24}$/.test(aid)) {
+            try { ayObjectIds.push(new ObjectId(aid)); } catch (e) { ayStringIds.push(aid); }
+          } else {
+            ayStringIds.push(aid);
+          }
+        }
+        const ayOr: any[] = [];
+        if (ayObjectIds.length) ayOr.push({ _id: { $in: ayObjectIds } });
+        if (ayStringIds.length) ayOr.push({ _id: { $in: ayStringIds } });
+        if (ayOr.length) {
+          const ayDocs = await db.collection(COLLECTIONS.ACADEMIC_YEARS).find(ayOr.length === 1 ? ayOr[0] : { $or: ayOr }).toArray();
+          ayDocs.forEach((ay: any) => {
+            // store a normalized academic year object including both _id and id as strings
+            academicYearMap[ay._id.toString()] = {
+              _id: ay._id.toString(),
+              id: ay._id.toString(),
+              name: ay.name,
+              abbreviation: ay.abbreviation,
+              year: ay.year,
+              departmentId: ay.departmentId ? String(ay.departmentId) : undefined,
+            };
+          });
+        }
+      }
+
+      // 4) Build results: one entry per departmentSubjects row, enriched with subject and optionally academicYear
+      // Build ONE result per departmentSubjects row with full subject fields and junction metadata
+      const results = rows.map((r: any) => {
+        const subj = subjectMap[r.subjectId];
+        if (!subj) return null;
+
+        const normalizedAYId = normalizeAcademicYearId(r.academicYearId);
+
+        const result: any = {
+          // Subject identity
+          _id: subj.id,
+          id: subj.id,
+          name: subj.name,
+          subjectCode: subj.subjectCode,
+          semester: subj.semester,
+          departmentId: subj.departmentId || depIdStr,
+
+          // academicYear will be filled below if requested
+          academicYear: null,
+
+          // junction metadata
+          _junctionId: r._id?.toString(),
+          createdAt: r.createdAt ? timestampToDate(r.createdAt) : (subj.createdAt ? timestampToDate(subj.createdAt) : null),
+          updatedAt: r.updatedAt ? timestampToDate(r.updatedAt) : (subj.updatedAt ? timestampToDate(subj.updatedAt) : null),
+        };
+
+        if (options?.include?.academicYear) {
+          if (normalizedAYId) {
+            result.academicYear = academicYearMap[normalizedAYId] || null;
+          } else if (subj && subj.academicYearId) {
+            // If the junction row lacks an academicYear, fall back to the master subject's academicYear
+            result.academicYear = academicYearMap[subj.academicYearId] || null;
+          } else {
+            result.academicYear = null;
+          }
+        }
+
+        return result;
+      }).filter(Boolean);
+
+      // Debug: log sample of results to help frontend mapping
+      try {
+        console.debug('findSubjectsForDepartment results count:', results.length);
+        if (results.length) console.debug('findSubjectsForDepartment first sample:', results[0]);
+      } catch (e) {
+        // ignore logging errors
+      }
+
+      // Additional verbose logging requested for debugging frontend mismatch
+      try {
+        console.log('🔍 findSubjectsForDepartment DEBUG:');
+        console.log('  Department ID:', departmentId);
+        console.log('  Results count:', results.length);
+        if (results.length > 0) {
+          console.log('  First result sample:', JSON.stringify(results[0], null, 2));
+        }
+      } catch (e) {
+        // swallow logging errors to avoid affecting runtime
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error in departmentSubjectsService.findSubjectsForDepartment:', error);
+      throw error;
+    }
+  },
+
+  // Link a subject to a department (graceful if already exists)
+  async linkSubjectToDepartment({ departmentId, subjectId, academicYearId }: { departmentId: string; subjectId: string; academicYearId?: any }) {
+    try {
+      const db = await getDatabase();
+      const doc: any = {
+        departmentId: String(departmentId),
+        subjectId: String(subjectId),
+        academicYearId: normalizeAcademicYearId(academicYearId),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      try {
+        const res = await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS).insertOne(doc);
+        return { insertedId: res.insertedId?.toString(), created: true };
+      } catch (err: any) {
+        // duplicate key -> already exists
+        if (err && err.code === 11000) {
+          return { created: false, reason: 'already_exists' };
+        }
+        throw err;
+      }
+    } catch (error) {
+      console.error('Error in departmentSubjectsService.linkSubjectToDepartment:', error);
+      throw error;
+    }
+  },
+
+  async unlinkSubjectFromDepartment(departmentId: string, subjectId: string) {
+    try {
+      const db = await getDatabase();
+      const res = await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS).deleteOne({ departmentId: String(departmentId), subjectId: String(subjectId) });
+      return { deletedCount: res.deletedCount };
+    } catch (error) {
+      console.error('Error in departmentSubjectsService.unlinkSubjectFromDepartment:', error);
+      throw error;
+    }
+  },
+
+  async linkExists(departmentId: string, subjectId: string) {
+    try {
+      const db = await getDatabase();
+      const found = await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS).findOne({ departmentId: String(departmentId), subjectId: String(subjectId) });
+      return !!found;
+    } catch (error) {
+      console.error('Error in departmentSubjectsService.linkExists:', error);
+      throw error;
+    }
+  },
+
+  async countSubjectsForDepartment(departmentId: string) {
+    try {
+      const db = await getDatabase();
+      return await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS).countDocuments({ departmentId: String(departmentId) });
+    } catch (error) {
+      console.error('Error in departmentSubjectsService.countSubjectsForDepartment:', error);
+      throw error;
+    }
+  },
+
+  async findDepartmentsForSubject(subjectId: string) {
+    try {
+      const db = await getDatabase();
+      const rows = await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS).find({ subjectId: String(subjectId) }).toArray();
+      return rows.map((r: any) => String(r.departmentId));
+    } catch (error) {
+      console.error('Error in departmentSubjectsService.findDepartmentsForSubject:', error);
+      throw error;
+    }
+  }
+};
+
 
 // ============ ASSIGNMENT OPERATIONS ============
 
@@ -746,6 +1033,7 @@ export const assignmentService = {
         // ensure id-like fields are stored as strings
         staffId: item.staffId ? String(item.staffId) : item.staffId,
         subjectId: item.subjectId ? String(item.subjectId) : item.subjectId,
+        departmentId: item.departmentId ? String(item.departmentId) : item.departmentId,
         createdAt: new Date(),
       }));
       if (docs.length === 0) return { count: 0 };

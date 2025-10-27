@@ -4,16 +4,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
 
 type Option = {
-  value: string;
+  value: string | number;
   label: string;
 };
 
 type CustomSelectProps = {
   options: Option[];
-  value: string;
-  onChange: (value: string) => void;
+  value: string | number | null;
+  // allow flexible handler shapes (setState functions, wrappers, etc.)
+  onChange: (value: any) => void;
   placeholder?: string;
-  label?: string;
+  label?: React.ReactNode;
   className?: string;
   disabled?: boolean;
 };
@@ -48,7 +49,7 @@ export function CustomSelect({
     };
   }, [isOpen]);
 
-  const handleSelect = (optionValue: string) => {
+  const handleSelect = (optionValue: string | number) => {
     onChange(optionValue);
     setIsOpen(false);
   };
