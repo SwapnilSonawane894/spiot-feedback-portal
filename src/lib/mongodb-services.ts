@@ -16,44 +16,10 @@ export const COLLECTIONS = {
 };
 
 // Helper to convert MongoDB _id to id
-// Convert a MongoDB document's _id to id (string) and normalize any ObjectId fields to strings
 const docWithId = (doc: any) => {
   if (!doc) return null;
   const { _id, ...rest } = doc;
-  // Convert any ObjectId values in the rest to strings so callers get consistent types
-  Object.keys(rest).forEach((k) => {
-    const v = rest[k];
-    if (v && typeof v === 'object') {
-      // single ObjectId
-      if (v instanceof ObjectId) rest[k] = v.toString();
-      // arrays containing ObjectId
-      else if (Array.isArray(v)) {
-        rest[k] = v.map((it: any) => (it instanceof ObjectId ? it.toString() : it));
-      }
-    }
-  });
   return { id: _id?.toString(), ...rest };
-};
-
-// Helper to build a mongo query from a flexible `where` object.
-// If `where.id` is present we query by _id ObjectId. Otherwise the keys are passed through.
-const buildQueryFromWhere = (where: any) => {
-  const query: any = {};
-  if (!where) return query;
-  if (where.id) {
-    try {
-      query._id = new ObjectId(where.id);
-      return query;
-    } catch (e) {
-      // fallthrough - if id isn't a valid ObjectId, leave as string match
-      query._id = where.id;
-      return query;
-    }
-  }
-  Object.entries(where).forEach(([key, value]) => {
-    if (value !== undefined) query[key] = value;
-  });
-  return query;
 };
 
 // Helper to handle date objects
@@ -63,28 +29,43 @@ const timestampToDate = (timestamp: any) => {
   return new Date(timestamp);
 };
 
-// Normalize semester strings into a canonical format: "Odd Semester 2025-26" or "Even Semester 2025-26"
-export const normalizeSemester = (semester: any) => {
-  if (!semester && semester !== 0) return semester;
-  let s = String(semester).trim();
-  // If it's already like 'Odd Semester 2025-26' normalize spacing
-  const m = s.match(/(Odd|Even)\s*(?:Semester)?\s*(\d{4}(?:-|–)\d{2})/i);
-  if (m) {
-    const type = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
-    const year = m[2];
-    return `${type} Semester ${year}`;
+// Normalize academicYearId values that may be stored as ObjectId, string or nested object
+export const normalizeAcademicYearId = (aid: any) => {
+  if (!aid) return null;
+  try {
+    if (typeof aid === 'string') return aid;
+    if (aid && typeof aid === 'object' && aid._id) return String(aid._id);
+    if (aid && typeof aid === 'object' && typeof aid.toString === 'function') return aid.toString();
+    return String(aid);
+  } catch (e) {
+    return null;
   }
-  // If it is numeric like 1..6, attempt to map to Odd/Even with current year
-  const num = parseInt(s, 10);
-  if (!isNaN(num) && num >= 1 && num <= 6) {
-    const isOdd = num % 2 === 1;
-    const yearStr = `${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}`;
-    return `${isOdd ? 'Odd' : 'Even'} Semester ${yearStr}`;
-  }
-  return s;
 };
 
-// ============ USER OPERATIONS ============
+// Normalize semester representation (prefer number when possible)
+export const normalizeSemester = (s: any) => {
+  if (s === undefined || s === null) return s;
+
+  // If it's already a number, keep it as number
+  if (typeof s === 'number') return s;
+
+  // Coerce numeric strings to actual numbers
+  if (typeof s === 'string') {
+    const trimmed = s.trim();
+    const maybeNum = Number(trimmed);
+    if (Number.isFinite(maybeNum) && String(maybeNum) !== 'NaN') return maybeNum;
+
+    // Normalize common textual semester forms:
+    // - "Odd Semester 2025-26"  -> "Odd 2025-26"
+    // - collapse multiple spaces and remove the word 'Semester' (case-insensitive)
+    const cleaned = trimmed.replace(/\bSemester\b/ig, '').replace(/\s+/g, ' ').trim();
+    return cleaned;
+  }
+
+  // Fallback: try numeric coercion, otherwise return original
+  const n = Number(s);
+  return Number.isFinite(n) ? n : s;
+};
 
 export const userService = {
   async findUnique(where: { email?: string; id?: string }) {
@@ -93,7 +74,7 @@ export const userService = {
       let query: any = {};
       
       if (where.id) {
-        query._id = new ObjectId(where.id);
+        try { query._id = new ObjectId(where.id); } catch { query._id = where.id; }
       } else if (where.email) {
         query.email = where.email;
       }
@@ -115,7 +96,7 @@ export const userService = {
         Object.entries(params.where).forEach(([key, value]) => {
           if (value !== undefined) {
             if (key === 'id') {
-              query._id = new ObjectId(value as string);
+              try { query._id = new ObjectId(value as string); } catch { query._id = value; }
             } else {
               query[key] = value;
             }
@@ -133,9 +114,7 @@ export const userService = {
         cursor = cursor.sort(sort);
       }
 
-      if (params?.limit) {
-        cursor = cursor.limit(params.limit);
-      }
+      if (params?.limit) cursor = cursor.limit(params.limit);
 
       let results = await cursor.toArray();
       results = results.map(docWithId);
@@ -193,9 +172,7 @@ export const userService = {
       const query: any = {};
       
       Object.entries(where).forEach(([key, value]) => {
-        if (value !== undefined) {
-          query[key] = value;
-        }
+        if (value !== undefined) query[key] = value;
       });
 
       const result = await db.collection(COLLECTIONS.USERS).updateMany(query, { $set: data });
@@ -223,9 +200,7 @@ export const userService = {
       const query: any = {};
       
       Object.entries(where).forEach(([key, value]) => {
-        if (value !== undefined) {
-          query[key] = value;
-        }
+        if (value !== undefined) query[key] = value;
       });
 
       const result = await db.collection(COLLECTIONS.USERS).deleteMany(query);
@@ -689,11 +664,10 @@ export const subjectService = {
       throw error;
     }
   },
-  // allow lookup by subjectCode
   async findUniqueByCode(subjectCode: string) {
     try {
       const db = await getDatabase();
-  const doc = await db.collection(COLLECTIONS.SUBJECTS).findOne({ subjectCode });
+      const doc = await db.collection(COLLECTIONS.SUBJECTS).findOne({ subjectCode });
       return docWithId(doc);
     } catch (error) {
       console.error('Error in subjectService.findUniqueByCode:', error);
@@ -705,14 +679,7 @@ export const subjectService = {
     try {
       const db = await getDatabase();
       const { id, ...rest } = data;
-      // If a departmentId is provided, store both legacy `departmentId` and a `departmentIds` array
-      const docToInsert: any = { ...rest, createdAt: new Date() };
-      if (rest.departmentId) {
-        docToInsert.departmentId = rest.departmentId;
-        docToInsert.departmentIds = Array.isArray(rest.departmentIds) ? Array.from(new Set([...(rest.departmentIds || []), rest.departmentId])) : [rest.departmentId];
-      }
-
-      const result = await db.collection(COLLECTIONS.SUBJECTS).insertOne(docToInsert);
+      const result = await db.collection(COLLECTIONS.SUBJECTS).insertOne({ ...rest, createdAt: new Date() });
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
       console.error('Error in subjectService.create:', error);
@@ -724,81 +691,14 @@ export const subjectService = {
     try {
       const db = await getDatabase();
       const { id, ...rest } = data;
-      await db.collection(COLLECTIONS.SUBJECTS).updateOne(
-        { _id: new ObjectId(where.id) },
-        { $set: rest }
-      );
+      await db.collection(COLLECTIONS.SUBJECTS).updateOne({ _id: new ObjectId(where.id) }, { $set: rest });
       return { id: where.id, ...rest };
     } catch (error) {
       console.error('Error in subjectService.update:', error);
       throw error;
     }
   },
-
-  async delete(where: { id: string }) {
-    try {
-      const db = await getDatabase();
-      await db.collection(COLLECTIONS.SUBJECTS).deleteOne({ _id: new ObjectId(where.id) });
-      return { success: true };
-    } catch (error) {
-      console.error('Error in subjectService.delete:', error);
-      throw error;
-    }
-  },
-
-  async count(where?: any) {
-    try {
-      const db = await getDatabase();
-      // Coerce '*Id' filters to match ObjectId or string (keeps behavior consistent with findMany)
-      const query: any = {};
-      if (where) {
-        Object.entries(where).forEach(([key, value]) => {
-          if (value === undefined) return;
-          if (key === 'departmentId') {
-            if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
-              try {
-                const obj = new ObjectId(value);
-                query['$or'] = [{ departmentId: { $in: [obj, value] } }, { departmentIds: { $in: [obj, value] } }];
-              } catch (e) {
-                query['$or'] = [{ departmentId: value }, { departmentIds: value }];
-              }
-            } else {
-              query['$or'] = [{ departmentId: value }, { departmentIds: value }];
-            }
-            return;
-          }
-
-          if (typeof value === 'string' && /Id$/.test(key) && /^[0-9a-fA-F]{24}$/.test(value)) {
-            try {
-              query[key] = { $in: [ new ObjectId(value), value ] };
-            } catch (e) {
-              query[key] = value;
-            }
-          } else {
-            query[key] = value;
-          }
-        });
-      }
-
-      return await db.collection(COLLECTIONS.SUBJECTS).countDocuments(query);
-    } catch (error) {
-      console.error('Error in subjectService.count:', error);
-      throw error;
-    }
-  },
-};
-
-// ============ DEPARTMENT-SUBJECT JUNCTION OPERATIONS ============
-
-// Normalize academicYearId values: convert the string 'null' to actual null
-const normalizeAcademicYearId = (ay: any) => {
-  if (ay === undefined || ay === null) return null;
-  if (typeof ay === 'string') {
-    const trimmed = ay.trim();
-    if (trimmed === '' || trimmed.toLowerCase() === 'null') return null;
-    return trimmed;
-  }
-  return ay;
+  
 };
 
 export const departmentSubjectsService = {
@@ -809,15 +709,7 @@ export const departmentSubjectsService = {
       if (!departmentId) return [];
       const depIdStr = String(departmentId);
 
-      // Early debug logging to trace why newly-created junction rows may not be found
-      try {
-        console.log('🔍 findSubjectsForDepartment CALLED:');
-        console.log('  Department ID:', departmentId);
-        console.log('  Options:', JSON.stringify(options));
-        console.log('  DepIdStr:', depIdStr);
-      } catch (e) {
-        // ignore logging errors
-      }
+      // (no-op) removed verbose debug logging for production to reduce noise and CPU overhead
 
       // 1) fetch all departmentSubjects rows for this department
       const rows = await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS).find({ departmentId: depIdStr }).toArray();
@@ -854,6 +746,7 @@ export const departmentSubjectsService = {
         const ayObjectIds: any[] = [];
         const ayStringIds: any[] = [];
         for (const aid of ayIds) {
+          if (!aid) continue;
           if (/^[0-9a-fA-F]{24}$/.test(aid)) {
             try { ayObjectIds.push(new ObjectId(aid)); } catch (e) { ayStringIds.push(aid); }
           } else {
@@ -919,25 +812,7 @@ export const departmentSubjectsService = {
         return result;
       }).filter(Boolean);
 
-      // Debug: log sample of results to help frontend mapping
-      try {
-        console.debug('findSubjectsForDepartment results count:', results.length);
-        if (results.length) console.debug('findSubjectsForDepartment first sample:', results[0]);
-      } catch (e) {
-        // ignore logging errors
-      }
-
-      // Additional verbose logging requested for debugging frontend mismatch
-      try {
-        console.log('🔍 findSubjectsForDepartment DEBUG:');
-        console.log('  Department ID:', departmentId);
-        console.log('  Results count:', results.length);
-        if (results.length > 0) {
-          console.log('  First result sample:', JSON.stringify(results[0], null, 2));
-        }
-      } catch (e) {
-        // swallow logging errors to avoid affecting runtime
-      }
+      // Removed verbose runtime logging — keep only errors above.
 
       return results;
     } catch (error) {
@@ -1340,3 +1215,155 @@ export const semesterSettingsService = {
 };
 
 export { timestampToDate };
+
+// Robust centralized student task fetcher: handles ObjectId/string mismatches
+export async function getStudentTasksFromDb(userId: string, options?: { groupBySubject?: boolean }) {
+  try {
+    const db = await getDatabase();
+    // 1. Fetch the student record.
+    const student = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+    if (!student || !student.departmentId || !student.academicYearId) {
+      console.error(`getStudentTasksFromDb: Student ${userId} lacks required fields.`);
+      return [];
+    }
+    
+    const studentDepartmentIdStr = student.departmentId.toString();
+    const studentAcademicYearIdStr = student.academicYearId.toString();
+
+    // Use the departmentSubjectsService which enriches junction rows with master subject
+    // and an `academicYear` field (it falls back to the subject's academicYear when the
+    // junction lacks one). This produces a more accurate picture of which subjects
+    // apply to the student's academic year.
+    const deptRows = await departmentSubjectsService.findSubjectsForDepartment(studentDepartmentIdStr, { include: { academicYear: true } });
+
+    if (!deptRows || deptRows.length === 0) {
+      console.log(`No department-subject junction rows found for department ${studentDepartmentIdStr}`);
+      return [];
+    }
+
+    // Select subjectIds where the enriched row.academicYear.id matches the student's academicYear
+    const subjectIdsAsStrings: string[] = [];
+    for (const row of deptRows) {
+      const rowAyId = row.academicYear && row.academicYear.id ? String(row.academicYear.id) : null;
+      if (rowAyId && rowAyId === studentAcademicYearIdStr) {
+        subjectIdsAsStrings.push(String(row.id));
+      }
+    }
+
+    if (subjectIdsAsStrings.length === 0) {
+      console.log(`No department-subject links found for department ${studentDepartmentIdStr} matching year ${studentAcademicYearIdStr}`);
+      return [];
+    }
+    
+    const subjectIdQueryValues = [
+      ...subjectIdsAsStrings, 
+      ...subjectIdsAsStrings.map(id => { try { return new ObjectId(id) } catch { return null } }).filter(Boolean)
+    ];
+    
+    const academicYearIdQueryValues = [
+      studentAcademicYearIdStr,
+      student.academicYearId
+    ];
+
+    // Find assignments that match our PRE-FILTERED list of subjects.
+    const assignments = await db.collection('facultyAssignments').find({
+      subjectId: { $in: subjectIdQueryValues },
+      academicYearId: { $in: academicYearIdQueryValues },
+    }).toArray();
+
+  console.log(`--- [API LOG] Found ${assignments.length} assignments after filtering by year AND correct department subjects.`);
+
+    if (assignments.length === 0) return [];
+
+    // --- Batch fetch all related data (no changes needed here) ---
+    const staffIds = assignments.map(a => new ObjectId(a.staffId));
+    const staffProfiles = await db.collection('staff').find({ _id: { $in: staffIds } }).toArray();
+    const staffProfileMap = new Map(staffProfiles.map(s => [s._id.toString(), s]));
+
+    const userIds = staffProfiles.map(s => new ObjectId(s.userId));
+    const staffUsers = await db.collection('users').find({ _id: { $in: userIds } }).toArray();
+    const userMap = new Map(staffUsers.map(u => [u._id.toString(), u]));
+    
+    const subjectObjectIds = assignments.map(a => new ObjectId(a.subjectId));
+    const subjectDetails = await db.collection('subjects').find({ _id: { $in: subjectObjectIds } }).toArray();
+    const subjectMap = new Map(subjectDetails.map(s => [s._id.toString(), s]));
+    
+    const feedback = await db.collection('feedback').find({
+      studentId: userId,
+      assignmentId: { $in: assignments.map(a => a._id.toString()) },
+    }).toArray();
+    const feedbackSet = new Set(feedback.map(f => f.assignmentId));
+
+    // If caller asked for ungrouped results, return one item per assignment (one per faculty assignment)
+    const groupBySubject = options?.groupBySubject !== undefined ? Boolean(options?.groupBySubject) : true;
+
+    if (!groupBySubject) {
+      const perAssignment = assignments.map((a: any) => {
+        const sid = String(a.subjectId);
+        const staffProfile = staffProfileMap.get(String(a.staffId));
+        const staffUser = staffProfile ? userMap.get(String(staffProfile.userId)) : null;
+        const staffName = staffUser?.name || 'Unknown Faculty';
+        const subject = subjectMap.get(sid);
+        const assignmentId = a._id?.toString();
+        const isCompleted = feedbackSet.has(a._id.toString());
+        return {
+          assignmentId: assignmentId || null,
+          subjectId: sid,
+          subjectName: subject?.name || 'Unknown Subject',
+          staffId: a.staffId || null,
+          facultyName: staffName,
+          facultyNames: [staffName],
+          status: isCompleted ? 'Completed' : 'Pending',
+        };
+      });
+      return perAssignment;
+    }
+
+    // Group assignments by subjectId so student sees one card per subject even if multiple staff are assigned.
+    const tasksBySubject = new Map<string, any>();
+    for (const a of assignments) {
+      const sid = String(a.subjectId);
+      const staffProfile = staffProfileMap.get(String(a.staffId));
+      const staffUser = staffProfile ? userMap.get(String(staffProfile.userId)) : null;
+      const staffName = staffUser?.name || 'Unknown Faculty';
+      const subject = subjectMap.get(sid);
+      const assignmentId = a._id?.toString();
+      const isCompleted = feedbackSet.has(a._id.toString());
+
+      if (!tasksBySubject.has(sid)) {
+        tasksBySubject.set(sid, {
+          subjectId: sid,
+          subjectName: subject?.name || 'Unknown Subject',
+          facultyNames: [staffName],
+          assignmentIds: assignmentId ? [assignmentId] : [],
+          // overall status: Pending if any assignment is pending, Completed only if all are completed
+          status: isCompleted ? 'Completed' : 'Pending',
+        });
+      } else {
+        const entry = tasksBySubject.get(sid);
+        // add unique staff name
+        if (!entry.facultyNames.includes(staffName)) entry.facultyNames.push(staffName);
+        if (assignmentId && !entry.assignmentIds.includes(assignmentId)) entry.assignmentIds.push(assignmentId);
+        // if any assignment is pending, overall remains Pending
+        if (!isCompleted) entry.status = 'Pending';
+      }
+    }
+
+    // Convert to array; keep legacy-friendly fields: facultyName (comma-joined) and assignmentId (first)
+    const resultTasks = Array.from(tasksBySubject.values()).map((t: any) => ({
+      subjectId: t.subjectId,
+      subjectName: t.subjectName,
+      facultyNames: t.facultyNames,
+      facultyName: t.facultyNames.join(', '),
+      assignmentIds: t.assignmentIds,
+      assignmentId: t.assignmentIds.length ? t.assignmentIds[0] : null,
+      status: t.status,
+    }));
+
+    return resultTasks;
+  } catch (error) {
+    console.error("Error in getStudentTasksFromDb:", error);
+    return [];
+  }
+}

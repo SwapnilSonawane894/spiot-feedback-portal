@@ -34,8 +34,13 @@ export async function PATCH(request: Request, context: any) {
     if (name || email) {
       const updateData: any = {};
       if (name) updateData.name = name;
-      if (email) updateData.email = email;
-      
+      if (email) {
+        // Only ADMIN may update a user's email via this endpoint
+        if (session.user.role !== "ADMIN") {
+          return NextResponse.json({ error: "Forbidden: only admin can change email" }, { status: 403 });
+        }
+        updateData.email = email;
+      }
       await userService.update({ id: staffProfile.userId }, updateData);
     }
 

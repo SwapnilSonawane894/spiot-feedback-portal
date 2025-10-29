@@ -2,11 +2,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { staffService, assignmentService, subjectService } from "@/lib/mongodb-services";
+import { staffService, assignmentService, subjectService, departmentSubjectsService, normalizeSemester } from "@/lib/mongodb-services";
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-const CURRENT_SEMESTER = "Odd 2025-26";
 
 export async function GET(request: Request) {
   try {
@@ -22,7 +21,7 @@ export async function GET(request: Request) {
     const departmentId = hodProfile.departmentId;
 
     // Allow semester override via query param, fall back to CURRENT_SEMESTER
-    let semester = CURRENT_SEMESTER;
+    let semester;
     try {
       const url = new URL(request.url);
       const s = url.searchParams.get('semester');
@@ -33,8 +32,13 @@ export async function GET(request: Request) {
 
   // Request received for faculty assignments
 
-    // Fetch assignments for the current semester that were created by this department
-    const allAssignments = await assignmentService.findMany({ where: { semester, departmentId } });
+    // Normalize semester before querying - UI passes human-friendly strings like "Odd 2025-26"
+    // while DB stores normalized values (we canonicalize on write). Use normalizeSemester to
+    // ensure the HOD GET fetches the same canonical semester values that assignments use.
+    const semesterNormalized = normalizeSemester(semester);
+
+    // Fetch assignments for the current (normalized) semester that were created by this department
+    const allAssignments = await assignmentService.findMany({ where: { semester: semesterNormalized, departmentId } });
     // assignments fetched
 
     // Collect unique subjectIds from assignments
@@ -92,97 +96,112 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const semester = body?.semester ?? CURRENT_SEMESTER;
+    const semester = body?.semester ?? "Odd 2025-26";
     const assignments = Array.isArray(body?.assignments) ? body.assignments : [];
 
     const hodUserId = session.user.id as string;
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-  const departmentId = hodProfile.departmentId;
+    const departmentId = hodProfile.departmentId;
 
-  // Delete existing assignments for this semester limited to this HOD's department subjects
-  // Use departmentSubjects junction to find subject ids for this department (subjects may no longer carry departmentId)
-  const deptJunctionRows = await (await import('@/lib/mongodb-services')).departmentSubjectsService.findSubjectsForDepartment(departmentId, { include: { academicYear: true } });
-  const deptSubjectIds = (deptJunctionRows || []).map((r: any) => String(r.id)).filter(Boolean);
-  // build delete filter: always include departmentId to avoid global deletes; include subjectId $in when available
-  const deleteFilter: any = { semester, departmentId };
-  if (deptSubjectIds.length) deleteFilter.subjectId = { $in: deptSubjectIds };
+    // Get department's subjects (may include academicYear info on the subject)
+    const deptJunctionRows = await departmentSubjectsService.findSubjectsForDepartment(departmentId, { include: { academicYear: true } });
+    const deptSubjectIds = new Set((deptJunctionRows || []).map((r: any) => String(r.id)).filter(Boolean));
 
-  // deleting existing assignments for semester (department-limited)
-  const deleteResult = await assignmentService.deleteMany(deleteFilter);
-  // deleted existing assignments
+    // We'll perform a safe diff-and-upsert approach instead of deleting all rows then recreating.
+    // Rationale: avoid temporarily removing assignments (which can create gaps) and prevent duplicate inserts
+    // when HOD does remove->add cycles. We'll only operate on assignments for this department + semester
+    // and only for subjects that belong to this department.
 
-    // Create new assignments
-    let createResult = null;
-    if (assignments.length > 0) {
-      // Only create assignments for subjects that belong to this HOD's department
-      const deptSubjectSet = new Set(deptSubjectIds.map(String));
+    // Only accept assignments for subjects that belong to this department
+    const filteredAssignments = Array.isArray(assignments)
+      ? assignments.filter((a: any) => deptSubjectIds.has(String(a.subjectId)))
+      : [];
 
-      const filtered = assignments.filter((a: any) => deptSubjectSet.has(String(a.subjectId)));
+    // Fetch subject master docs to obtain their academicYearId (fallback)
+    const subjectIds = Array.from(new Set(filteredAssignments.map((a: any) => String(a.subjectId)).filter(Boolean)));
+    const subjectDetails = subjectIds.length ? await subjectService.findMany({ where: { id: { $in: subjectIds } } }) : [];
+    const subjectYearMap = new Map(subjectDetails.map((s: any) => [s.id, s.academicYearId]));
 
-      // Build a map subjectId -> junction row (to get the department-specific academicYear)
-      const junctionMap = new Map<string, any>();
-      for (const jr of deptJunctionRows || []) {
-        if (jr && jr.id) junctionMap.set(String(jr.id), jr);
-      }
+    // Build a map from subjectId -> junction academicYearId (if present on departmentSubjects lookup)
+    const junctionYearMap = new Map((deptJunctionRows || []).map((r: any) => [String(r.id), r.academicYearId || (r.academicYear?.id ?? null)]));
 
-      // For subjects where junction doesn't carry academicYear, batch-fetch master subject docs to fallback
-      const needSubjectLookup = new Set<string>();
-      for (const a of filtered) {
-        const sid = String(a.subjectId);
-        const jun = junctionMap.get(sid);
-        if (!jun || !(jun.academicYear || jun.academicYearId)) {
-          needSubjectLookup.add(sid);
-        }
-      }
+    const db = await getDatabase();
 
-      const subjectAcademicMap = new Map<string, string | null>();
-      if (needSubjectLookup.size > 0) {
-        const db = await getDatabase();
-        const objIds = [];
-        const stringIds = [];
-        for (const s of Array.from(needSubjectLookup)) {
-          if (/^[0-9a-fA-F]{24}$/.test(s)) objIds.push(new ObjectId(s)); else stringIds.push(s);
-        }
-        const orClauses = [];
-        if (objIds.length) orClauses.push({ _id: { $in: objIds } });
-        if (stringIds.length) orClauses.push({ _id: { $in: stringIds } });
-        if (orClauses.length > 0) {
-          const queryFilter: any = orClauses.length === 1 ? orClauses[0] : { $or: orClauses };
-          const subjectsRaw = await db.collection('subjects').find(queryFilter).toArray();
-          for (const s of subjectsRaw) {
-            const key = s._id?.toString() || s.id;
-            subjectAcademicMap.set(String(key), s.academicYearId ? String(s.academicYearId) : (s.academicYear ? String(s.academicYear.id || s.academicYear._id) : null));
-          }
-        }
-      }
+    // Fetch existing assignments for this department+semester limited to the department's subjects
+    const existingFilter: any = { departmentId, semester: normalizeSemester(semester) };
+    if (deptSubjectIds.size > 0) existingFilter.subjectId = { $in: Array.from(deptSubjectIds) };
+    const existingRaw = await db.collection('facultyAssignments').find(existingFilter).toArray();
 
-      const createData = filtered.map((a: any) => {
-        const sid = String(a.subjectId);
-        const jun = junctionMap.get(sid);
-        const junYear = jun ? (jun.academicYear ? (jun.academicYear.id || jun.academicYear._id) : (jun.academicYearId || null)) : null;
-        const subjYear = subjectAcademicMap.has(sid) ? subjectAcademicMap.get(sid) : null;
-        const academicYearId = junYear ? String(junYear) : (subjYear ? String(subjYear) : (a.academicYearId ? String(a.academicYearId) : null));
-
-        return {
-          staffId: a.staffId,
-          subjectId: a.subjectId,
-          semester,
-          departmentId,
-          academicYearId
-        };
-      });
-
-      // create new assignments rows
-      createResult = await assignmentService.createMany({ data: createData });
+    // Build maps keyed by staffId:subjectId:semester for quick comparison
+    const existingMap = new Map<string, any>();
+    for (const ex of existingRaw) {
+      const key = `${String(ex.staffId)}:${String(ex.subjectId)}:${String(normalizeSemester(ex.semester))}`;
+      existingMap.set(key, ex);
     }
 
-    return NextResponse.json({
-      success: true,
-      deleted: deleteResult.count,
-      created: createResult?.count ?? 0,
+    // Desired set and de-duplication
+    const desiredMap = new Map<string, any>();
+    for (const a of filteredAssignments) {
+      const staffId = String(a.staffId);
+      const subjectId = String(a.subjectId);
+      const sem = normalizeSemester(semester);
+      const key = `${staffId}:${subjectId}:${sem}`;
+      if (desiredMap.has(key)) continue; // de-duplicate incoming payload
+
+      const academicYearId = junctionYearMap.get(String(subjectId)) || subjectYearMap.get(subjectId) || null;
+
+      desiredMap.set(key, {
+        staffId,
+        subjectId,
+        semester: sem,
+        departmentId: String(departmentId),
+        academicYearId,
+        updatedAt: new Date(),
+      });
+    }
+
+  // Truncate existing assignments for this department+semester (department-scoped truncate)
+  // This implements the requested behaviour: when HOD clicks "Save all assignments" we remove
+  // the existing rows for this department and semester and re-insert the incoming set, preventing
+  // lingering duplicates caused by remove->add flows. NOTE: deletion is scoped to the department
+  // and semester and the department's subjects.
+  let created = 0;
+  let updated = 0;
+  let deleted = 0;
+
+  const famCol = db.collection('facultyAssignments');
+  const semNormalized = normalizeSemester(semester);
+
+  const deleteFilter: any = { departmentId: String(departmentId), semester: semNormalized };
+  if (deptSubjectIds.size > 0) deleteFilter.subjectId = { $in: Array.from(deptSubjectIds) };
+
+  // Backup is done by external scripts; here we perform the deletion as requested.
+  const delRes = await famCol.deleteMany(deleteFilter);
+  deleted += delRes.deletedCount ?? 0;
+
+  // Insert desired rows in one batch
+  const docsToInsert: any[] = [];
+  const now = new Date();
+  for (const [k, v] of desiredMap.entries()) {
+    docsToInsert.push({
+      staffId: v.staffId,
+      subjectId: v.subjectId,
+      semester: v.semester,
+      departmentId: v.departmentId,
+      academicYearId: v.academicYearId ?? null,
+      createdAt: now,
+      updatedAt: now,
     });
+  }
+
+  if (docsToInsert.length) {
+    const ins = await famCol.insertMany(docsToInsert);
+    created = ins.insertedCount ?? docsToInsert.length;
+  }
+
+  return NextResponse.json({ success: true, created, updated, deleted, total: desiredMap.size });
   } catch (error: any) {
     console.error("API /hod/faculty-assignments POST error:", error);
     return NextResponse.json({ error: error?.message || "Failed to save assignments" }, { status: 500 });

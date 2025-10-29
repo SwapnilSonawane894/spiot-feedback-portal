@@ -29,7 +29,6 @@ const hodLinks: Array<{ href: string; label: string; icon: React.ReactNode }> = 
 
 const studentLinks: Array<{ href: string; label: string; icon: React.ReactNode }> = [
   { href: "/student/dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-  { href: "/profile", label: "My Profile", icon: <User size={16} /> },
 ];
 
 const staffLinks: Array<{ href: string; label: string; icon: React.ReactNode }> = [
@@ -43,7 +42,14 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
   const role = (session as any)?.user?.role;
   const userName = (session as any)?.user?.name;
 
-  const links = role === "HOD" ? hodLinks : role === "STUDENT" ? studentLinks : role === "STAFF" ? staffLinks : adminLinks;
+  // Show profile link for HOD, STAFF, FACULTY and ADMIN. Students get a limited set without profile.
+  const links = role === "HOD"
+    ? hodLinks
+    : role === "STUDENT"
+    ? studentLinks
+    : (role === "STAFF" || role === "FACULTY")
+    ? staffLinks
+    : adminLinks;
 
   // choose the best (longest) matching href so nested routes highlight the specific link
   const bestMatch = links.reduce<string | null>((best, l) => {

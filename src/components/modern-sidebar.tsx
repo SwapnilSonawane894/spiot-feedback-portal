@@ -50,12 +50,12 @@ const hodLinks: NavItem[] = [
   { href: "/hod/assignment", label: "Faculty Assignment", icon: <ClipboardList size={20} /> },
   { href: "/hod/reports", label: "Feedback Reports", icon: <Clipboard size={20} />, group: "reports" },
   { href: "/hod/submission-status", label: "Submission Status", icon: <FileText size={20} />, group: "reports" },
-  { href: "/profile", label: "My Profile", icon: <User size={20} />, group: "more" },
+  { href: "/profile", label: "My Profile", icon: <User size={20} />, group: "more"},
 ];
 
 const studentLinks: NavItem[] = [
   { href: "/student/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-  { href: "/profile", label: "My Profile", icon: <User size={20} /> },
+  // Profile link intentionally omitted for students
 ];
 
 const staffLinks: NavItem[] = [

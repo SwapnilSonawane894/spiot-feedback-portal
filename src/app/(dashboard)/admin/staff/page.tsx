@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { Trash2, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui-controls";
 import { SkeletonTable } from "@/components/skeletons";
@@ -35,6 +36,8 @@ export default function ManageStaffPage(): React.ReactElement {
   const [password, setPassword] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: session, status } = useSession();
+  const role = (session as any)?.user?.role;
 
   useEffect(() => {
     fetchStaff();
@@ -270,7 +273,9 @@ export default function ManageStaffPage(): React.ReactElement {
                   onChange={(e) => setEmail(e.target.value)}
                   className="input-field"
                   required
-                  disabled={!!editingStaff}
+                  // allow editing existing staff email only to ADMIN
+                  // allow editing existing staff email for ADMIN; while session is loading
+                  disabled={!!editingStaff && !(role === "ADMIN" || status === "loading")}
                 />
               </div>
 

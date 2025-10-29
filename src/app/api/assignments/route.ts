@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    console.log("API /assignments POST received body:", body);
+  // request body received
 
     const staffId = body?.staffId as string | undefined;
     const subjectIds = Array.isArray(body?.subjectIds) ? body.subjectIds : [];
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid payload: staffId required" }, { status: 400 });
     }
 
-    console.log("API /assignments POST for staffId", staffId, { subjectIds, semester });
+  // processing assignment save for staff
 
     const hodUserId = session.user.id as string;
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
@@ -81,17 +81,12 @@ export async function POST(request: Request) {
       departmentId: hodProfile.departmentId,
     }));
 
-    console.log("API /assignments POST - deleting existing assignments for staffId", staffId, "semester", semester);
     const deleteResult = await assignmentService.deleteMany({ staffId, semester });
-    console.log("API /assignments POST - deleteMany result:", deleteResult);
+  // deleted existing assignments for staffId/semester
 
     let createResult = null;
     if (createData.length) {
-      console.log("API /assignments POST - creating assignments", createData.length, "rows");
       createResult = await assignmentService.createMany({ data: createData });
-      console.log("API /assignments POST - createMany result:", createResult);
-    } else {
-      console.log("API /assignments POST - no subjects provided; skipped createMany");
     }
 
     return NextResponse.json({ success: true, deleted: deleteResult.count, created: createResult?.count ?? 0 });

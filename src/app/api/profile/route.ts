@@ -30,10 +30,30 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { name, currentPassword, newPassword } = body || {};
+    const { name, currentPassword, newPassword, email } = body || {};
 
     const data: any = {};
     if (name) data.name = name;
+
+    // Only admins can change their email via this route
+    if (email !== undefined) {
+      if (session.user?.role !== "ADMIN") {
+        return NextResponse.json({ error: "Forbidden: only admin can change email" }, { status: 403 });
+      }
+      // basic email format check
+      const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      if (!emailRegex.test(email)) {
+        return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+      }
+
+      // ensure uniqueness
+      const existing = await userService.findUnique({ email });
+      if (existing && existing.id !== session.user.id) {
+        return NextResponse.json({ error: "Email already in use" }, { status: 409 });
+      }
+
+      data.email = email;
+    }
 
     if (currentPassword || newPassword) {
       if (!currentPassword || !newPassword) {
@@ -50,9 +70,9 @@ export async function PATCH(request: Request) {
       data.hashedPassword = await bcrypt.hash(newPassword, 10);
     }
 
-    if (Object.keys(data).length === 0) return NextResponse.json({ error: "No changes provided" }, { status: 400 });
+  if (Object.keys(data).length === 0) return NextResponse.json({ error: "No changes provided" }, { status: 400 });
 
-    const updated = await userService.update({ id: session.user.id }, data);
+  const updated = await userService.update({ id: session.user.id }, data);
 
     return NextResponse.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
   } catch (error) {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { User, Mail, Lock } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -10,6 +11,8 @@ import { TextInput } from "@/components/ui-controls";
 export default function ProfilePage(): React.ReactElement {
   const { data: session } = useSession();
   const role = (session as any)?.user?.role;
+
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,11 +38,21 @@ export default function ProfilePage(): React.ReactElement {
     load();
   }, []);
 
+  // Redirect students away from this page if they try to access directly
+  useEffect(() => {
+    if (role === "STUDENT") {
+      router.replace("/student/dashboard");
+    }
+  }, [role, router]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
       const payload: any = { name };
+      // Only allow admins to change email from this page
+      if (role === "ADMIN") payload.email = email;
+
       if (role !== "STUDENT" && (currentPassword || newPassword)) {
         payload.currentPassword = currentPassword;
         payload.newPassword = newPassword;
@@ -47,6 +60,16 @@ export default function ProfilePage(): React.ReactElement {
 
       setCurrentPasswordError(null);
       setGeneralError(null);
+      // Basic client-side email validation for admins
+      if (role === "ADMIN" && payload.email) {
+        const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+        if (!emailRegex.test(payload.email)) {
+          setGeneralError("Invalid email format");
+          setLoading(false);
+          return;
+        }
+      }
+
       const res = await fetch("/api/profile", { 
         method: "PATCH", 
         headers: { "Content-Type": "application/json" }, 
@@ -110,10 +133,11 @@ export default function ProfilePage(): React.ReactElement {
               </label>
               <input 
                 value={email} 
-                disabled 
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={role !== "ADMIN"}
                 className="input-field"
               />
-              <p className="form-helper">Email cannot be changed</p>
+              <p className="form-helper">{role === "ADMIN" ? "Change your email address" : "Email cannot be changed"}</p>
             </div>
 
             <div>
