@@ -184,12 +184,20 @@ export default function AssignmentPage(): React.ReactElement {
   const handleSaveAll = useCallback(async () => {
     setIsSaving(true);
     try {
+      // Find matching subject for each assignment to get academicYearId
       const payload = {
         semester: currentSemester,
-        // Convert rowKey back to subjectId for the API payload
+        // Convert rowKey back to subjectId for the API payload and include academicYearId
         assignments: Object.entries(assignments).flatMap(([rowKey, staffIds]) => {
           const subjectId = rowKeyToSubjectIdRef.current[rowKey] || rowKey.split('-')[0];
-          return staffIds.map(staffId => ({ subjectId, staffId }));
+          // Find matching subject to get its academicYearId
+          const subject = subjects.find(s => String(s.id) === String(subjectId));
+          const academicYearId = subject && ((subject as any).academicYearId || ((subject as any).academicYear && (subject as any).academicYear.id));
+          return staffIds.map(staffId => ({ 
+            subjectId, 
+            staffId,
+            academicYearId: academicYearId || null
+          }));
         })
       };
 

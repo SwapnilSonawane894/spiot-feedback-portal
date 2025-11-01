@@ -1,0 +1,52 @@
+[
+  {
+    "_id": "6900c62e41367cf57074169e",
+    "staffId": "68f850ff465f951796151e3f",
+    "subjectId": "68f868daf16d44023c9ba5eb",
+    "semester": "Odd 2025-26",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-28T13:33:34.632Z",
+    "updatedAt": "2025-10-28T13:33:34.632Z"
+  },
+  {
+    "_id": "6900c62e41367cf5707416af",
+    "staffId": "68f850ff465f951796151e3f",
+    "subjectId": "68fc94da39f4fd3479b1b272",
+    "semester": "Odd 2025-26",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-28T13:33:34.632Z",
+    "updatedAt": "2025-10-28T13:33:34.632Z"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b3",
+    "staffId": "68f850ff465f951796151e3d",
+    "subjectId": "68f8689cf16d44023c9ba5e3",
+    "semester": "Odd 2025-26",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-28T13:33:34.632Z",
+    "updatedAt": "2025-10-28T13:33:34.632Z"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b4",
+    "staffId": "68f850fe465f951796151e37",
+    "subjectId": "68f868c9f16d44023c9ba5e9",
+    "semester": "Odd 2025-26",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-28T13:33:34.632Z",
+    "updatedAt": "2025-10-28T13:33:34.632Z"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b5",
+    "staffId": "68f850ff465f951796151e41",
+    "subjectId": "68f868adf16d44023c9ba5e5",
+    "semester": "Odd 2025-26",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "createdAt": "2025-10-28T13:33:34.632Z",
+    "updatedAt": "2025-10-28T13:33:34.632Z"
+  }
+]

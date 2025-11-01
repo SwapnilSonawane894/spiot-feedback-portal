@@ -39,7 +39,7 @@ function createClientPromise(): Promise<MongoClient> {
 export async function getDatabase(): Promise<Db> {
   if (!clientPromise) clientPromise = createClientPromise();
   const client = await clientPromise;
-  return client.db('feedbackPortal');
+  return client.db('FeedbackPortal2');
 }
 
 export default async function getClientPromise() {

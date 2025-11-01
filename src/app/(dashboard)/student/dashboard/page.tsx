@@ -7,18 +7,40 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonTaskCard } from "@/components/skeletons";
 
-type Task = { assignmentId: string; facultyName: string; subjectName: string; status: string };
+type Task = { 
+  assignmentId?: string | null; 
+  subjectId?: string | null; 
+  facultyName: string; 
+  subjectName: string; 
+  status: string; 
+  academicYearMismatch?: boolean;
+  assignmentAcademicYearId?: string | null;
+};
 
 export default function StudentDashboard(): React.ReactElement {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentSemester, setCurrentSemester] = useState<string>("Semester 2025-26");
+  const [studentYear, setStudentYear] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTasks();
     fetchSemester();
+    fetchStudentYear();
   }, []);
+
+  async function fetchStudentYear() {
+    try {
+      const res = await fetch("/api/student/academicYear");
+      if (res.ok) {
+        const data = await res.json();
+        setStudentYear(data.academicYearStr);
+      }
+    } catch (err) {
+      console.error("Failed to fetch student year:", err);
+    }
+  }
 
   async function fetchSemester() {
     try {
@@ -91,8 +113,8 @@ export default function StudentDashboard(): React.ReactElement {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {tasks.map((t) => (
-            <article key={t.assignmentId} className="card content-spacing flex flex-col gap-4">
+          {tasks.map((t, idx) => (
+            <article key={t.assignmentId ?? `${t.subjectId}-${idx}` } className="card content-spacing flex flex-col gap-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg" style={{ background: "var(--primary-light)" }}>
                   <FileText size={20} style={{ color: "var(--primary)" }} />
@@ -109,16 +131,27 @@ export default function StudentDashboard(): React.ReactElement {
 
               <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 Subject: <span className="font-medium" style={{ color: "var(--text-primary)" }}>{t.subjectName}</span>
+                {t.academicYearMismatch && studentYear ? (
+                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800" title={`Your current year is ${studentYear}`}>
+                    Different Academic Year
+                  </span>
+                ) : null}
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-auto pt-3 border-t" style={{ borderColor: "var(--card-border)" }}>
                 {t.status === "Pending" ? (
-                  <Link
-                    href={`/student/feedback/${t.assignmentId}`}
-                    className="btn-primary w-full sm:w-auto"
-                  >
-                    Start Feedback
-                  </Link>
+                  t.assignmentId ? (
+                    <Link
+                      href={`/student/feedback/${t.assignmentId}`}
+                      className="btn-primary w-full sm:w-auto"
+                    >
+                      Start Feedback
+                    </Link>
+                  ) : (
+                    <button className="btn-primary w-full sm:w-auto opacity-60 cursor-not-allowed" disabled title="Assignment not available">
+                      Start Feedback
+                    </button>
+                  )
                 ) : (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
                     <CheckCircle2 size={16} />

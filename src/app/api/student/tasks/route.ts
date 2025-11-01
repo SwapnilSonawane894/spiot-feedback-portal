@@ -26,7 +26,9 @@ export async function GET() {
 
   // Call the centralized function and request ungrouped results so the frontend
   // renders one card per faculty assignment (no HTML/CSS changes required).
-  const tasks = await getStudentTasksFromDb(session.user.id as string, { groupBySubject: false });
+  // Enable academic-year fallback so students will see same-subject assignments from other years
+  // when strict year-matching would otherwise exclude them. This avoids needing manual DB scripts.
+  const tasks = await getStudentTasksFromDb(session.user.id as string, { groupBySubject: false, allowAcademicYearFallback: true });
 
     console.log(`--- [API LOG] Student tasks for ${session.user.email}: Found ${tasks.length} tasks.`);
     

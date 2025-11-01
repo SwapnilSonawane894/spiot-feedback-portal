@@ -17,23 +17,31 @@ export async function GET(request: Request) {
 
     const departmentId = hodProfile.departmentId;
 
+  // Debug logging for request context
+  console.log('🔍 GET /api/subjects - Debug Info:');
+  console.log('  HOD User ID:', hodUserId);
+  console.log('  Department ID:', departmentId);
+
   // Only return subjects for this HOD's department (use departmentSubjects junction)
   let subjects = await departmentSubjectsService.findSubjectsForDepartment(departmentId, { include: { academicYear: true } });
+  
+  // Debug logging for raw results
+  console.log('  Raw subjects from DB:', JSON.stringify(subjects, null, 2));
+  
+  if (!subjects) subjects = [];
+  
   // preserve ordering by name asc
-  subjects = (subjects || []).sort((a: any, b: any) => {
+  subjects = subjects.sort((a: any, b: any) => {
     const an = (a?.name || '').toString();
     const bn = (b?.name || '').toString();
     return an.localeCompare(bn);
   });
-  // Debug logging for GET /api/subjects
-  try {
-    console.log('📋 GET /api/subjects - Returning subjects:');
-    console.log('  Count:', subjects.length);
-    if (subjects.length > 0) {
-      console.log('  First subject:', JSON.stringify(subjects[0], null, 2));
-    }
-  } catch (e) {
-    // swallow logging errors
+
+  // Debug logging for final results
+  console.log('📋 GET /api/subjects - Final results:');
+  console.log('  Count:', subjects.length);
+  if (subjects.length > 0) {
+    console.log('  First subject:', JSON.stringify(subjects[0], null, 2));
   }
 
   return NextResponse.json(subjects);
@@ -127,7 +135,7 @@ export async function POST(request: Request) {
             subjectCode: subjDoc.subjectCode,
             semester: subjDoc.semester,
             departmentId: subjDoc.departmentId || deptId,
-            _junctionId: linkRes?.insertedId || null,
+            _junctionId: linkRes?.upsertedId || null,
             createdAt: subjDoc.createdAt || null,
             updatedAt: new Date(),
             academicYear: year ? { _id: year.id, id: year.id, name: year.name, abbreviation: year.abbreviation, year: year.year } : null,
@@ -186,8 +194,8 @@ export async function POST(request: Request) {
           name: subjDoc.name,
           subjectCode: subjDoc.subjectCode,
           semester: subjDoc.semester,
-          departmentId: subjDoc.departmentId || session.user.departmentId,
-          _junctionId: linkRes?.insertedId || null,
+          departmentId: subjDoc.departmentId || hodProfile.departmentId,
+          _junctionId: linkRes?.upsertedId || null,
           createdAt: subjDoc.createdAt || null,
           updatedAt: subjDoc.updatedAt || null,
           academicYear: year ? { _id: year.id, id: year.id, name: year.name, abbreviation: year.abbreviation, year: year.year } : null,

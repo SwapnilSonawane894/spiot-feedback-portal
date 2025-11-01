@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { staffService, userService, departmentService } from "@/lib/mongodb-services";
+import { validateDepartmentExists, validateEmailUnique } from "@/lib/data-validation";
+import { getDatabase } from '@/lib/mongodb';
 import bcrypt from "bcrypt";
 
 export async function GET(request: Request) {
@@ -49,26 +51,70 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const existingUser = await userService.findUnique({ email });
-    if (existingUser) {
+    // Pre-validate all data before starting transaction
+    const [departmentExists, isEmailUnique] = await Promise.all([
+      validateDepartmentExists(departmentId),
+      validateEmailUnique(email)
+    ]);
+
+    if (!departmentExists) {
+      return NextResponse.json({ error: "Department not found" }, { status: 404 });
+    }
+
+    if (!isEmailUnique) {
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Start transaction
+    const db = await getDatabase();
+    const session_db = db.client.startSession();
 
-    const user = await userService.create({
-      name,
-      email,
-      hashedPassword,
-      role: "STAFF",
-    });
+    try {
+      const result = await session_db.withTransaction(async () => {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create user
+        const user = await userService.create({
+          name,
+          email,
+          hashedPassword,
+          role: "STAFF",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
 
-    const staff = await staffService.create({
-      userId: user.id,
-      departmentId,
-    });
+        // Create staff profile
+        const staff = await staffService.create({
+          userId: user.id,
+          departmentId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
 
-    return NextResponse.json({ success: true, staffId: staff.id });
+        return { userId: user.id, staffId: staff.id };
+      });
+
+      // Fetch complete staff data with relationships
+      const createdStaff = await staffService.findUnique({
+        where: { id: result.staffId },
+        include: {
+          user: true,
+          department: true
+        }
+      });
+
+      return NextResponse.json({ 
+        success: true,
+        staff: createdStaff
+      });
+    } catch (error: any) {
+      console.error('Transaction error:', error);
+      return NextResponse.json({ 
+        error: error.message || "Failed to create staff" 
+      }, { status: 400 });
+    } finally {
+      await session_db.endSession();
+    }
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to create staff" }, { status: 500 });

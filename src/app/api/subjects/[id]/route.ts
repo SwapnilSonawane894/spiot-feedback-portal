@@ -7,6 +7,7 @@ import { staffService, subjectService, assignmentService } from "@/lib/mongodb-s
 import { departmentSubjectsService } from "@/lib/mongodb-services";
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { logger } from '@/lib/logger';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -81,31 +82,61 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
       // First, check whether the provided id refers to a departmentSubjects junction _id
       let junctionRow: any = null;
+      let subjectId: string | null = null;
+      
       try {
         if (/^[0-9a-fA-F]{24}$/.test(id)) {
           junctionRow = await db.collection('departmentSubjects').findOne({ _id: new ObjectId(id) });
+          if (junctionRow) {
+            subjectId = String(junctionRow.subjectId);
+          }
         }
       } catch (e) {
-        // ignore
+        console.warn('Error checking for junction:', e);
       }
 
       if (junctionRow) {
+        // Log what we found
+        logger.debug('Found junction row', { 
+          context: 'SubjectDelete',
+          data: { junctionId: id, subjectId, departmentId: String(junctionRow.departmentId) }
+        });
+
         // Ensure HOD owns this junction's department
         if (String(junctionRow.departmentId) !== String(hodDeptId)) {
           return NextResponse.json({ error: 'Forbidden: junction does not belong to your department' }, { status: 403 });
         }
 
-        // Delete assignments that reference this junction id and belong to this department
+        // Delete assignments that reference either the junction id or the subject id
         try {
-          await db.collection('facultyAssignments').deleteMany({ subjectId: id, departmentId: String(hodDeptId) });
+          await db.collection('facultyAssignments').deleteMany({ 
+            departmentId: String(hodDeptId),
+            $or: [
+              { subjectId: id }, // match by junction id
+              { subjectId: subjectId } // match by subject id
+            ]
+          });
+          logger.info(`Deleted faculty assignments for junction`, {
+            context: 'SubjectDelete',
+            data: { junctionId: id, subjectId }
+          });
         } catch (e) {
-          console.warn('Failed to delete faculty assignments for junction id', id, e);
+          logger.error('Failed to delete faculty assignments', e, {
+            context: 'SubjectDelete',
+            data: { junctionId: id, subjectId }
+          });
         }
 
         // Delete the junction row itself (department-scoped removal)
-        await db.collection('departmentSubjects').deleteOne({ _id: new ObjectId(id), departmentId: String(hodDeptId) });
+        await db.collection('departmentSubjects').deleteOne({ 
+          _id: new ObjectId(id),
+          departmentId: String(hodDeptId)
+        });
 
-        console.info(`✅ Deleted subject junction for department ${hodDeptId}, junction ID: ${id}`);
+        logger.info(`Deleted subject junction for department`, {
+          context: 'SubjectDelete',
+          data: { departmentId: hodDeptId, junctionId: id, subjectId }
+        });
         return NextResponse.json({ success: true });
       }
 

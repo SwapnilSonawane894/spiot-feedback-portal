@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { staffService, assignmentService, subjectService, departmentSubjectsService, normalizeSemester } from "@/lib/mongodb-services";
+import { staffService, assignmentService, subjectService, departmentSubjectsService, normalizeSemester, normalizeAcademicYearId } from "@/lib/mongodb-services";
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -150,7 +150,9 @@ export async function POST(request: Request) {
       const key = `${staffId}:${subjectId}:${sem}`;
       if (desiredMap.has(key)) continue; // de-duplicate incoming payload
 
-      const academicYearId = junctionYearMap.get(String(subjectId)) || subjectYearMap.get(subjectId) || null;
+  // normalize academicYearId to canonical string form before storing
+  const rawAcademicYearId = junctionYearMap.get(String(subjectId)) || subjectYearMap.get(subjectId) || null;
+  const academicYearId = normalizeAcademicYearId(rawAcademicYearId) || null;
 
       desiredMap.set(key, {
         staffId,
@@ -174,8 +176,33 @@ export async function POST(request: Request) {
   const famCol = db.collection('facultyAssignments');
   const semNormalized = normalizeSemester(semester);
 
-  const deleteFilter: any = { departmentId: String(departmentId), semester: semNormalized };
-  if (deptSubjectIds.size > 0) deleteFilter.subjectId = { $in: Array.from(deptSubjectIds) };
+  // Build a robust delete filter that tolerates departmentId/subjectId stored either as string or ObjectId
+  const deleteFilter: any = { semester: semNormalized };
+
+  // departmentId may be stored as ObjectId or string in existing rows; match both when possible
+  try {
+    if (typeof departmentId === 'string' && /^[0-9a-fA-F]{24}$/.test(departmentId)) {
+      deleteFilter.departmentId = { $in: [ new ObjectId(departmentId), String(departmentId) ] };
+    } else {
+      deleteFilter.departmentId = String(departmentId);
+    }
+  } catch (e) {
+    deleteFilter.departmentId = String(departmentId);
+  }
+
+  if (deptSubjectIds.size > 0) {
+    const subjArr = Array.from(deptSubjectIds);
+    const subjectQueryValues: any[] = [];
+    for (const sid of subjArr) {
+      if (typeof sid === 'string' && /^[0-9a-fA-F]{24}$/.test(sid)) {
+        try { subjectQueryValues.push(new ObjectId(sid)); } catch (e) { subjectQueryValues.push(sid); }
+        subjectQueryValues.push(sid);
+      } else {
+        subjectQueryValues.push(sid);
+      }
+    }
+    deleteFilter.subjectId = { $in: subjectQueryValues };
+  }
 
   // Backup is done by external scripts; here we perform the deletion as requested.
   const delRes = await famCol.deleteMany(deleteFilter);
@@ -190,7 +217,8 @@ export async function POST(request: Request) {
       subjectId: v.subjectId,
       semester: v.semester,
       departmentId: v.departmentId,
-      academicYearId: v.academicYearId ?? null,
+      // ensure stored academicYearId is canonicalized to string
+      academicYearId: normalizeAcademicYearId(v.academicYearId) ?? null,
       createdAt: now,
       updatedAt: now,
     });
