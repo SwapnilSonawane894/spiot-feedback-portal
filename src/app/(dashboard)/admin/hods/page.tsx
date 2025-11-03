@@ -11,7 +11,11 @@ type Hod = {
   id: string;
   name?: string | null;
   email?: string | null;
-  staffProfile?: { employeeId: string; designation: string; department?: Department | null } | null;
+  staffProfile?: { 
+    id?: string;
+    employeeId?: string;
+    department?: Department | null;
+  } | null;
 };
 
 export default function ManageHodsPage(): React.ReactElement {

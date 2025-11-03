@@ -46,6 +46,7 @@ export async function POST(request: Request) {
 
     const hashed = await bcrypt.hash(password, 10);
 
+    // Create user
     const created = await userService.create({
       name,
       email,
@@ -53,9 +54,15 @@ export async function POST(request: Request) {
       role: "HOD",
     });
 
+    // Generate unique employee ID
+    const timestamp = new Date().getTime();
+    const employeeId = `HOD${timestamp.toString().slice(-6)}`;
+
+    // Create staff record with unique employee ID
     const createdStaff = await staffService.create({
       userId: created.id,
       departmentId,
+      employeeId: employeeId
     });
 
     const department = await departmentService.findUnique({ id: departmentId });

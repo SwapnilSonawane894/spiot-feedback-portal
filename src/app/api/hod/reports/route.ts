@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { staffService, userService, assignmentService, subjectService, feedbackService, departmentSubjectsService } from "@/lib/mongodb-services";
+import { getDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 export async function GET(req: Request) {
   try {
@@ -12,7 +14,8 @@ export async function GET(req: Request) {
     const staff = await staffService.findFirst({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-  const departmentId = staff.departmentId;
+    const departmentId = staff.departmentId;
+    const db = await getDatabase();
 
   // debug flag and optional includeExternal query param
   const url = new URL(req.url);
@@ -21,14 +24,28 @@ export async function GET(req: Request) {
   const semester = url.searchParams.get('semester') || 'Odd 2025-26';
 
     // Get staff list anchored to department, but also include any staff who are assigned to subjects of this department
-    // 1) find subjects for this department (via departmentSubjects junction)
-    const deptSubjects = await departmentSubjectsService.findSubjectsForDepartment(departmentId);
+    // 1) find subjects that have this department in their departments array or departmentIds
+    let departmentIdObj;
+    try {
+      departmentIdObj = new ObjectId(departmentId);
+    } catch (e) {
+      console.log('Department ID is not a valid ObjectId');
+    }
+
+    const query = {
+      $or: [
+        { departmentIds: { $in: [String(departmentId), departmentIdObj].filter(Boolean) } },
+        { "departments.id": { $in: [String(departmentId), departmentIdObj].filter(Boolean) } }
+      ]
+    };
+
+    const deptSubjects = await db.collection("subjects").find(query).toArray();
+
     const deptSubjectIds = new Set<string>();
-    // Include all ID variants: subject._id, subject.id, and _junctionId
+    // Include all ID variants: subject._id and subject.id
     for (const s of (deptSubjects || [])) {
-      if (s && (s as any)._id) deptSubjectIds.add(String((s as any)._id));
-      if (s && (s as any).id) deptSubjectIds.add(String((s as any).id));
-      if (s && (s as any)._junctionId) deptSubjectIds.add(String((s as any)._junctionId));
+      if (s && s._id) deptSubjectIds.add(String(s._id));
+      if (s && s.id) deptSubjectIds.add(String(s.id));
     }
     console.log('🔍 deptSubjectIds built:', { count: deptSubjectIds.size, sample: Array.from(deptSubjectIds).slice(0,5) });
 
@@ -198,6 +215,12 @@ export async function GET(req: Request) {
         // If no feedbacks yet, still include the assignment with zeroed metrics
         const hasFeedback = feedbacks && feedbacks.length > 0;
 
+        // Get feedbacks specific to this assignment
+        const feedbackQuery = { assignmentId: a.id };
+        console.log('Feedback query:', JSON.stringify(feedbackQuery, null, 2));
+        const validFeedbacks = await db.collection('feedback').find(feedbackQuery).toArray();
+        console.log(`Found ${validFeedbacks.length} feedbacks for assignment ${a.id}`);
+
         // Compute averages for 16 params
         const paramKeys = [
           'coverage_of_syllabus',
@@ -235,16 +258,48 @@ export async function GET(req: Request) {
           });
         }
 
-        const totalStudentsForSubject = await getStudentCountForYear(subject?.academicYearId);
+        // Get all students for this department and academic year
+        const studentQuery = {
+          role: 'STUDENT',
+          departmentId: String(departmentId), // ensure string format
+          academicYearId: String(subject?.academicYearId) // ensure string format
+        };
+        
+        console.log('🔍 Student query:', JSON.stringify(studentQuery, null, 2));
+        
+        // Also try with ObjectId for academicYearId
+        let academicYearIdObj;
+        try {
+          academicYearIdObj = new ObjectId(subject?.academicYearId);
+        } catch (e) {
+          console.log('Academic Year ID is not a valid ObjectId');
+        }
+
+        const studentQueryWithObjectId = {
+          role: 'STUDENT',
+          departmentId: String(departmentId),
+          academicYearId: { $in: [String(subject?.academicYearId), academicYearIdObj].filter(Boolean) }
+        };
+
+        console.log('🔍 Student query with ObjectId:', JSON.stringify(studentQueryWithObjectId, null, 2));
+        
+        const students = await db.collection('users').find(studentQueryWithObjectId).toArray();
+        const totalStudentsForSubject = students.length;
+        
+        console.log('🔍 Total students found:', totalStudentsForSubject);
+        if (totalStudentsForSubject > 0) {
+          console.log('Sample student:', JSON.stringify(students[0], null, 2));
+        }
+        console.log('Subject details:', JSON.stringify(subject, null, 2));
 
         return {
           assignmentId: a.id,
           semester: a.semester,
           subject: subject,
           averages: avg,
-          submissionCount: feedbacks.length || 0,
-          totalResponses: feedbacks.length || 0,
-          totalStudents: totalStudentsForSubject,
+          submissionCount: validFeedbacks.length || 0,
+          totalResponses: validFeedbacks.length || 0,
+          totalStudents: totalStudentsForSubject || 0,
           isReleased: hasFeedback ? feedbacks.every((ff: any) => ff.isReleased) : false,
         };
       }));

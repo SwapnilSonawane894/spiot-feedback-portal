@@ -83,10 +83,15 @@ export async function POST(request: Request) {
           updatedAt: new Date()
         });
 
+        // Generate unique employee ID
+        const timestamp = new Date().getTime();
+        const employeeId = `STAFF${timestamp.toString().slice(-6)}`;
+
         // Create staff profile
         const staff = await staffService.create({
           userId: user.id,
           departmentId,
+          employeeId,
           createdAt: new Date(),
           updatedAt: new Date()
         });
