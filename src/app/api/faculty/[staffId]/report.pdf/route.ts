@@ -179,9 +179,29 @@ export async function GET(req: Request, ctx: { params?: any }) {
     // Prepare wrapped subject headers so they don't overlap; measure using embedded font
     const headerFontSize = 10;
     const maxHeaderWidth = colWidth - 12; // padding inside column
+    
+    // Helper to strip emojis and other non-WinAnsi characters that pdf-lib cannot encode
+    function stripEmojis(text: string): string {
+      if (!text) return '';
+      // Remove emojis and other non-ASCII/non-Latin1 characters that WinAnsi cannot encode
+      return text
+        .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Emojis and symbols
+        .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Miscellaneous symbols
+        .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+        .replace(/[\u{1F000}-\u{1F02F}]/gu, '') // Mahjong tiles
+        .replace(/[\u{1F0A0}-\u{1F0FF}]/gu, '') // Playing cards
+        .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation selectors
+        .replace(/[\u{200D}]/gu, '')            // Zero width joiner
+        .replace(/[^\x00-\xFF]/g, '')           // Remove any remaining non-Latin1 characters
+        .trim();
+    }
+    
     function wrapPdfText(text: string, maxW: number, font: any, size: number) {
       if (!text) return [''];
-      const words = text.split(' ');
+      // Strip emojis before processing to avoid WinAnsi encoding errors
+      const sanitizedText = stripEmojis(text);
+      if (!sanitizedText) return [''];
+      const words = sanitizedText.split(' ');
       const lines: string[] = [];
       let cur = '';
       for (const w of words) {

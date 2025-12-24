@@ -27,6 +27,21 @@ const feedbackParameters: { key: string; label: string }[] = [
 
 const PARAMETERS = feedbackParameters.map((p) => p.key);
 
+// Helper to strip emojis from text (PDF generation cannot handle them)
+function stripEmojis(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Emojis and symbols
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Miscellaneous symbols
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+    .replace(/[\u{1F000}-\u{1F02F}]/gu, '') // Mahjong tiles
+    .replace(/[\u{1F0A0}-\u{1F0FF}]/gu, '') // Playing cards
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation selectors
+    .replace(/[\u{200D}]/gu, '')            // Zero width joiner
+    .replace(/[^\x00-\xFF]/g, '')           // Remove any remaining non-Latin1 characters
+    .trim();
+}
+
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <div className="flex gap-2" role="radiogroup">
@@ -159,10 +174,15 @@ export default function FeedbackForm(): React.ReactElement {
           <label className="form-label">Any Suggestions (Optional)</label>
           <textarea
             value={anySuggestion}
-            onChange={(e) => setAnySuggestion(e.target.value)}
+            onChange={(e) => {
+              // Strip emojis as user types to prevent PDF generation issues
+              const sanitized = stripEmojis(e.target.value);
+              setAnySuggestion(sanitized);
+            }}
             className="input-field min-h-[100px] resize-none"
-            placeholder="Optional: add any comments or suggestions for the faculty..."
+            placeholder="Optional: add any comments or suggestions for the faculty (emojis not allowed)..."
           />
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Note: Emojis and special characters are not allowed.</p>
         </div>
 
         <div className="pt-4 flex gap-3">

@@ -4,6 +4,21 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import { feedbackService } from "@/lib/mongodb-services";
 
+// Helper to strip emojis from text to ensure PDF compatibility
+function stripEmojis(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Emojis and symbols
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Miscellaneous symbols
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+    .replace(/[\u{1F000}-\u{1F02F}]/gu, '') // Mahjong tiles
+    .replace(/[\u{1F0A0}-\u{1F0FF}]/gu, '') // Playing cards
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation selectors
+    .replace(/[\u{200D}]/gu, '')            // Zero width joiner
+    .replace(/[^\x00-\xFF]/g, '')           // Remove any remaining non-Latin1 characters
+    .trim();
+}
+
 export async function GET() {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
@@ -75,7 +90,7 @@ export async function POST(request: Request) {
       encourage_cocurricular: ratings.encourage_cocurricular,
       encourage_extracurricular: ratings.encourage_extracurricular,
       guidance_during_internship: ratings.guidance_during_internship,
-      any_suggestion: typeof any_suggestion === 'string' && any_suggestion.trim().length > 0 ? any_suggestion.trim() : null,
+      any_suggestion: typeof any_suggestion === 'string' && any_suggestion.trim().length > 0 ? stripEmojis(any_suggestion) || null : null,
     });
 
     return NextResponse.json({ success: true });
