@@ -64,20 +64,32 @@ export async function GET(req: Request, ctx: { params?: any }) {
   const allowed = viewerIsHod || viewerIsSelf;
   if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    // Get optional departmentId from query params (for multi-department faculty)
+    const url = new URL(req.url);
+    const requestedDeptId = url.searchParams.get('departmentId');
+
     // fetch assignments (subject) then fetch feedbacks explicitly so we always get the latest feedback docs
-    // Scope assignments by department depending on viewer: HOD sees assignments for their department, staff sees assignments for their own department
+    // Scope assignments by department - use requested department or fall back to appropriate default
     let deptFilter: any = {};
-    if (viewerIsHod) {
+    if (requestedDeptId) {
+      // Specific department requested (for multi-department faculty)
+      deptFilter.departmentId = requestedDeptId;
+    } else if (viewerIsHod) {
       const hodProfile = await (await import('@/lib/mongodb-services')).staffService.findUnique({ where: { userId: viewerId } });
       if (hodProfile && hodProfile.departmentId) deptFilter.departmentId = hodProfile.departmentId;
     } else if (viewerIsSelf) {
       if (staff.departmentId) deptFilter.departmentId = staff.departmentId;
     }
 
+    // Fetch department info for PDF header
+    const { departmentService } = await import('@/lib/mongodb-services');
+    const targetDeptId = requestedDeptId || deptFilter.departmentId || staff.departmentId;
+    const department = targetDeptId ? await departmentService.findUnique({ id: targetDeptId }) : null;
+    const departmentName = department?.name || '';
+
     const assignments = await assignmentService.findMany({ where: { staffId, ...deptFilter }, include: { subject: true } });
 
     // debug mode: return diagnostics instead of binary PDF
-    const url = new URL(req.url);
     const debugMode = url.searchParams.get('debug') === '1';
     if (debugMode) {
       // compute counts
@@ -131,7 +143,14 @@ export async function GET(req: Request, ctx: { params?: any }) {
   const pageCenter = page.getWidth() / 2;
   page.drawText('Student Feedback Analysis', { x: pageCenter - 110, y, size: 18, font: times, color: rgb(0,0,0) });
   y -= 20;
-  // only show centered title; staff name and academic year will appear once below in left column
+  
+  // Add department name if available
+  if (departmentName) {
+    const deptText = `Department: ${departmentName}`;
+    const deptTextWidth = times.widthOfTextAtSize(deptText, 12);
+    page.drawText(deptText, { x: pageCenter - (deptTextWidth / 2), y, size: 12, font: times, color: rgb(0.3, 0.3, 0.3) });
+    y -= 16;
+  }
   y -= 10;
 
   // Two-column info area: left = staff / academic year, right = subjects

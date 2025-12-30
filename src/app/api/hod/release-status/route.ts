@@ -14,13 +14,9 @@ export async function GET() {
     if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
     // Check the first feedback in the department to infer release status
-    // Get all staff in department, then their assignments, then feedback
-    const deptStaff = await staffService.findMany({ where: { departmentId: staff.departmentId } });
-    const staffIds = deptStaff.map(s => s.id);
-  // Fetch assignments scoped to this department
-  const deptAssignments = await assignmentService.findMany({ where: { departmentId: staff.departmentId } });
-  const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
-    const assignmentIds = relevantAssignments.map(a => a.id);
+    // Get ALL assignments in this department (including external faculty)
+    const deptAssignments = await assignmentService.findMany({ where: { departmentId: staff.departmentId } });
+    const assignmentIds = deptAssignments.map(a => a.id);
     
     const allFeedback = await feedbackService.findMany({});
     const deptFeedback = allFeedback.filter(f => assignmentIds.includes(f.assignmentId));
@@ -47,13 +43,9 @@ export async function PATCH(request: Request) {
     const staff = await staffService.findFirst({ where: { userId: session.user.id } });
     if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
-    // Get all staff in department, then their assignments, then bulk update feedback
-    const deptStaff = await staffService.findMany({ where: { departmentId: staff.departmentId } });
-    const staffIds = deptStaff.map(s => s.id);
-  // Fetch assignments scoped to this department
-  const deptAssignments = await assignmentService.findMany({ where: { departmentId: staff.departmentId } });
-  const relevantAssignments = deptAssignments.filter(a => staffIds.includes(a.staffId));
-    const assignmentIds = relevantAssignments.map(a => a.id);
+    // Get ALL assignments in this department (including external faculty)
+    const deptAssignments = await assignmentService.findMany({ where: { departmentId: staff.departmentId } });
+    const assignmentIds = deptAssignments.map(a => a.id);
     
     // Update all feedback for these assignments
     const allFeedback = await feedbackService.findMany({});

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { SkeletonPulse, SkeletonReportCard } from "@/components/skeletons";
+import { Download, Building2 } from "lucide-react";
 
 const PARAM_LABELS: Record<string, string> = {
   coverage_of_syllabus: "Coverage of syllabus",
@@ -45,8 +46,6 @@ export default function FacultyReportPage() {
     }
   }
 
-  // Download is handled server-side via the new pdf endpoint
-
   if (loading) {
     return (
       <main className="max-w-7xl mx-auto">
@@ -62,96 +61,183 @@ export default function FacultyReportPage() {
     );
   }
 
+  const departmentReports = data?.departmentReports || [];
+  const hasMultipleDepartments = departmentReports.length > 1;
+
   return (
     <main className="max-w-7xl mx-auto">
       <div className="text-left mb-6">
-        <h1 className="text-3xl font-bold">Student Feedback Analysis</h1>
-        <div className="text-sm text-gray-500 mt-2">Subjects: {data?.reports?.map((r: any) => r.subject?.name).filter(Boolean).join(', ')}</div>
+        <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>Student Feedback Analysis</h1>
+        {hasMultipleDepartments && (
+          <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
+            You have feedback reports from {departmentReports.length} departments
+          </p>
+        )}
       </div>
 
+      {(!departmentReports || departmentReports.length === 0) && (
+        <div className="card">
+          <div className="card-body">
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No report data available.</p>
+          </div>
+        </div>
+      )}
+
+      {departmentReports.map((deptData: any, deptIndex: number) => (
+        <DepartmentReportSection 
+          key={deptData.departmentId} 
+          deptData={deptData} 
+          staffId={data?.staffId}
+          isHomeDepartment={deptData.departmentId === data?.homeDepartmentId}
+          showDepartmentLabel={hasMultipleDepartments}
+        />
+      ))}
+    </main>
+  );
+}
+
+function DepartmentReportSection({ 
+  deptData, 
+  staffId, 
+  isHomeDepartment,
+  showDepartmentLabel 
+}: { 
+  deptData: any; 
+  staffId?: string;
+  isHomeDepartment: boolean;
+  showDepartmentLabel: boolean;
+}) {
+  const reports = deptData.reports || [];
+
+  return (
+    <div className="mb-8">
+      {/* Department Header */}
+      {showDepartmentLabel && (
+        <div className="flex items-center gap-3 mb-4">
+          <div 
+            className="p-2 rounded-lg flex items-center justify-center" 
+            style={{ backgroundColor: "var(--primary-light)" }}
+          >
+            <Building2 size={20} style={{ color: "var(--primary)" }} />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+              {deptData.departmentName}
+              {deptData.departmentAbbreviation && (
+                <span className="ml-2 text-sm font-normal" style={{ color: "var(--text-muted)" }}>
+                  ({deptData.departmentAbbreviation})
+                </span>
+              )}
+            </h2>
+            {isHomeDepartment && (
+              <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: "var(--success)", color: "white" }}>
+                Home Department
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Download Button */}
       <div className="flex justify-end mb-4">
-        {data?.staffId ? (
-          <a href={`/api/faculty/${data.staffId}/report.pdf`} className="px-4 py-2 bg-blue-600 text-white rounded" download>
-            Download as PDF
+        {staffId ? (
+          <a 
+            href={`/api/faculty/${staffId}/report.pdf?departmentId=${deptData.departmentId}`} 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded transition-colors"
+            style={{ backgroundColor: "var(--primary)", color: "white" }}
+            download
+          >
+            <Download size={16} />
+            Download PDF {showDepartmentLabel && `(${deptData.departmentAbbreviation || deptData.departmentName})`}
           </a>
         ) : (
-          <button className="px-4 py-2 bg-gray-400 text-white rounded" disabled>Download unavailable</button>
+          <button 
+            className="px-4 py-2 rounded" 
+            style={{ backgroundColor: "var(--text-muted)", color: "white" }}
+            disabled
+          >
+            Download unavailable
+          </button>
         )}
       </div>
 
-      <div ref={reportRef} className="bg-white p-4 sm:p-6 rounded shadow">
-        {/* HOD suggestion (if present) */}
-        {data?.hodSuggestion ? (
-          <div className="mb-6 border rounded p-3 bg-gray-50">
-            <h3 className="font-medium mb-1">HOD Suggestions</h3>
-            <div className="text-sm text-gray-800 whitespace-pre-wrap">{data.hodSuggestion}</div>
+      {/* Report Card */}
+      <div className="card">
+        <div className="card-body">
+          {/* HOD suggestion (if present) */}
+          {deptData.hodSuggestion ? (
+            <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "var(--hover-overlay)", borderLeft: "4px solid var(--primary)" }}>
+              <h3 className="font-medium mb-1" style={{ color: "var(--text-primary)" }}>HOD Suggestions</h3>
+              <div className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-secondary)" }}>{deptData.hodSuggestion}</div>
+            </div>
+          ) : null}
+
+          {/* Subjects list */}
+          <div className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+            Subjects: {reports.map((r: any) => r.subject?.name).filter(Boolean).join(', ')}
           </div>
-        ) : null}
-        {/* Responsive rendering: if single subject, show stacked card layout; if multiple, show scrollable table */}
-        {(!data?.reports || data.reports.length === 0) && (
-          <div className="text-sm text-gray-500">No report data available.</div>
-        )}
 
-        {data?.reports && data.reports.length === 1 ? (
-          data.reports.map((r: any) => (
-            <section key={r.assignmentId} className="mb-6 border rounded bg-white">
-              <div className="p-4 sm:p-6 border-b bg-gray-50">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
-                  <h2 className="font-medium">{r.subject?.name} — {r.semester}</h2>
-                  <div className="text-sm text-gray-500 mt-2 sm:mt-0">Total responses: {r.totalResponses ?? 0}</div>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <dl className="space-y-3">
-                  {Object.keys(PARAM_LABELS).map((key) => (
-                    <div key={key} className="flex justify-between items-center border-b py-2">
-                      <dt className="text-sm text-gray-700 w-3/5">{PARAM_LABELS[key]}</dt>
-                      <dd className="text-sm font-medium text-gray-900">{r.averages?.[key] ?? '0'} / 5</dd>
-                    </div>
-                  ))}
-
-                  <div className="flex justify-between items-center pt-2">
-                    <dt className="text-sm font-medium">Overall Performance</dt>
-                    <dd className="text-sm font-medium">{Number(r.overallPercentage ?? 0).toFixed(2)}%</dd>
+          {/* Single subject - card layout */}
+          {reports.length === 1 ? (
+            reports.map((r: any) => (
+              <section key={r.assignmentId} className="border rounded" style={{ borderColor: "var(--card-border)" }}>
+                <div className="p-4 sm:p-6 border-b" style={{ backgroundColor: "var(--hover-overlay)", borderColor: "var(--card-border)" }}>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
+                    <h2 className="font-medium" style={{ color: "var(--text-primary)" }}>{r.subject?.name} — {r.semester}</h2>
+                    <div className="text-sm mt-2 sm:mt-0" style={{ color: "var(--text-muted)" }}>Total responses: {r.totalResponses ?? 0}</div>
                   </div>
-                </dl>
-              </div>
-            </section>
-          ))
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  <th className="border px-3 py-2 text-left">Parameter</th>
-                  {data?.reports?.map((r: any) => (
-                    <th key={r.assignmentId} className="border px-3 py-2 text-left whitespace-normal break-words">{r.subject?.name}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {Object.keys(PARAM_LABELS).map((key) => (
-                  <tr key={key}>
-                    <td className="border px-3 py-2 align-top">{PARAM_LABELS[key]}</td>
-                    {data?.reports?.map((r: any) => (
-                      <td key={r.assignmentId + key} className="border px-3 py-2 align-top">{r.averages?.[key] ?? '0'}</td>
+                </div>
+                <div className="p-4 sm:p-6">
+                  <dl className="space-y-3">
+                    {Object.keys(PARAM_LABELS).map((key) => (
+                      <div key={key} className="flex justify-between items-center border-b py-2" style={{ borderColor: "var(--card-border)" }}>
+                        <dt className="text-sm w-3/5" style={{ color: "var(--text-secondary)" }}>{PARAM_LABELS[key]}</dt>
+                        <dd className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{r.averages?.[key] ?? '0'} / 5</dd>
+                      </div>
+                    ))}
+
+                    <div className="flex justify-between items-center pt-2">
+                      <dt className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Overall Performance</dt>
+                      <dd className="text-sm font-medium" style={{ color: "var(--primary)" }}>{Number(r.overallPercentage ?? 0).toFixed(2)}%</dd>
+                    </div>
+                  </dl>
+                </div>
+              </section>
+            ))
+          ) : (
+            /* Multiple subjects - table layout */
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm" style={{ borderColor: "var(--card-border)" }}>
+                <thead>
+                  <tr>
+                    <th className="border px-3 py-2 text-left" style={{ borderColor: "var(--card-border)", color: "var(--text-primary)" }}>Parameter</th>
+                    {reports.map((r: any) => (
+                      <th key={r.assignmentId} className="border px-3 py-2 text-left whitespace-normal break-words" style={{ borderColor: "var(--card-border)", color: "var(--text-primary)" }}>{r.subject?.name}</th>
                     ))}
                   </tr>
-                ))}
-
-                <tr>
-                  <td className="border px-3 py-2 font-medium">Overall Performance</td>
-                  {data?.reports?.map((r: any) => (
-                    <td key={r.assignmentId + '-overall'} className="border px-3 py-2 font-medium">{Number(r.overallPercentage ?? 0).toFixed(2)}%</td>
+                </thead>
+                <tbody>
+                  {Object.keys(PARAM_LABELS).map((key) => (
+                    <tr key={key}>
+                      <td className="border px-3 py-2 align-top" style={{ borderColor: "var(--card-border)", color: "var(--text-secondary)" }}>{PARAM_LABELS[key]}</td>
+                      {reports.map((r: any) => (
+                        <td key={r.assignmentId + key} className="border px-3 py-2 align-top" style={{ borderColor: "var(--card-border)", color: "var(--text-primary)" }}>{r.averages?.[key] ?? '0'}</td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
 
-        {/* Student suggestions removed from faculty view - only HOD can see them */}
+                  <tr>
+                    <td className="border px-3 py-2 font-medium" style={{ borderColor: "var(--card-border)", color: "var(--text-primary)" }}>Overall Performance</td>
+                    {reports.map((r: any) => (
+                      <td key={r.assignmentId + '-overall'} className="border px-3 py-2 font-medium" style={{ borderColor: "var(--card-border)", color: "var(--primary)" }}>{Number(r.overallPercentage ?? 0).toFixed(2)}%</td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
