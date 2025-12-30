@@ -150,16 +150,7 @@ export default function FacultyReportPage() {
           </div>
         )}
 
-        <div className="mt-6">
-          <h3 className="text-lg font-medium mb-2">Suggestions for Improvement</h3>
-          {data?.suggestions?.length ? (
-            <ul className="list-disc pl-5 space-y-2">
-              {data.suggestions.map((s: string, idx: number) => <li key={idx}>{s}</li>)}
-            </ul>
-          ) : (
-            <div className="text-sm text-gray-500">No suggestions submitted.</div>
-          )}
-        </div>
+        {/* Student suggestions removed from faculty view - only HOD can see them */}
       </div>
     </main>
   );

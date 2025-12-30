@@ -98,7 +98,7 @@ export async function GET(req: Request, ctx: { params?: any }) {
 
     // prepare data
     const reports: any[] = [];
-    const suggestions: string[] = [];
+    // Student suggestions removed from PDF - only HOD can see them
 
     for (const a of assignments) {
       const fbService = (await import('@/lib/mongodb-services')).feedbackService;
@@ -111,8 +111,7 @@ export async function GET(req: Request, ctx: { params?: any }) {
       PARAM_KEYS.forEach((p: string) => (avg[p] = 0));
       for (const f of feedbacks) {
         PARAM_KEYS.forEach((p: string) => (avg[p] += Number((f as any)[p] ?? 0)));
-        const text = (f as any).any_suggestion;
-        if (text && typeof text === 'string' && text.trim().length > 0) suggestions.push(text.trim());
+        // Student suggestions no longer collected for PDF
       }
       PARAM_KEYS.forEach((p: string) => (avg[p] = parseFloat((avg[p] / feedbacks.length).toFixed(2))));
       const total = PARAM_KEYS.reduce((s: number, k: string) => s + (Number(avg[k]) || 0), 0);
@@ -258,6 +257,10 @@ export async function GET(req: Request, ctx: { params?: any }) {
     // Draw vertical grid lines
     // leftmost at tableX
     page.drawLine({ start: { x: tableX, y: tableYStart }, end: { x: tableX, y: tableYStart - tableHeight }, thickness: 0.7, color: rgb(0,0,0) });
+    // vertical line between Sr. No. and Parameter columns
+    const srNoColRight = tableX + col1Width;
+    page.drawLine({ start: { x: srNoColRight, y: tableYStart }, end: { x: srNoColRight, y: tableYStart - tableHeight }, thickness: 0.7, color: rgb(0,0,0) });
+    // vertical line after Parameter column
     const firstColRight = tableX + firstColTotal;
     page.drawLine({ start: { x: firstColRight, y: tableYStart }, end: { x: firstColRight, y: tableYStart - tableHeight }, thickness: 0.7, color: rgb(0,0,0) });
     for (let c = 0; c < colCount; c++) {
@@ -310,31 +313,7 @@ export async function GET(req: Request, ctx: { params?: any }) {
 
     y = tableYStart - tableHeight - 18;
 
-    // Add "You need to improve" section with bullet points from student suggestions
-    if (suggestions.length > 0) {
-      y -= 8;
-      page.drawText('You need to improve your following points  that,', { x: tableX, y, size: 11, font: times });
-      y -= 16;
-      
-      // Limit to first 5 unique suggestions to avoid overcrowding
-      const uniqueSuggestions = [...new Set(suggestions)].slice(0, 5);
-      for (const suggestion of uniqueSuggestions) {
-        // Draw bullet point
-        page.drawText('•', { x: tableX + 6, y, size: 10, font: times });
-        
-        // Wrap suggestion text
-        const suggestionWrapped = wrapPdfText(suggestion, pageWidth - 100, times, 10);
-        for (let i = 0; i < suggestionWrapped.length; i++) {
-          page.drawText(suggestionWrapped[i], { x: tableX + 20, y, size: 10, font: times });
-          y -= 14;
-          if (y < 60) {
-            page = pdfDoc.addPage([595.28, 841.89]);
-            y = page.getHeight() - 40;
-          }
-        }
-      }
-      y -= 6;
-    }
+    // Student suggestions removed from PDF - only HOD can see them through the dashboard
 
     y -= 8;
     // Space before HOD suggestion

@@ -58,7 +58,7 @@ export async function GET() {
     const academicYear = assignments.length > 0 ? (assignments[0].subject?.academicYearId ?? null) : null;
 
     const reports: any[] = [];
-    const suggestions: string[] = [];
+    // Student suggestions are now only visible to HOD, not faculty
 
     for (const a of assignments) {
       let fb = feedbackMap.get(a.id) || [];
@@ -72,8 +72,7 @@ export async function GET() {
       params.forEach((p) => (avg[p] = 0));
       for (const f of fb) {
         params.forEach((p) => (avg[p] += Number((f as any)[p] ?? 0)));
-        const text = (f as any).any_suggestion;
-        if (text && typeof text === 'string' && text.trim().length > 0) suggestions.push(text.trim());
+        // Student suggestions are no longer collected for faculty view
       }
       params.forEach((p) => (avg[p] = parseFloat((avg[p] / fb.length).toFixed(2))));
 
@@ -95,7 +94,8 @@ export async function GET() {
     hodSuggestion = rows && rows.length > 0 ? rows[0].content || '' : '';
   }
 
-  return NextResponse.json({ facultyName, academicYear, reports, suggestions, staffId: staffProfile?.id, hodSuggestion });
+  // Student suggestions removed from faculty response - only HOD can see them
+  return NextResponse.json({ facultyName, academicYear, reports, staffId: staffProfile?.id, hodSuggestion });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to fetch faculty report" }, { status: 500 });

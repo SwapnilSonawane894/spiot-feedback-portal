@@ -234,6 +234,7 @@ export default function HodReportsPage() {
       ) : selected ? (
         <div>
           <FacultyReportView staff={selected} />
+          <StudentSuggestionsCard suggestions={selected?.studentSuggestions || []} staffName={selected?.staffName || ''} />
           <HODSuggestionCard staffId={selectedStaff} semester={selected?.reports?.[0]?.semester || ''} />
         </div>
       ) : (
@@ -262,6 +263,57 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
           >
             <Icon size={24} style={{ color }} />
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StudentSuggestionsCard({ suggestions, staffName }: { suggestions: string[]; staffName: string }) {
+  if (!suggestions || suggestions.length === 0) {
+    return (
+      <div className="card mt-6" style={{ borderLeft: "4px solid var(--text-muted)" }}>
+        <div className="card-body">
+          <h3 className="section-title mb-4">Student Suggestions for {staffName}</h3>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            No suggestions submitted by students.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Remove duplicates and limit display
+  const uniqueSuggestions = [...new Set(suggestions)];
+
+  return (
+    <div className="card mt-6" style={{ borderLeft: "4px solid var(--primary)" }}>
+      <div className="card-body">
+        <div className="flex items-center gap-2 mb-4">
+          <div 
+            className="p-2 rounded-lg flex items-center justify-center" 
+            style={{ backgroundColor: "var(--primary-light)" }}
+          >
+            <BookOpen size={18} style={{ color: "var(--primary)" }} />
+          </div>
+          <h3 className="section-title">Student Suggestions for {staffName}</h3>
+          <span className="badge badge-primary ml-2">{uniqueSuggestions.length}</span>
+        </div>
+        <div className="space-y-3 max-h-64 overflow-y-auto">
+          {uniqueSuggestions.map((suggestion, idx) => (
+            <div 
+              key={idx} 
+              className="p-3 rounded-lg"
+              style={{ 
+                background: "var(--hover-overlay)",
+                borderLeft: "3px solid var(--primary)"
+              }}
+            >
+              <p className="text-sm" style={{ color: "var(--text-primary)" }}>
+                {suggestion}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

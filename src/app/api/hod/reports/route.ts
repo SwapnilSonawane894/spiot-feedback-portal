@@ -221,6 +221,17 @@ export async function GET(req: Request) {
         const validFeedbacks = await db.collection('feedback').find(feedbackQuery).toArray();
         console.log(`Found ${validFeedbacks.length} feedbacks for assignment ${a.id}`);
 
+        // Collect student suggestions from feedbacks
+        const studentSuggestions: string[] = [];
+        if (hasFeedback) {
+          feedbacks.forEach((f: any) => {
+            const text = f.any_suggestion;
+            if (text && typeof text === 'string' && text.trim().length > 0) {
+              studentSuggestions.push(text.trim());
+            }
+          });
+        }
+
         // Compute averages for 16 params
         const paramKeys = [
           'coverage_of_syllabus',
@@ -301,15 +312,25 @@ export async function GET(req: Request) {
           totalResponses: validFeedbacks.length || 0,
           totalStudents: totalStudentsForSubject || 0,
           isReleased: hasFeedback ? feedbacks.every((ff: any) => ff.isReleased) : false,
+          studentSuggestions: studentSuggestions, // Include student suggestions for HOD
         };
       }));
       
       const validReports = staffReports.filter(Boolean); // Remove null entries
 
+      // Aggregate all student suggestions from all reports for this staff member
+      const allStudentSuggestions: string[] = [];
+      validReports.forEach((r: any) => {
+        if (r.studentSuggestions && r.studentSuggestions.length > 0) {
+          allStudentSuggestions.push(...r.studentSuggestions);
+        }
+      });
+
       return {
         staffId: s.id,
         staffName: user?.name ?? user?.email ?? "Unknown",
         reports: validReports,
+        studentSuggestions: allStudentSuggestions, // All suggestions for this staff
       };
     }));
 
