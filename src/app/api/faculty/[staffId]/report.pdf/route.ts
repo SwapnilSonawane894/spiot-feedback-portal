@@ -179,11 +179,12 @@ export async function GET(req: Request, ctx: { params?: any }) {
     const headerFontSize = 10;
     const maxHeaderWidth = colWidth - 12; // padding inside column
     
-    // Helper to strip emojis and other non-WinAnsi characters that pdf-lib cannot encode
+    // Helper to strip emojis, newlines, and other non-WinAnsi characters that pdf-lib cannot encode
     function stripEmojis(text: string): string {
       if (!text) return '';
-      // Remove emojis and other non-ASCII/non-Latin1 characters that WinAnsi cannot encode
+      // Remove emojis, newlines, and other non-ASCII/non-Latin1 characters that WinAnsi cannot encode
       return text
+        .replace(/[\r\n\t]/g, ' ')             // Replace newlines and tabs with spaces
         .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Emojis and symbols
         .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Miscellaneous symbols
         .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
@@ -191,7 +192,8 @@ export async function GET(req: Request, ctx: { params?: any }) {
         .replace(/[\u{1F0A0}-\u{1F0FF}]/gu, '') // Playing cards
         .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation selectors
         .replace(/[\u{200D}]/gu, '')            // Zero width joiner
-        .replace(/[^\x00-\xFF]/g, '')           // Remove any remaining non-Latin1 characters
+        .replace(/[^\x20-\xFF]/g, '')           // Remove any remaining non-printable or non-Latin1 characters (keep space 0x20 and above)
+        .replace(/\s+/g, ' ')                   // Collapse multiple spaces into one
         .trim();
     }
     
