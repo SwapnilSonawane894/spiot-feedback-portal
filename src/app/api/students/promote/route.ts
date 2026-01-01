@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { staffService, userService } from "@/lib/mongodb-services";
+import { staffService, userService, academicYearService } from "@/lib/mongodb-services";
 
 export async function POST(request: Request) {
   try {
@@ -12,13 +12,41 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { fromYearId, toYearId } = body || {};
+    const { fromYearId, toYearId, forcePromote } = body || {};
     if (!fromYearId || !toYearId) return NextResponse.json({ error: "fromYearId and toYearId are required" }, { status: 400 });
 
     const hodProfile = await staffService.findUnique({ where: { userId: session.user.id } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
 
-    const result = await userService.updateMany({ academicYearId: fromYearId, departmentId: hodProfile.departmentId, role: "STUDENT" }, { academicYearId: toYearId });
+    const departmentId = hodProfile.departmentId;
+
+    // Get year details
+    const toYear = await academicYearService.findUnique({ id: toYearId });
+    if (!toYear) {
+      return NextResponse.json({ error: "Invalid target year" }, { status: 400 });
+    }
+
+    // Check if target year already has students
+    const targetCount = await userService.count({
+      academicYearId: toYearId,
+      departmentId,
+      role: "STUDENT"
+    });
+
+    // If target has students and force is not set, return warning
+    if (targetCount > 0 && !forcePromote) {
+      return NextResponse.json({
+        error: `Target year "${toYear.abbreviation || toYear.name}" already has ${targetCount} students. Please promote or remove them first.`,
+        hasExistingStudents: true,
+        existingCount: targetCount,
+        targetYearName: toYear.abbreviation || toYear.name
+      }, { status: 409 }); // 409 Conflict
+    }
+
+    const result = await userService.updateMany(
+      { academicYearId: fromYearId, departmentId, role: "STUDENT" },
+      { academicYearId: toYearId }
+    );
 
     return NextResponse.json({ success: true, promoted: result.count });
   } catch (error) {

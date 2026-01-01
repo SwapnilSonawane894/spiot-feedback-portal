@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { hodSuggestionService } from "@/lib/mongodb-services";
+import { hodSuggestionService, staffService } from "@/lib/mongodb-services";
 
 export async function GET(req: Request) {
   try {
@@ -14,7 +14,14 @@ export async function GET(req: Request) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (session.user?.role !== 'HOD') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const suggestion = await hodSuggestionService.findUnique({ staffId_semester: { staffId, semester } });
+    // Get HOD's staff profile to get their ID
+    const hodProfile = await staffService.findFirst({ where: { userId: session.user.id } });
+    if (!hodProfile) return NextResponse.json({ error: 'HOD profile not found' }, { status: 404 });
+
+    // Find suggestion for this specific HOD, staff, and semester combination
+    const suggestion = await hodSuggestionService.findUnique({ 
+      hodId_staffId_semester: { hodId: hodProfile.id, staffId, semester } 
+    });
     return NextResponse.json({ suggestion });
   } catch (error) {
     console.error(error);
@@ -28,17 +35,25 @@ export async function POST(req: Request) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (session.user?.role !== 'HOD') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    // Get HOD's staff profile to get their ID
+    const hodProfile = await staffService.findFirst({ where: { userId: session.user.id } });
+    if (!hodProfile) return NextResponse.json({ error: 'HOD profile not found' }, { status: 404 });
+
     const body = await req.json();
     const { staffId, semester, content } = body;
     if (!staffId || !semester) return NextResponse.json({ error: 'staffId and semester required' }, { status: 400 });
 
-    const existing = await hodSuggestionService.findUnique({ staffId_semester: { staffId, semester } });
+    // Delete existing suggestion from THIS HOD for this staff/semester
+    const existing = await hodSuggestionService.findUnique({ 
+      hodId_staffId_semester: { hodId: hodProfile.id, staffId, semester } 
+    });
     
     let suggestion;
     if (existing) {
-      await hodSuggestionService.deleteMany({ staffId, semester });
+      await hodSuggestionService.deleteMany({ hodId: hodProfile.id, staffId, semester });
     }
-    suggestion = await hodSuggestionService.create({ staffId, semester, content });
+    // Include hodId when creating the suggestion
+    suggestion = await hodSuggestionService.create({ hodId: hodProfile.id, staffId, semester, content });
 
     return NextResponse.json({ suggestion });
   } catch (error) {

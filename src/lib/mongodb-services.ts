@@ -1135,13 +1135,18 @@ export const hodSuggestionService = {
     }
   },
 
-  async findUnique(where: { id?: string; staffId_semester?: { staffId: string; semester: string } }) {
+  async findUnique(where: { id?: string; staffId_semester?: { staffId: string; semester: string }; hodId_staffId_semester?: { hodId: string; staffId: string; semester: string } }) {
     try {
       const db = await getDatabase();
       let query: any = {};
       if (where.id) {
         query._id = new ObjectId(where.id);
+      } else if (where.hodId_staffId_semester) {
+        // New: find by HOD + staff + semester (unique per HOD)
+        const { hodId, staffId, semester } = where.hodId_staffId_semester;
+        query = { hodId, staffId, semester };
       } else if (where.staffId_semester) {
+        // Legacy: find by staff + semester (for backward compatibility)
         const { staffId, semester } = where.staffId_semester;
         query = { staffId, semester };
       }
@@ -1183,6 +1188,7 @@ export const semesterSettingsService = {
           type: 'semester',
           currentSemester: 1,
           academicYear: `${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}`,
+          semesterHistory: [], // Array to store history of semesters
           updatedAt: new Date(),
         };
         const result = await db.collection(COLLECTIONS.SETTINGS).insertOne(defaultSettings);
@@ -1199,11 +1205,34 @@ export const semesterSettingsService = {
   async update(data: { currentSemester: number; academicYear?: string }) {
     try {
       const db = await getDatabase();
+      
+      // Generate the new semester string
+      const isOdd = Number(data.currentSemester) % 2 === 1;
+      const semesterType = isOdd ? 'Odd' : 'Even';
+      const academicYear = data.academicYear || `${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}`;
+      const newSemesterString = `${semesterType} ${academicYear}`;
+      
+      // Get current settings to check if we need to add to history
+      const currentSettings = await this.get();
+      const currentSemesterString = this.getCurrentSemesterString(currentSettings.currentSemester, currentSettings.academicYear);
+      const normalizedCurrentString = normalizeSemester(currentSemesterString);
+      const normalizedNewString = normalizeSemester(newSemesterString);
+      
+      // Initialize history if not exists
+      let semesterHistory = currentSettings.semesterHistory || [];
+      
+      // If changing to a different semester, add the new one to history (if not already there)
+      if (!semesterHistory.some((s: string) => normalizeSemester(s) === normalizedNewString)) {
+        semesterHistory.push(normalizedNewString);
+      }
+      
       const updateData: any = {
         currentSemester: data.currentSemester,
+        semesterHistory,
         updatedAt: new Date(),
       };
       if (data.academicYear) updateData.academicYear = data.academicYear;
+      
       await db.collection(COLLECTIONS.SETTINGS).updateOne(
         { type: 'semester' },
         { $set: updateData },
@@ -1220,7 +1249,18 @@ export const semesterSettingsService = {
     const isOdd = Number(semesterNumber) % 2 === 1;
     const semesterType = isOdd ? 'Odd' : 'Even';
     const academicYear = year || `${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}`;
-    return `${semesterType} Semester ${academicYear}`;
+    return `${semesterType} ${academicYear}`;
+  },
+  
+  // Get all saved semesters from history
+  async getSemesterHistory() {
+    try {
+      const settings = await this.get();
+      return settings.semesterHistory || [];
+    } catch (error) {
+      console.error('Error in semesterSettingsService.getSemesterHistory:', error);
+      return [];
+    }
   },
 };
 

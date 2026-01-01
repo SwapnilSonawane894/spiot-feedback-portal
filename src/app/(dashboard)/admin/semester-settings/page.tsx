@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { PageHeader } from "@/components/page-header";
-import { Calendar, Save } from "lucide-react";
+import { Calendar, Save, History, CheckCircle } from "lucide-react";
 import { CustomSelect } from "@/components/custom-select";
 
 export default function SemesterSettingsPage() {
@@ -12,6 +12,7 @@ export default function SemesterSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [semesterString, setSemesterString] = useState("");
+  const [semesterHistory, setSemesterHistory] = useState<string[]>([]);
 
   const semesterOptions = [
     { value: 1, label: "1st Semester (Odd)" },
@@ -31,6 +32,7 @@ export default function SemesterSettingsPage() {
       setCurrentSemester(data.currentSemester || 1);
       setAcademicYear(data.academicYear || "");
       setSemesterString(data.semesterString || "");
+      setSemesterHistory(data.semesterHistory || []);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load semester settings");
@@ -67,6 +69,7 @@ export default function SemesterSettingsPage() {
 
       const data = await res.json();
       setSemesterString(data.semesterString);
+      setSemesterHistory(data.semesterHistory || []);
       toast.success("Semester settings updated successfully!");
     } catch (error) {
       console.error(error);
@@ -153,6 +156,59 @@ export default function SemesterSettingsPage() {
                 {saving ? "Saving..." : "Save Settings"}
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Semester History Section */}
+      <div className="card content-spacing mt-6">
+        <div className="flex items-center gap-2 mb-4">
+          <History size={20} style={{ color: "var(--primary)" }} />
+          <h3 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+            Saved Semesters
+          </h3>
+        </div>
+        <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
+          These are the semesters that HOD and Faculty can filter in their reports.
+        </p>
+        
+        {semesterHistory.length > 0 ? (
+          <div className="grid gap-2">
+            {semesterHistory.map((semester, index) => (
+              <div 
+                key={index} 
+                className="flex items-center gap-3 p-3 rounded-lg"
+                style={{ 
+                  background: semester === semesterString ? "var(--primary-light)" : "var(--surface-2)",
+                  border: semester === semesterString ? "1px solid var(--primary)" : "1px solid var(--card-border)"
+                }}
+              >
+                {semester === semesterString && (
+                  <CheckCircle size={18} style={{ color: "var(--primary)" }} />
+                )}
+                <span 
+                  className={semester === semesterString ? "font-semibold" : ""}
+                  style={{ color: semester === semesterString ? "var(--primary)" : "var(--text-primary)" }}
+                >
+                  {semester}
+                </span>
+                {semester === semesterString && (
+                  <span 
+                    className="text-xs px-2 py-0.5 rounded-full ml-auto"
+                    style={{ background: "var(--primary)", color: "white" }}
+                  >
+                    Current
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div 
+            className="p-4 rounded-lg text-center"
+            style={{ background: "var(--surface-2)", color: "var(--text-muted)" }}
+          >
+            No semesters saved yet. Save the current settings to add to history.
           </div>
         )}
       </div>

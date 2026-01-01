@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { semesterSettingsService } from "@/lib/mongodb-services";
+import { semesterSettingsService, normalizeSemester } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
@@ -17,9 +17,13 @@ export async function GET() {
       settings.academicYear
     );
 
+    // Normalize the semester history for display
+    const semesterHistory = (settings.semesterHistory || []).map((s: string) => normalizeSemester(s)).filter(Boolean);
+
     return NextResponse.json({
       ...settings,
-      semesterString,
+      semesterString: normalizeSemester(semesterString),
+      semesterHistory,
     });
   } catch (error) {
     console.error(error);
@@ -51,9 +55,13 @@ export async function PATCH(request: Request) {
       updated.academicYear
     );
 
+    // Normalize the semester history for display
+    const semesterHistory = (updated.semesterHistory || []).map((s: string) => normalizeSemester(s)).filter(Boolean);
+
     return NextResponse.json({
       ...updated,
-      semesterString,
+      semesterString: normalizeSemester(semesterString),
+      semesterHistory,
     });
   } catch (error) {
     console.error(error);

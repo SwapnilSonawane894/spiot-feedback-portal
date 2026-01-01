@@ -36,14 +36,40 @@ const parameterGroups = {
 export default function HodReportsPage() {
   const [data, setData] = useState<any[]>([]);
   const [years, setYears] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<string[]>([]);
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedStaff, setSelectedStaff] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [semestersLoading, setSemestersLoading] = useState(true);
 
-  const fetchReports = useCallback(async () => {
+  // Fetch available semesters from database
+  const fetchSemesters = useCallback(async () => {
+    setSemestersLoading(true);
+    try {
+      const res = await fetch('/api/semesters');
+      if (!res.ok) throw new Error('Failed to load semesters');
+      const json = await res.json();
+      setSemesters(json.semesters || []);
+      // Set current semester as default
+      if (json.currentSemester) {
+        setSelectedSemester(json.currentSemester);
+      } else if (json.semesters && json.semesters.length > 0) {
+        setSelectedSemester(json.semesters[0]);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load semesters');
+    } finally {
+      setSemestersLoading(false);
+    }
+  }, []);
+
+  const fetchReports = useCallback(async (semester: string) => {
+    if (!semester) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/hod/reports`);
+      const res = await fetch(`/api/hod/reports?semester=${encodeURIComponent(semester)}`);
       if (!res.ok) throw new Error("Failed to load reports");
       const json = await res.json();
       setData(json.reports || []);
@@ -69,9 +95,22 @@ export default function HodReportsPage() {
   }, []);
 
   useEffect(() => {
-    fetchReports();
+    fetchSemesters();
     fetchYears();
-  }, [fetchReports, fetchYears]);
+  }, [fetchSemesters, fetchYears]);
+
+  // Fetch reports when semester is selected/changed
+  useEffect(() => {
+    if (selectedSemester) {
+      fetchReports(selectedSemester);
+    }
+  }, [selectedSemester, fetchReports]);
+
+  // When semester changes, reset selected staff
+  const handleSemesterChange = (newSemester: string) => {
+    setSelectedSemester(newSemester);
+    setSelectedStaff(''); // Reset selected staff when semester changes
+  };
 
   const handleDownloadReport = useCallback(() => {
     if (!selectedYear) {
@@ -208,6 +247,14 @@ export default function HodReportsPage() {
       {/* Filter Section */}
       <div className="mb-6">
         <div className="flex items-center gap-4 flex-wrap">
+          <CustomSelect
+            label="Semester"
+            options={semesters.map((s) => ({ value: s, label: s }))}
+            value={selectedSemester}
+            onChange={handleSemesterChange}
+            placeholder="Select semester"
+            className="w-full sm:w-48"
+          />
           <CustomSelect
           label="Filter by Faculty Member"
           options={[
@@ -542,6 +589,9 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
 
   if (!staffId) return null;
 
+  // Parse text into numbered points for preview (split by actual newlines)
+  const suggestionPoints = text.split('\n').filter(line => line.trim());
+
   return (
     <div className="card mt-6">
       <div className="card-body">
@@ -557,13 +607,28 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
         </div>
         <div className="mb-4">
           <label className="form-label">Your Suggestions</label>
+          <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+            Enter each suggestion on a new line. They will be automatically numbered in the PDF.
+          </p>
           <textarea 
             value={text} 
             onChange={(e) => setText(e.target.value)} 
             className="input-field w-full h-32 resize-none" 
-            placeholder={loading ? 'Loading...' : 'Enter your suggestions and feedback for this faculty member...'} 
+            placeholder={loading ? 'Loading...' : 'Enter your suggestions (one per line)...'} 
           />
         </div>
+        {suggestionPoints.length > 0 && (
+          <div className="mb-4 p-3 rounded-lg" style={{ background: "var(--hover-overlay)" }}>
+            <p className="text-xs font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Preview (as numbered points):</p>
+            <ol className="list-decimal list-inside space-y-1">
+              {suggestionPoints.map((point, idx) => (
+                <li key={idx} className="text-sm" style={{ color: "var(--text-primary)" }}>
+                  {point.trim()}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
         <Button onClick={save} disabled={saving}>
           {saving ? 'Saving...' : 'Save Suggestions'}
         </Button>

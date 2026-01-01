@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SkeletonPulse, SkeletonReportCard } from "@/components/skeletons";
-import { Download, Building2 } from "lucide-react";
+import { Download, Building2, Calendar } from "lucide-react";
+import { CustomSelect } from "@/components/custom-select";
 
 const PARAM_LABELS: Record<string, string> = {
   coverage_of_syllabus: "Coverage of syllabus",
@@ -23,19 +24,58 @@ const PARAM_LABELS: Record<string, string> = {
   guidance_during_internship: "Guidance during internship",
 };
 
+// Helper function to get rating based on percentage
+function getRating(percentage: number): string {
+  if (percentage >= 95) return 'Outstanding';
+  if (percentage >= 90) return 'Excellent';
+  if (percentage >= 80) return 'Very Good';
+  if (percentage >= 70) return 'Good';
+  if (percentage >= 50) return 'Satisfactory';
+  return 'Needs Improvement';
+}
+
+// Get color for rating
+function getRatingColor(percentage: number): string {
+  if (percentage >= 90) return 'var(--success)';
+  if (percentage >= 70) return 'var(--primary)';
+  if (percentage >= 50) return '#FFA500';
+  return 'var(--danger)';
+}
+
 export default function FacultyReportPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [semesters, setSemesters] = useState<string[]>([]);
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
+  const [semestersLoading, setSemestersLoading] = useState(true);
   const reportRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    fetchData();
+  // Fetch available semesters from database
+  const fetchSemesters = useCallback(async () => {
+    setSemestersLoading(true);
+    try {
+      const res = await fetch('/api/semesters');
+      if (!res.ok) throw new Error('Failed to load semesters');
+      const json = await res.json();
+      setSemesters(json.semesters || []);
+      // Set current semester as default
+      if (json.currentSemester) {
+        setSelectedSemester(json.currentSemester);
+      } else if (json.semesters && json.semesters.length > 0) {
+        setSelectedSemester(json.semesters[0]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSemestersLoading(false);
+    }
   }, []);
 
-  async function fetchData() {
+  const fetchData = useCallback(async (semester: string) => {
+    if (!semester) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/faculty/report');
+      const res = await fetch(`/api/faculty/report?semester=${encodeURIComponent(semester)}`);
       if (!res.ok) throw new Error('Failed to load report');
       const json = await res.json();
       setData(json);
@@ -44,7 +84,17 @@ export default function FacultyReportPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchSemesters();
+  }, [fetchSemesters]);
+
+  useEffect(() => {
+    if (selectedSemester) {
+      fetchData(selectedSemester);
+    }
+  }, [selectedSemester, fetchData]);
 
   if (loading) {
     return (
@@ -75,10 +125,24 @@ export default function FacultyReportPage() {
         )}
       </div>
 
+      {/* Semester Filter */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4 flex-wrap">
+          <CustomSelect
+            label="Semester"
+            options={semesters.map((s) => ({ value: s, label: s }))}
+            value={selectedSemester}
+            onChange={setSelectedSemester}
+            placeholder={semestersLoading ? "Loading..." : "Select semester"}
+            className="w-full sm:w-64"
+          />
+        </div>
+      </div>
+
       {(!departmentReports || departmentReports.length === 0) && (
         <div className="card">
           <div className="card-body">
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No report data available.</p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No report data available for {selectedSemester || 'this semester'}.</p>
           </div>
         </div>
       )}
@@ -88,6 +152,7 @@ export default function FacultyReportPage() {
           key={deptData.departmentId} 
           deptData={deptData} 
           staffId={data?.staffId}
+          semester={selectedSemester}
           isHomeDepartment={deptData.departmentId === data?.homeDepartmentId}
           showDepartmentLabel={hasMultipleDepartments}
         />
@@ -99,11 +164,13 @@ export default function FacultyReportPage() {
 function DepartmentReportSection({ 
   deptData, 
   staffId, 
+  semester,
   isHomeDepartment,
   showDepartmentLabel 
 }: { 
   deptData: any; 
   staffId?: string;
+  semester?: string;
   isHomeDepartment: boolean;
   showDepartmentLabel: boolean;
 }) {
@@ -142,7 +209,7 @@ function DepartmentReportSection({
       <div className="flex justify-end mb-4">
         {staffId ? (
           <a 
-            href={`/api/faculty/${staffId}/report.pdf?departmentId=${deptData.departmentId}`} 
+            href={`/api/faculty/${staffId}/report.pdf?departmentId=${deptData.departmentId}${semester ? `&semester=${encodeURIComponent(semester)}` : ''}`} 
             className="inline-flex items-center gap-2 px-4 py-2 rounded transition-colors"
             style={{ backgroundColor: "var(--primary)", color: "white" }}
             download
@@ -200,6 +267,12 @@ function DepartmentReportSection({
                       <dt className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Overall Performance</dt>
                       <dd className="text-sm font-medium" style={{ color: "var(--primary)" }}>{Number(r.overallPercentage ?? 0).toFixed(2)}%</dd>
                     </div>
+                    <div className="flex justify-between items-center pt-2 border-t" style={{ borderColor: "var(--card-border)" }}>
+                      <dt className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Overall Rating</dt>
+                      <dd className="text-sm font-bold" style={{ color: getRatingColor(Number(r.overallPercentage ?? 0)) }}>
+                        {getRating(Number(r.overallPercentage ?? 0))}
+                      </dd>
+                    </div>
                   </dl>
                 </div>
               </section>
@@ -230,6 +303,14 @@ function DepartmentReportSection({
                     <td className="border px-3 py-2 font-medium" style={{ borderColor: "var(--card-border)", color: "var(--text-primary)" }}>Overall Performance</td>
                     {reports.map((r: any) => (
                       <td key={r.assignmentId + '-overall'} className="border px-3 py-2 font-medium" style={{ borderColor: "var(--card-border)", color: "var(--primary)" }}>{Number(r.overallPercentage ?? 0).toFixed(2)}%</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="border px-3 py-2 font-medium" style={{ borderColor: "var(--card-border)", color: "var(--text-primary)" }}>Overall Rating</td>
+                    {reports.map((r: any) => (
+                      <td key={r.assignmentId + '-rating'} className="border px-3 py-2 font-bold" style={{ borderColor: "var(--card-border)", color: getRatingColor(Number(r.overallPercentage ?? 0)) }}>
+                        {getRating(Number(r.overallPercentage ?? 0))}
+                      </td>
                     ))}
                   </tr>
                 </tbody>

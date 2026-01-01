@@ -4,14 +4,16 @@ import React, { useCallback, useEffect, useState } from "react";
 import ConfirmationModal from "@/components/confirmation-modal";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui-controls";
-import { Plus, Upload, Filter } from "lucide-react";
+import { Plus, Upload, Filter, AlertTriangle, Trash2, Users } from "lucide-react";
 import { CustomSelect } from "@/components/custom-select";
 
 type Student = { id: string; name?: string | null; email?: string | null; academicYearId?: string | null };
+type YearCount = { id: string; name: string; abbreviation?: string; studentCount: number; isFinalYear: boolean };
 
 export default function StudentsPage(): React.ReactElement {
   const [students, setStudents] = useState<Student[]>([]);
   const [years, setYears] = useState<Array<{ id: string; name: string; abbreviation?: string }>>([]);
+  const [yearCounts, setYearCounts] = useState<YearCount[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [academicYearId, setAcademicYearId] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
@@ -26,10 +28,17 @@ export default function StudentsPage(): React.ReactElement {
   const [newStudentEnroll, setNewStudentEnroll] = useState("");
   const [newStudentYear, setNewStudentYear] = useState("");
   const [isAddingStudent, setIsAddingStudent] = useState(false);
+  
+  // New states for promotion warning and remove all
+  const [promotionWarning, setPromotionWarning] = useState<string | null>(null);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+  const [yearToRemove, setYearToRemove] = useState<YearCount | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   useEffect(() => {
     fetchStudents();
     fetchYears();
+    fetchYearCounts();
   }, []);
 
   async function fetchStudents() {
@@ -49,6 +58,17 @@ export default function StudentsPage(): React.ReactElement {
       if (!res.ok) throw new Error("Failed to fetch years");
       const data = await res.json();
       setYears(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function fetchYearCounts() {
+    try {
+      const res = await fetch("/api/students/year-counts");
+      if (!res.ok) throw new Error("Failed to fetch year counts");
+      const data = await res.json();
+      setYearCounts(data || []);
     } catch (err) {
       console.error(err);
     }
@@ -136,7 +156,10 @@ export default function StudentsPage(): React.ReactElement {
     e.preventDefault();
     if (!fromYearId || !toYearId) return toast.error("Please select both from and to academic years");
     if (fromYearId === toYearId) return toast.error("From and To must be different");
+    
+    setPromotionWarning(null);
     setIsPromoting(true);
+    
     try {
       const res = await fetch("/api/students/promote", { 
         method: "POST", 
@@ -144,9 +167,19 @@ export default function StudentsPage(): React.ReactElement {
         body: JSON.stringify({ fromYearId, toYearId }) 
       });
       const json = await res.json();
+      
+      // Check if target year has existing students
+      if (res.status === 409 && json.hasExistingStudents) {
+        setPromotionWarning(json.error);
+        setIsPromoting(false);
+        return;
+      }
+      
       if (!res.ok) throw new Error(json?.error || "Promote failed");
       toast.success(`Successfully promoted ${json.promoted ?? 0} students.`);
+      setPromotionWarning(null);
       fetchStudents();
+      fetchYearCounts();
     } catch (err) {
       console.error(err);
       toast.error((err as Error).message || "Promote failed");
@@ -154,6 +187,39 @@ export default function StudentsPage(): React.ReactElement {
       setIsPromoting(false);
     }
   }, [fromYearId, toYearId]);
+
+  // Handle removing all students from a year
+  const handleRemoveAllStudents = useCallback(async () => {
+    if (!yearToRemove) return;
+    
+    setIsRemoving(true);
+    try {
+      const res = await fetch("/api/students/remove-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ yearId: yearToRemove.id, confirmRemoval: true })
+      });
+      const json = await res.json();
+      
+      if (!res.ok) throw new Error(json?.error || "Remove failed");
+      
+      toast.success(`Successfully removed ${json.removed} students from ${json.yearName}`);
+      setRemoveConfirmOpen(false);
+      setYearToRemove(null);
+      fetchStudents();
+      fetchYearCounts();
+    } catch (err) {
+      console.error(err);
+      toast.error((err as Error).message || "Remove failed");
+    } finally {
+      setIsRemoving(false);
+    }
+  }, [yearToRemove]);
+
+  const openRemoveConfirm = useCallback((year: YearCount) => {
+    setYearToRemove(year);
+    setRemoveConfirmOpen(true);
+  }, []);
 
   const openAddStudentModal = useCallback(() => {
     setIsAddStudentModalOpen(true);
@@ -236,20 +302,30 @@ export default function StudentsPage(): React.ReactElement {
           <h2 className="section-title">Promote Students</h2>
           <p className="section-description mb-5">Move all students from one year to the next</p>
 
+          {promotionWarning && (
+            <div className="flex items-start gap-3 p-4 mb-4 rounded-lg" style={{ background: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.3)" }}>
+              <AlertTriangle size={20} style={{ color: "#EAB308", flexShrink: 0, marginTop: "2px" }} />
+              <div>
+                <p className="text-sm font-medium" style={{ color: "#EAB308" }}>Cannot Promote</p>
+                <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>{promotionWarning}</p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handlePromote} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <CustomSelect
                 label="From Year"
                 options={uploadYearOptions}
                 value={fromYearId}
-                onChange={setFromYearId}
+                onChange={(val) => { setFromYearId(val); setPromotionWarning(null); }}
                 placeholder="Select year"
               />
               <CustomSelect
                 label="To Year"
                 options={uploadYearOptions}
                 value={toYearId}
-                onChange={setToYearId}
+                onChange={(val) => { setToYearId(val); setPromotionWarning(null); }}
                 placeholder="Select year"
               />
             </div>
@@ -258,6 +334,53 @@ export default function StudentsPage(): React.ReactElement {
               {isPromoting ? "Promoting..." : "Promote All Students"}
             </Button>
           </form>
+        </div>
+      </div>
+
+      {/* Year-wise Student Count Cards with Remove Button for Final Year */}
+      <div className="card content-spacing mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={20} style={{ color: "var(--primary)" }} />
+          <h2 className="section-title mb-0">Students by Academic Year</h2>
+        </div>
+        <p className="section-description mb-4">Overview of student distribution. Final year students can be removed after graduation.</p>
+        
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {yearCounts.map((yc) => (
+            <div 
+              key={yc.id} 
+              className="p-4 rounded-lg flex items-center justify-between"
+              style={{ 
+                background: yc.isFinalYear ? "rgba(239, 68, 68, 0.05)" : "var(--surface-2)",
+                border: yc.isFinalYear ? "1px solid rgba(239, 68, 68, 0.2)" : "1px solid var(--card-border)"
+              }}
+            >
+              <div>
+                <div className="font-medium" style={{ color: "var(--text-primary)" }}>
+                  {yc.abbreviation || yc.name}
+                </div>
+                <div className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  {yc.studentCount} {yc.studentCount === 1 ? "student" : "students"}
+                </div>
+              </div>
+              {yc.isFinalYear && yc.studentCount > 0 && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => openRemoveConfirm(yc)}
+                  className="gap-1"
+                >
+                  <Trash2 size={14} />
+                  Remove All
+                </Button>
+              )}
+            </div>
+          ))}
+          {yearCounts.length === 0 && (
+            <div className="col-span-full text-center py-4" style={{ color: "var(--text-muted)" }}>
+              No academic years found
+            </div>
+          )}
         </div>
       </div>
 
@@ -318,6 +441,17 @@ export default function StudentsPage(): React.ReactElement {
         cancelLabel="Cancel"
         onConfirm={() => handleDelete(toDeleteId)}
         onCancel={() => { setConfirmOpen(false); setToDeleteId(null); }}
+      />
+
+      {/* Remove All Students Confirmation Modal */}
+      <ConfirmationModal
+        open={removeConfirmOpen}
+        title={`Remove All ${yearToRemove?.abbreviation || yearToRemove?.name || ''} Students`}
+        description={`This will permanently remove all ${yearToRemove?.studentCount || 0} students from "${yearToRemove?.abbreviation || yearToRemove?.name || ''}". This action cannot be undone. Are you sure?`}
+        confirmLabel={isRemoving ? "Removing..." : "Remove All"}
+        cancelLabel="Cancel"
+        onConfirm={handleRemoveAllStudents}
+        onCancel={() => { setRemoveConfirmOpen(false); setYearToRemove(null); }}
       />
 
       {isAddStudentModalOpen && (

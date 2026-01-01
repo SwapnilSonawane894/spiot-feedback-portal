@@ -64,9 +64,10 @@ export async function GET(req: Request, ctx: { params?: any }) {
   const allowed = viewerIsHod || viewerIsSelf;
   if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    // Get optional departmentId from query params (for multi-department faculty)
+    // Get optional departmentId and semester from query params
     const url = new URL(req.url);
     const requestedDeptId = url.searchParams.get('departmentId');
+    const requestedSemester = url.searchParams.get('semester');
 
     // fetch assignments (subject) then fetch feedbacks explicitly so we always get the latest feedback docs
     // Scope assignments by department - use requested department or fall back to appropriate default
@@ -82,12 +83,18 @@ export async function GET(req: Request, ctx: { params?: any }) {
     }
 
     // Fetch department info for PDF header
-    const { departmentService } = await import('@/lib/mongodb-services');
+    const { departmentService, normalizeSemester } = await import('@/lib/mongodb-services');
     const targetDeptId = requestedDeptId || deptFilter.departmentId || staff.departmentId;
     const department = targetDeptId ? await departmentService.findUnique({ id: targetDeptId }) : null;
     const departmentName = department?.name || '';
 
-    const assignments = await assignmentService.findMany({ where: { staffId, ...deptFilter }, include: { subject: true } });
+    let assignments = await assignmentService.findMany({ where: { staffId, ...deptFilter }, include: { subject: true } });
+    
+    // Filter by semester if requested
+    if (requestedSemester) {
+      const targetSemester = normalizeSemester(requestedSemester);
+      assignments = assignments.filter((a: any) => normalizeSemester(a.semester || '') === targetSemester);
+    }
 
     // debug mode: return diagnostics instead of binary PDF
     const debugMode = url.searchParams.get('debug') === '1';
@@ -104,9 +111,43 @@ export async function GET(req: Request, ctx: { params?: any }) {
       return NextResponse.json({ success: true, staffId, viewerRole: session.user?.role, allowed: allowed, assignmentCount: assignments.length, counts });
     }
 
-  // determine semester (best-effort: use first assignment.semester) and fetch the single HOD suggestion for it
+  // determine semester (best-effort: use first assignment.semester) and fetch the HOD suggestion
   const semester = assignments?.[0]?.semester || '';
-  const hodSuggestion = await hodSuggestionService.findUnique({ staffId_semester: { staffId, semester } });
+  
+  // Get the HOD's suggestion for this staff
+  // If viewer is HOD, use their own suggestion. Otherwise, find the department's HOD and use their suggestion.
+  let hodSuggestion: any = null;
+  if (viewerIsHod) {
+    // Get HOD's staff profile
+    const hodProfile = await staffService.findFirst({ where: { userId: viewerId } });
+    if (hodProfile) {
+      hodSuggestion = await hodSuggestionService.findUnique({ 
+        hodId_staffId_semester: { hodId: hodProfile.id, staffId, semester } 
+      });
+    }
+  } else {
+    // For faculty viewing their own report, find the HOD of the target department
+    const { staffService: staffSvc } = await import('@/lib/mongodb-services');
+    const allStaff = await staffSvc.findMany({});
+    // Get HOD of this department - staff with HOD role in the target department
+    const departmentHods = allStaff.filter((s: any) => 
+      s.departmentId === targetDeptId && s.role === 'HOD'
+    );
+    // Try each HOD to find if they left a suggestion
+    for (const hod of departmentHods) {
+      const suggestion = await hodSuggestionService.findUnique({
+        hodId_staffId_semester: { hodId: hod.id, staffId, semester }
+      });
+      if (suggestion) {
+        hodSuggestion = suggestion;
+        break;
+      }
+    }
+    // Fallback: try legacy query without hodId for old suggestions
+    if (!hodSuggestion) {
+      hodSuggestion = await hodSuggestionService.findUnique({ staffId_semester: { staffId, semester } });
+    }
+  }
 
     // prepare data
     const reports: any[] = [];
@@ -256,8 +297,19 @@ export async function GET(req: Request, ctx: { params?: any }) {
 
     const headerRowHeight = Math.max(rowHeight, requiredHeaderHeight);
     const overallRowHeight = rowHeight;
-    const totalRows = 1 + PARAM_KEYS.length + 1; // header + params + overall
-    const tableHeight = headerRowHeight + PARAM_KEYS.length * rowHeight + overallRowHeight;
+    const ratingRowHeight = rowHeight; // New row for Overall Rating
+    const totalRows = 1 + PARAM_KEYS.length + 2; // header + params + overall + rating
+    const tableHeight = headerRowHeight + PARAM_KEYS.length * rowHeight + overallRowHeight + ratingRowHeight;
+
+    // Helper function to get rating based on percentage
+    function getRating(percentage: number): string {
+      if (percentage >= 95) return 'Outstanding';
+      if (percentage >= 90) return 'Excellent';
+      if (percentage >= 80) return 'Very Good';
+      if (percentage >= 70) return 'Good';
+      if (percentage >= 50) return 'Satisfactory';
+      return 'Needs Improvement';
+    }
 
     // Draw horizontal grid lines: iterate over rows heights
     let gridY = tableYStart;
@@ -271,17 +323,25 @@ export async function GET(req: Request, ctx: { params?: any }) {
       gridY -= rowHeight;
       page.drawLine({ start: { x: tableX, y: gridY }, end: { x: tableRight, y: gridY }, thickness: 0.7, color: rgb(0,0,0) });
     }
-    // overall bottom
+    // overall performance row bottom
     gridY -= overallRowHeight;
+    page.drawLine({ start: { x: tableX, y: gridY }, end: { x: tableRight, y: gridY }, thickness: 0.7, color: rgb(0,0,0) });
+    // overall rating row bottom (final row)
+    gridY -= ratingRowHeight;
     page.drawLine({ start: { x: tableX, y: gridY }, end: { x: tableRight, y: gridY }, thickness: 0.7, color: rgb(0,0,0) });
 
     // Draw vertical grid lines
-    // leftmost at tableX
+    // leftmost at tableX - full height
     page.drawLine({ start: { x: tableX, y: tableYStart }, end: { x: tableX, y: tableYStart - tableHeight }, thickness: 0.7, color: rgb(0,0,0) });
-    // vertical line between Sr. No. and Parameter columns
+    
+    // Calculate where the last two rows start (Overall Performance and Overall Rating rows)
+    const lastTwoRowsStartY = tableYStart - headerRowHeight - (PARAM_KEYS.length * rowHeight);
+    
+    // vertical line between Sr. No. and Parameter columns - stop before last two rows
     const srNoColRight = tableX + col1Width;
-    page.drawLine({ start: { x: srNoColRight, y: tableYStart }, end: { x: srNoColRight, y: tableYStart - tableHeight }, thickness: 0.7, color: rgb(0,0,0) });
-    // vertical line after Parameter column
+    page.drawLine({ start: { x: srNoColRight, y: tableYStart }, end: { x: srNoColRight, y: lastTwoRowsStartY }, thickness: 0.7, color: rgb(0,0,0) });
+    
+    // vertical line after Parameter column - full height for subject columns
     const firstColRight = tableX + firstColTotal;
     page.drawLine({ start: { x: firstColRight, y: tableYStart }, end: { x: firstColRight, y: tableYStart - tableHeight }, thickness: 0.7, color: rgb(0,0,0) });
     for (let c = 0; c < colCount; c++) {
@@ -325,11 +385,21 @@ export async function GET(req: Request, ctx: { params?: any }) {
 
     // Overall Performance row (last row index = PARAM_KEYS.length)
   const overallRowTop = tableYStart - headerRowHeight - (PARAM_KEYS.length * rowHeight);
-  // Overall performance row (no fill, only text and grid lines already drawn)
-  page.drawText('Overall Performance', { x: tableX + col1Width + 6, y: overallRowTop - 12, size: 10, font: times });
+  // Overall performance row - label spans merged Sr.No. + Parameter columns
+  page.drawText('Overall Performance', { x: tableX + 6, y: overallRowTop - 12, size: 10, font: times });
     reports.forEach((r: any, idx: number) => {
       const x = firstColRight + idx * colWidth;
       page.drawText(`${Number(r.overallPercentage ?? 0).toFixed(2)}%`, { x: x + 6, y: overallRowTop - 12, size: 10, font: times });
+    });
+
+    // Overall Rating row (below Overall Performance)
+    const ratingRowTop = overallRowTop - overallRowHeight;
+    // Rating label spans merged Sr.No. + Parameter columns
+    page.drawText('Overall Rating', { x: tableX + 6, y: ratingRowTop - 12, size: 10, font: times });
+    reports.forEach((r: any, idx: number) => {
+      const x = firstColRight + idx * colWidth;
+      const rating = getRating(Number(r.overallPercentage ?? 0));
+      page.drawText(rating, { x: x + 6, y: ratingRowTop - 12, size: 9, font: times });
     });
 
     y = tableYStart - tableHeight - 18;
@@ -342,16 +412,25 @@ export async function GET(req: Request, ctx: { params?: any }) {
     y -= 14;
     const hs = hodSuggestion;
     if (hs && hs.content) {
-      // show semester label then the single suggestion content
+      // show semester label then the suggestion content as numbered points
       page.drawText(`Semester: ${hs.semester}`, { x: tableX + 4, y, size: 9, font: times, color: rgb(0.2,0.2,0.2) });
-      y -= 12;
-      const wrapped = wrapPdfText(hs.content || '', pageWidth - 100, times, 10);
-      for (const line of wrapped) {
-        page.drawText(line, { x: tableX + 6, y, size: 10, font: times });
-        y -= 14;
-        if (y < 60) {
-          page = pdfDoc.addPage([595.28, 841.89]);
-          y = page.getHeight() - 40;
+      y -= 14;
+      
+      // Split content by newlines and create numbered points
+      const lines = (hs.content || '').split(/\n/).filter((line: string) => line.trim());
+      
+      for (let i = 0; i < lines.length; i++) {
+        const pointText = `${i + 1}. ${lines[i].trim()}`;
+        const wrapped = wrapPdfText(pointText, pageWidth - 100, times, 10);
+        for (let j = 0; j < wrapped.length; j++) {
+          // First line has number, subsequent lines are indented
+          const xPos = j === 0 ? tableX + 6 : tableX + 20;
+          page.drawText(wrapped[j], { x: xPos, y, size: 10, font: times });
+          y -= 14;
+          if (y < 60) {
+            page = pdfDoc.addPage([595.28, 841.89]);
+            y = page.getHeight() - 40;
+          }
         }
       }
     } else {

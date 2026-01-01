@@ -25,13 +25,23 @@ export async function GET(req: Request) {
   console.log('📊 [Faculty Report] Staff Department ID:', staff.departmentId);
   console.log('📊 [Faculty Report] User Role:', session.user?.role);
 
-  // Check for optional departmentId query param to filter by specific department
+  // Check for optional query params
   const url = new URL(req.url);
   const filterDeptId = url.searchParams.get('departmentId');
+  const filterSemester = url.searchParams.get('semester'); // New: semester filter
   const debugMode = url.searchParams.get('debug') === '1';
 
   // Fetch ALL assignments for this staff (across all departments)
-  const allAssignments = await assignmentService.findMany({ where: { staffId: staff.id } });
+  let allAssignments = await assignmentService.findMany({ where: { staffId: staff.id } });
+  
+  // Filter by semester if provided
+  if (filterSemester) {
+    const { normalizeSemester } = await import('@/lib/mongodb-services');
+    const targetSemester = normalizeSemester(filterSemester);
+    allAssignments = allAssignments.filter((a: any) => normalizeSemester(a.semester || '') === targetSemester);
+    console.log('📊 [Faculty Report] Filtered by semester:', filterSemester, '- Assignments:', allAssignments.length);
+  }
+  
   console.log('📊 [Faculty Report] Total assignments found:', allAssignments.length);
   
   if (allAssignments.length > 0) {

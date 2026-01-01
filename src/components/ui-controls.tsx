@@ -5,19 +5,24 @@ import React from "react";
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "danger" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
 };
 
-export function Button({ children, variant = "primary", className = "", ...props }: ButtonProps) {
+export function Button({ children, variant = "primary", size = "md", className = "", ...props }: ButtonProps) {
   const baseClass = variant === "primary" ? "btn-primary" :
                     variant === "secondary" ? "btn-secondary" :
                     variant === "danger" ? "btn-danger" :
                     variant === "outline" ? "btn-outline" :
                     "btn-ghost";
   
+  const sizeClass = size === "sm" ? "text-xs px-2.5 py-1.5" :
+                    size === "lg" ? "text-base px-5 py-3" :
+                    "";
+  
   return (
     <button
       {...props}
-      className={`${baseClass} ${className}`}
+      className={`${baseClass} ${sizeClass} ${className}`}
     >
       {children}
     </button>

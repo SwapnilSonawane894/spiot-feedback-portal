@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const debug = url.searchParams.get('debug');
   const includeExternal = url.searchParams.get('includeExternal') === '1';
-  const semester = url.searchParams.get('semester') || 'Odd 2025-26';
+  const semester = url.searchParams.get('semester');
 
     // Get staff list anchored to department, but also include any staff who are assigned to subjects of this department
     // 1) find subjects that have this department in their departments array or departmentIds
@@ -326,15 +326,25 @@ export async function GET(req: Request) {
         }
       });
 
+      const staffName = user?.name ?? user?.email ?? "Unknown";
+      
+      // Skip staff with "Unknown" name and no assignments
+      if (staffName === "Unknown" && validReports.length === 0) {
+        return null;
+      }
+      
       return {
         staffId: s.id,
-        staffName: user?.name ?? user?.email ?? "Unknown",
+        staffName,
         reports: validReports,
         studentSuggestions: allStudentSuggestions, // All suggestions for this staff
       };
     }));
 
-    const resp: any = { reports };
+    // Filter out null entries (staff with Unknown name and no assignments)
+    const filteredReports = reports.filter(Boolean);
+
+    const resp: any = { reports: filteredReports };
     if (debug) {
       // attempt to fetch subjects directly for debugging (bypass subjectService.findMany behavior)
   const directSubjects = await departmentSubjectsService.findSubjectsForDepartment(departmentId);
