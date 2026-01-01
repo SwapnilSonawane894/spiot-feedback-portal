@@ -31,7 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       } : null
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to update HOD" }, { status: 500 });
   }
 }
@@ -67,7 +67,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to delete HOD" }, { status: 500 });
   }
 }

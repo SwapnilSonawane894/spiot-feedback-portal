@@ -28,7 +28,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await userService.delete({ id });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to delete student" }, { status: 500 });
   }
 }

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         : null
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to check promotion eligibility" }, { status: 500 });
   }
 }

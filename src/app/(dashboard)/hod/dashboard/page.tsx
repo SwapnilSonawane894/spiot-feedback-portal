@@ -103,7 +103,7 @@ export default function HODDashboardPage(): React.ReactElement {
           setReportsReleased(Boolean(json.isReleased));
         }
       } catch (err: any) {
-        console.error(err);
+        // console.error(err);
         toast.error('Failed to load dashboard data');
       }
     }
@@ -125,7 +125,7 @@ export default function HODDashboardPage(): React.ReactElement {
       setIsFeedbackActive(Boolean(json.isFeedbackActive));
       toast.success(`Feedback window ${json.isFeedbackActive ? 'opened' : 'closed'}`);
     } catch (err: any) {
-      console.error(err);
+      // console.error(err);
       toast.error(err?.message || 'Failed to update feedback status');
     } finally {
       setLoadingFeedbackToggle(false);
@@ -149,7 +149,7 @@ export default function HODDashboardPage(): React.ReactElement {
       setReportsReleased(Boolean(json.isReleased));
       toast.success(json.isReleased ? 'Reports released to faculty' : 'Reports retracted from faculty');
     } catch (err: any) {
-      console.error(err);
+      // console.error(err);
       toast.error(err?.message || 'Failed to update release status');
     } finally {
       setLoadingReportsToggle(false);

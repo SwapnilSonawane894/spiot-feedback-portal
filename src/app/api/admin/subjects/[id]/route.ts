@@ -53,7 +53,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error updating subject:", error);
+    // console.error("Error updating subject:", error);
     return NextResponse.json({ error: "Failed to update subject" }, { status: 500 });
   }
 }
@@ -79,7 +79,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting subject:", error);
+    // console.error("Error deleting subject:", error);
     return NextResponse.json({ error: "Failed to delete subject" }, { status: 500 });
   }
 }

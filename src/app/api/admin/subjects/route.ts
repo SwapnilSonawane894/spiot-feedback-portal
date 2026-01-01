@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(subjects);
   } catch (error) {
-    console.error("Error fetching subjects:", error);
+    // console.error("Error fetching subjects:", error);
     return NextResponse.json({ error: "Failed to fetch subjects" }, { status: 500 });
   }
 }
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(created[0], { status: 201 });
   } catch (error) {
-    console.error("Error creating subject:", error);
+    // console.error("Error creating subject:", error);
     return NextResponse.json({ error: "Failed to create subject" }, { status: 500 });
   }
 }

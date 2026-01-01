@@ -3,7 +3,7 @@ import { getDatabase } from '../mongodb';
 
 export class DepartmentSubjectsService {
   async findSubjectsForDepartment(departmentId: string, options: any = {}) {
-    console.log('🔍 [departmentSubjectsService] Finding subjects for department:', departmentId);
+    // console.log('🔍 [departmentSubjectsService] Finding subjects for department:', departmentId);
     
     const db = await getDatabase();
 
@@ -70,7 +70,7 @@ export class DepartmentSubjectsService {
       ])
       .toArray();
 
-    console.log('Found subjects:', subjects.length);
+    // console.log('Found subjects:', subjects.length);
 
     return subjects;
   }

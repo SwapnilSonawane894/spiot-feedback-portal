@@ -85,14 +85,14 @@ export async function POST(request: Request) {
         });
         created.push(enrollment);
       } catch (err: any) {
-        console.error("Failed to create user for", enrollment, err);
+        // console.error("Failed to create user for", enrollment, err);
         skipped.push({ email: enrollment, reason: err?.message || "create failed" });
       }
     }
 
     return NextResponse.json({ success: true, createdCount: created.length, created, skipped });
   } catch (error: any) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: error?.message || "Failed to upload students" }, { status: 500 });
   }
 }

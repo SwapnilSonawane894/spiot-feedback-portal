@@ -93,7 +93,7 @@ export default function FeedbackForm(): React.ReactElement {
       }
       setInfo({ facultyName: found.facultyName, subjectName: found.subjectName });
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("Failed to load assignment info");
     }
   }
@@ -122,12 +122,12 @@ export default function FeedbackForm(): React.ReactElement {
         body: JSON.stringify({ assignmentId, ratings, any_suggestion: anySuggestion }),
       });
       const json = await res.json().catch(() => null);
-      console.log("Feedback submit response", res.status, json);
+      // console.log("Feedback submit response", res.status, json);
       if (!res.ok) throw new Error(json?.error || "Failed to submit");
       toast.success("Feedback submitted");
       router.push("/student/dashboard");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Submit failed");
     } finally {
       setIsSubmitting(false);

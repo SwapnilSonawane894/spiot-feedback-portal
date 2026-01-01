@@ -37,7 +37,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
       const data = await res.json();
       setDepartments(data);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
       setDepartmentName("");
       setDepartmentAbbreviation("");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Save failed");
     } finally {
       setIsSubmitting(false);
@@ -97,7 +97,7 @@ export default function ManageDepartmentsPage(): React.ReactElement {
       setShowDeleteModal(false);
       setDepartmentToDelete(null);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       // consider toasting error
     } finally {
       setIsSubmitting(false);

@@ -42,7 +42,7 @@ export async function GET(req: Request) {
       assignedStaff,
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: 'Failed to fetch diagnostics' }, { status: 500 });
   }
 }

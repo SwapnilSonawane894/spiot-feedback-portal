@@ -78,7 +78,7 @@ async function _fetchStudentTasks(userId: string): Promise<StudentTask[]> {
     });
 
     if (!student || !student.departmentId || !student.academicYearId) {
-      console.error(`getStudentTasksFromDb: Student ${userId} lacks required fields.`);
+      // console.error(`getStudentTasksFromDb: Student ${userId} lacks required fields.`);
       return [];
     }
 
@@ -87,7 +87,7 @@ async function _fetchStudentTasks(userId: string): Promise<StudentTask[]> {
     try {
       departmentIdObj = new ObjectId(student.departmentId);
     } catch (e) {
-      console.log('Department ID is not a valid ObjectId');
+      // Department ID is not a valid ObjectId - expected in some cases
     }
 
     const departmentCriteria = {
@@ -106,7 +106,7 @@ async function _fetchStudentTasks(userId: string): Promise<StudentTask[]> {
       try {
         academicYearIdObj = new ObjectId(student.academicYearId);
       } catch (e) {
-        console.log('Academic Year ID is not a valid ObjectId');
+        // Academic Year ID is not a valid ObjectId - expected in some cases
       }
       query = {
         $and: [
@@ -116,28 +116,15 @@ async function _fetchStudentTasks(userId: string): Promise<StudentTask[]> {
       };
     }
 
-    console.log('Student subjects query:', JSON.stringify(query, null, 2));
     const subjects = await db.collection<Subject>('subjects').find(query).toArray();
-    console.log('Found subjects:', subjects.length);
-    if (subjects.length > 0) {
-      console.log('Subject details:', JSON.stringify(subjects.map(s => ({
-        id: s._id,
-        name: s.name,
-        departmentIds: s.departmentIds,
-        departments: s.departments,
-        academicYearId: s.academicYearId
-      })), null, 2));
-    }
 
     if (!subjects || subjects.length === 0) {
-      console.log(`No subjects found for department ${student.departmentId} and academic year ${student.academicYearId}`);
       return [];
     }
 
     // Get current semester from settings
     const settings = await db.collection('settings').findOne({ type: 'semester' });
     if (!settings) {
-      console.error('Semester settings not found');
       return [];
     }
 
@@ -156,7 +143,6 @@ async function _fetchStudentTasks(userId: string): Promise<StudentTask[]> {
     }).toArray();
 
     if (!assignments || assignments.length === 0) {
-      console.log(`No assignments found for subjects`);
       return [];
     }
 
@@ -205,10 +191,9 @@ async function _fetchStudentTasks(userId: string): Promise<StudentTask[]> {
       };
     });
 
-    console.log(`--- [API LOG] Student tasks for ${userId}: Found ${resultTasks.length} tasks.`);
     return resultTasks;
   } catch (error) {
-    console.error("Error in getStudentTasksFromDb:", error);
+    // console.error("Error in getStudentTasksFromDb:", error);
     return [];
   }
 }

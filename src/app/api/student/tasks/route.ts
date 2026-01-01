@@ -30,11 +30,11 @@ export async function GET() {
   // when strict year-matching would otherwise exclude them. This avoids needing manual DB scripts.
   const tasks = await getStudentTasksFromDb(session.user.id as string, { groupBySubject: false, allowAcademicYearFallback: true });
 
-    console.log(`--- [API LOG] Student tasks for ${session.user.email}: Found ${tasks.length} tasks.`);
+    // console.log(`--- [API LOG] Student tasks for ${session.user.email}: Found ${tasks.length} tasks.`);
     
     return NextResponse.json(tasks);
   } catch (error) {
-    console.error("API /student/tasks - unexpected error:", error);
+    // console.error("API /student/tasks - unexpected error:", error);
     return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
   }
 }

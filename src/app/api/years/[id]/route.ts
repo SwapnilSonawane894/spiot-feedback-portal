@@ -24,7 +24,7 @@ export async function PATCH(request: Request, context: any) {
     );
     return NextResponse.json(updated);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to update academic year" }, { status: 500 });
   }
 }
@@ -39,7 +39,7 @@ export async function DELETE(request: Request, context: any) {
     await academicYearService.delete({ id });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to delete academic year" }, { status: 500 });
   }
 }

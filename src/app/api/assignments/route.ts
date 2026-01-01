@@ -39,7 +39,7 @@ export async function GET() {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch assignments" }, { status: 500 });
   }
 }
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, deleted: deleteResult.count, created: createResult?.count ?? 0 });
   } catch (error: any) {
-    console.error("API /assignments POST error:", error);
+    // console.error("API /assignments POST error:", error);
     return NextResponse.json({ error: error?.message || "Failed to save assignments" }, { status: 500 });
   }
 }

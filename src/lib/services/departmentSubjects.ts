@@ -13,7 +13,7 @@ export async function findSubjectsForDepartment(departmentId: string, options?: 
     if (!departmentId) return [];
     const depIdStr = String(departmentId);
 
-    console.log('🔍 [departmentSubjectsService] Finding subjects for department:', depIdStr);
+    // console.log('🔍 [departmentSubjectsService] Finding subjects for department:', depIdStr);
 
     // 1) Fetch junction rows linking subjects to this department
     const junctions = await db.collection(COLLECTIONS.DEPARTMENT_SUBJECTS)
@@ -21,7 +21,7 @@ export async function findSubjectsForDepartment(departmentId: string, options?: 
       .toArray();
     
     if (!junctions || junctions.length === 0) {
-      console.log('❌ [departmentSubjectsService] No junction rows found for department');
+      // console.log('❌ [departmentSubjectsService] No junction rows found for department');
       return [];
     }
 
@@ -120,7 +120,7 @@ export async function findSubjectsForDepartment(departmentId: string, options?: 
     return enrichedRows;
 
   } catch (error) {
-    console.error('Error in departmentSubjectsService.findSubjectsForDepartment:', error);
+    // console.error('Error in departmentSubjectsService.findSubjectsForDepartment:', error);
     throw error;
   }
 }

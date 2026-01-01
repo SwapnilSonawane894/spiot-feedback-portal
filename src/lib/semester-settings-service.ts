@@ -39,7 +39,7 @@ export const semesterSettingsService = {
         ...doc
       };
     } catch (error) {
-      console.error('Error in semesterSettingsService.get:', error);
+      // console.error('Error in semesterSettingsService.get:', error);
       throw error;
     }
   },
@@ -62,7 +62,7 @@ export const semesterSettingsService = {
       
       return this.get();
     } catch (error) {
-      console.error('Error in semesterSettingsService.update:', error);
+      // console.error('Error in semesterSettingsService.update:', error);
       throw error;
     }
   }

@@ -101,15 +101,15 @@ export async function GET(request: Request) {
       .toArray();
 
     // Debug logging for final results
-    console.log('📋 GET /api/subjects - Final results:');
-    console.log('  Count:', subjects.length);
+    // console.log('📋 GET /api/subjects - Final results:');
+    // console.log('  Count:', subjects.length);
     if (subjects.length > 0) {
-      console.log('  First subject:', JSON.stringify(subjects[0], null, 2));
+      // console.log('  First subject:', JSON.stringify(subjects[0], null, 2));
     }
 
     return NextResponse.json(subjects);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch subjects" }, { status: 500 });
   }
 }

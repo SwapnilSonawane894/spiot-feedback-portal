@@ -29,7 +29,7 @@ export async function GET() {
     const feedback = await feedbackService.findMany({});
     return NextResponse.json(feedback);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch feedback" }, { status: 500 });
   }
 }
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to save feedback" }, { status: 500 });
   }
 }

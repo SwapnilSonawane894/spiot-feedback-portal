@@ -26,7 +26,7 @@ export async function GET() {
       semesterHistory,
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch semester settings" }, { status: 500 });
   }
 }
@@ -64,7 +64,7 @@ export async function PATCH(request: Request) {
       semesterHistory,
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to update semester settings" }, { status: 500 });
   }
 }

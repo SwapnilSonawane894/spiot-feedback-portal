@@ -25,7 +25,7 @@ export async function GET() {
 
     return NextResponse.json(filteredYears);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch academic years" }, { status: 500 });
   }
 }

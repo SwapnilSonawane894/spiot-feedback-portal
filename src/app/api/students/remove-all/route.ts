@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       yearName: year.abbreviation || year.name
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to remove students" }, { status: 500 });
   }
 }

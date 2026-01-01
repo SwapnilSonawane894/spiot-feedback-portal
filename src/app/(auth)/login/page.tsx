@@ -69,7 +69,7 @@ export default function LoginPage(): React.JSX.Element {
           }
           return;
         } catch (sessionErr) {
-          console.error('Session fetch error:', sessionErr);
+          // console.error('Session fetch error:', sessionErr);
           setError("Login successful but failed to load dashboard. Please refresh the page.");
           setIsNavigating(false);
           setIsLoading(false);
@@ -80,7 +80,7 @@ export default function LoginPage(): React.JSX.Element {
       setError("Login failed. Please try again.");
       setIsLoading(false);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setError("An unexpected error occurred.");
       setIsLoading(false);
     }

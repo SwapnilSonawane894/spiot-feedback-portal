@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(filteredStaff);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch staff" }, { status: 500 });
   }
 }
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
         staff: createdStaff
       });
     } catch (error: any) {
-      console.error('Transaction error:', error);
+      // console.error('Transaction error:', error);
       return NextResponse.json({ 
         error: error.message || "Failed to create staff" 
       }, { status: 400 });
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       await session_db.endSession();
     }
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to create staff" }, { status: 500 });
   }
 }

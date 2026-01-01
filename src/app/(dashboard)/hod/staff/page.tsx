@@ -45,7 +45,7 @@ export default function ManageStaffPage(): React.ReactElement {
       const data = await res.json();
       setStaffList(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setStaffList([]);
     }
   }
@@ -58,7 +58,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setDepartments(data);
       if (data.length > 0) setDepartmentId(data[0].id);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -99,7 +99,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setEmail("");
       setPassword("");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message);
     } finally {
       setIsSubmitting(false);
@@ -141,7 +141,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setStaffList((prev) => prev.filter((p) => p.id !== s.id));
       toast.success("Staff member deleted successfully");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message);
     } finally {
       setDeletingId(null);

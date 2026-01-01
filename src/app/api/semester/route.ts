@@ -16,7 +16,7 @@ export async function GET() {
 
     return NextResponse.json({ semesterString });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch semester" }, { status: 500 });
   }
 }

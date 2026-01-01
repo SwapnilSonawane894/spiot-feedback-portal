@@ -65,7 +65,7 @@ export default function FacultyReportPage() {
         setSelectedSemester(json.semesters[0]);
       }
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     } finally {
       setSemestersLoading(false);
     }
@@ -80,7 +80,7 @@ export default function FacultyReportPage() {
       const json = await res.json();
       setData(json);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     } finally {
       setLoading(false);
     }

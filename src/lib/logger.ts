@@ -10,7 +10,7 @@ interface LogOptions {
 export const logger = {
   info: (message: string, options?: LogOptions) => {
     if (!isDev) return;
-    console.log(
+    // console.log(
       `ℹ️ [${options?.context || 'APP'}] ${message}`,
       options?.data || ''
     );
@@ -18,7 +18,7 @@ export const logger = {
 
   warn: (message: string, options?: LogOptions) => {
     if (!isDev) return;
-    console.warn(
+    // console.warn(
       `⚠️ [${options?.context || 'APP'}] ${message}`,
       options?.data || ''
     );
@@ -26,7 +26,7 @@ export const logger = {
 
   error: (message: string, error?: any, options?: LogOptions) => {
     // Always log errors, even in production
-    console.error(
+    // console.error(
       `❌ [${options?.context || 'APP'}] ${message}`,
       error || '',
       options?.data || ''
@@ -35,7 +35,7 @@ export const logger = {
 
   debug: (message: string, options?: LogOptions) => {
     if (!isDev) return;
-    console.debug(
+    // console.debug(
       `🔍 [${options?.context || 'APP'}] ${message}`,
       options?.data || ''
     );
@@ -45,7 +45,7 @@ export const logger = {
   api: (method: string, path: string, statusCode: number, durationMs: number) => {
     if (!isDev) return;
     const emoji = statusCode >= 400 ? '❌' : statusCode >= 300 ? '⚠️' : '✅';
-    console.log(`${emoji} ${method} ${path} ${statusCode} (${durationMs}ms)`);
+    // console.log(`${emoji} ${method} ${path} ${statusCode} (${durationMs}ms)`);
   }
 };
 

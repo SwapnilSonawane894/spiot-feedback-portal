@@ -25,7 +25,7 @@ export async function GET() {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("API /student/academicYear - unexpected error:", error);
+    // console.error("API /student/academicYear - unexpected error:", error);
     return NextResponse.json({ error: "Failed to fetch academic year" }, { status: 500 });
   }
 }

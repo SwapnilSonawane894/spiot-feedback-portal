@@ -58,7 +58,7 @@ export default function HodReportsPage() {
         setSelectedSemester(json.semesters[0]);
       }
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error('Failed to load semesters');
     } finally {
       setSemestersLoading(false);
@@ -74,7 +74,7 @@ export default function HodReportsPage() {
       const json = await res.json();
       setData(json.reports || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("Failed to load reports");
     } finally {
       setLoading(false);
@@ -89,7 +89,7 @@ export default function HodReportsPage() {
       setYears(json || []);
       if (json && json.length > 0) setSelectedYear(json[0].id);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error('Failed to load academic years');
     }
   }, []);
@@ -557,7 +557,7 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
         const json = await res.json();
         setText(json.suggestion?.content || '');
       } catch (err) {
-        console.error(err);
+        // console.error(err);
       } finally {
         setLoading(false);
       }
@@ -580,7 +580,7 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
       if (!res.ok) throw new Error(json?.error || 'Save failed');
       toast.success('Saved HOD suggestions');
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || 'Save failed');
     } finally {
       setSaving(false);

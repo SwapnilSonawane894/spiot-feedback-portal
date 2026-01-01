@@ -54,7 +54,7 @@ export default function AssignmentPage(): React.ReactElement {
   // Save raw assignments for downstream mapping (mapping is done in a useMemo to avoid timing issues)
   setRawAssignmentsData(assignmentsData || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("Failed to load data");
     }
   }
@@ -85,12 +85,12 @@ export default function AssignmentPage(): React.ReactElement {
   // Build assignments mapping after subjects and departmentAssignments are available
   const assignmentsBySubjectId = useMemo(() => {
     if (!subjects || subjects.length === 0) {
-      console.log('⚠️ Subjects not loaded yet, skipping mapping');
+      // console.log('⚠️ Subjects not loaded yet, skipping mapping');
       return {} as Record<string, string[]>;
     }
 
     if (!departmentAssignments || departmentAssignments.length === 0) {
-      console.log('⚠️ No assignments to map');
+      // console.log('⚠️ No assignments to map');
       return {} as Record<string, string[]>;
     }
 
@@ -214,7 +214,7 @@ export default function AssignmentPage(): React.ReactElement {
 
       toast.success("All assignments saved successfully!");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Save failed");
     } finally {
       setIsSaving(false);

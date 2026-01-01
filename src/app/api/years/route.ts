@@ -24,7 +24,7 @@ export async function GET() {
 
     return NextResponse.json(allYears);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch academic years" }, { status: 500 });
   }
 }
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const created = await academicYearService.create({ name, abbreviation, departmentId: departmentId || null });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to create academic year" }, { status: 500 });
   }
 }

@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     try {
       departmentIdObj = new ObjectId(departmentId);
     } catch (e) {
-      console.log('Department ID is not a valid ObjectId');
+      // console.log('Department ID is not a valid ObjectId');
     }
 
     const query = {
@@ -47,23 +47,23 @@ export async function GET(req: Request) {
       if (s && s._id) deptSubjectIds.add(String(s._id));
       if (s && s.id) deptSubjectIds.add(String(s.id));
     }
-    console.log('🔍 deptSubjectIds built:', { count: deptSubjectIds.size, sample: Array.from(deptSubjectIds).slice(0,5) });
+    // console.log('🔍 deptSubjectIds built:', { count: deptSubjectIds.size, sample: Array.from(deptSubjectIds).slice(0,5) });
 
     // 2) find all assignments for this department (do NOT filter by semester at DB level because
     //    semester strings may be inconsistent; normalize and filter client-side)
-    console.log('🔍 GET /api/hod/reports DEBUG:');
-    console.log('  HOD Department ID:', departmentId);
-    console.log('  Requested Semester:', semester);
+    // console.log('🔍 GET /api/hod/reports DEBUG:');
+    // console.log('  HOD Department ID:', departmentId);
+    // console.log('  Requested Semester:', semester);
 
     const allAssignmentsRaw = await assignmentService.findMany({ where: { departmentId } });
-    console.log('  Found assignments (department total):', (allAssignmentsRaw || []).length);
-    if ((allAssignmentsRaw || []).length > 0) console.log('  Sample raw assignment:', allAssignmentsRaw[0]);
+    // console.log('  Found assignments (department total):', (allAssignmentsRaw || []).length);
+    // if ((allAssignmentsRaw || []).length > 0) console.log('  Sample raw assignment:', allAssignmentsRaw[0]);
 
     // Normalize semesters and filter them client-side to match target semester string
     const normalizeSemester = (await import('@/lib/mongodb-services')).normalizeSemester;
     const targetSemester = normalizeSemester(semester || '');
     const allAssignments = (allAssignmentsRaw || []).filter((a: any) => normalizeSemester(a.semester || '') === targetSemester);
-    console.log('  Assignments after semester normalization/filter:', (allAssignments || []).length);
+    // console.log('  Assignments after semester normalization/filter:', (allAssignments || []).length);
 
     const assignedStaffIds = new Set<string>();
     // Collect staffIds from assignments that reference this department's subjects
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
       const staffId = a.staffId ? String(a.staffId) : null;
       const matches = subjId ? deptSubjectIds.has(subjId) : false;
       if (!matches && subjId) {
-        console.log(`  ⚠️  Assignment subjectId ${subjId} NOT in deptSubjectIds`);
+        // console.log(`  ⚠️  Assignment subjectId ${subjId} NOT in deptSubjectIds`);
       }
       if (subjId && matches) {
         if (staffId) assignedStaffIds.add(staffId);
@@ -85,15 +85,15 @@ export async function GET(req: Request) {
 
     // Fetch assignments that point to dept subjects (filtered above)
     // Only include assignments that were created by THIS department (assignment.departmentId must match)
-    console.log('🔍 Filtering assignments by department ownership:');
-    console.log('  Total assignments matching dept subjects (before ownership filter):', (allAssignments || []).filter(a => { const subjId = a.subjectId ? String(a.subjectId) : null; return subjId && deptSubjectIds.has(subjId); }).length);
+    // console.log('🔍 Filtering assignments by department ownership:');
+    // console.log('  Total assignments matching dept subjects (before ownership filter):', (allAssignments || []).filter(a => { const subjId = a.subjectId ? String(a.subjectId) : null; return subjId && deptSubjectIds.has(subjId); }).length);
     const assignmentsForDeptSubj = (allAssignments || []).filter((a: any) => {
       const subjId = a.subjectId ? String(a.subjectId) : null;
       const assignmentDeptId = a.departmentId ? String(a.departmentId) : null;
       const matches = subjId && deptSubjectIds.has(subjId) && assignmentDeptId === String(departmentId);
       return !!matches;
     });
-    console.log('  After filtering by assignment.departmentId:', assignmentsForDeptSubj.length);
+    // console.log('  After filtering by assignment.departmentId:', assignmentsForDeptSubj.length);
 
     const staffIdsFromAssignments = new Set<string>();
     for (const a of assignmentsForDeptSubj) {
@@ -157,22 +157,22 @@ export async function GET(req: Request) {
     // Build final staff list by resolving records (prefer fetched records)
     const staffList: any[] = [];
 
-    console.log('🔍 Building final staff list:');
-    console.log('  includeStaffIds count:', includeStaffIds.size);
-    console.log('  Sample IDs:', Array.from(includeStaffIds).slice(0, 5));
+    // console.log('🔍 Building final staff list:');
+    // console.log('  includeStaffIds count:', includeStaffIds.size);
+    // console.log('  Sample IDs:', Array.from(includeStaffIds).slice(0, 5));
 
     for (const id of Array.from(includeStaffIds)) {
       const rec = staffRecordMap.get(id) || (await staffService.findUnique({ where: { id }, include: { user: true, department: true } }));
-      console.log(`  Staff ID ${id}:`, rec ? 'FOUND' : '❌ NOT FOUND');
+      // console.log(`  Staff ID ${id}:`, rec ? 'FOUND' : '❌ NOT FOUND');
       if (rec) staffList.push(rec);
     }
 
       // Debug: show faculty counts before building reports
-      console.log('  Faculty candidate ids count (includeStaffIds):', includeStaffIds.size);
-      console.log('  Resolved staffList length:', staffList.length);
+      // console.log('  Faculty candidate ids count (includeStaffIds):', includeStaffIds.size);
+      // console.log('  Resolved staffList length:', staffList.length);
       if (staffList.length > 0) {
         const first = staffList[0];
-        console.log('  First faculty sample:', { id: first.id, user: first.user?.name || first.user?.email });
+        // console.log('  First faculty sample:', { id: first.id, user: first.user?.name || first.user?.email });
       }
 
     // debug flag: ?debug=1 will include internal counts to help diagnose missing staff
@@ -217,9 +217,9 @@ export async function GET(req: Request) {
 
         // Get feedbacks specific to this assignment
         const feedbackQuery = { assignmentId: a.id };
-        console.log('Feedback query:', JSON.stringify(feedbackQuery, null, 2));
+        // console.log('Feedback query:', JSON.stringify(feedbackQuery, null, 2));
         const validFeedbacks = await db.collection('feedback').find(feedbackQuery).toArray();
-        console.log(`Found ${validFeedbacks.length} feedbacks for assignment ${a.id}`);
+        // console.log(`Found ${validFeedbacks.length} feedbacks for assignment ${a.id}`);
 
         // Collect student suggestions from feedbacks
         const studentSuggestions: string[] = [];
@@ -276,14 +276,14 @@ export async function GET(req: Request) {
           academicYearId: String(subject?.academicYearId) // ensure string format
         };
         
-        console.log('🔍 Student query:', JSON.stringify(studentQuery, null, 2));
+        // console.log('🔍 Student query:', JSON.stringify(studentQuery, null, 2));
         
         // Also try with ObjectId for academicYearId
         let academicYearIdObj;
         try {
           academicYearIdObj = new ObjectId(subject?.academicYearId);
         } catch (e) {
-          console.log('Academic Year ID is not a valid ObjectId');
+          // console.log('Academic Year ID is not a valid ObjectId');
         }
 
         const studentQueryWithObjectId = {
@@ -292,16 +292,16 @@ export async function GET(req: Request) {
           academicYearId: { $in: [String(subject?.academicYearId), academicYearIdObj].filter(Boolean) }
         };
 
-        console.log('🔍 Student query with ObjectId:', JSON.stringify(studentQueryWithObjectId, null, 2));
+        // console.log('🔍 Student query with ObjectId:', JSON.stringify(studentQueryWithObjectId, null, 2));
         
         const students = await db.collection('users').find(studentQueryWithObjectId).toArray();
         const totalStudentsForSubject = students.length;
         
-        console.log('🔍 Total students found:', totalStudentsForSubject);
+        // console.log('🔍 Total students found:', totalStudentsForSubject);
         if (totalStudentsForSubject > 0) {
-          console.log('Sample student:', JSON.stringify(students[0], null, 2));
+          // console.log('Sample student:', JSON.stringify(students[0], null, 2));
         }
-        console.log('Subject details:', JSON.stringify(subject, null, 2));
+        // console.log('Subject details:', JSON.stringify(subject, null, 2));
 
         return {
           assignmentId: a.id,
@@ -364,7 +364,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(resp);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch reports" }, { status: 500 });
   }
 }

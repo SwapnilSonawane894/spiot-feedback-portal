@@ -59,7 +59,7 @@ export default function AdminManageSubjectsPage(): React.ReactElement {
       const data = await res.json();
       setSubjects(data);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("Failed to load subjects");
     } finally {
       setLoading(false);
@@ -73,7 +73,7 @@ export default function AdminManageSubjectsPage(): React.ReactElement {
       const data = await res.json();
       setDepartments(data);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -84,7 +84,7 @@ export default function AdminManageSubjectsPage(): React.ReactElement {
       const data = await res.json();
       setAcademicYears(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setAcademicYears([]);
     }
   }
@@ -104,7 +104,7 @@ export default function AdminManageSubjectsPage(): React.ReactElement {
       setSubjects((prev) => prev.filter((s) => s.id !== id));
       toast.success("Subject deleted successfully");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Delete failed");
     }
   }, []);
@@ -168,7 +168,7 @@ export default function AdminManageSubjectsPage(): React.ReactElement {
       setAcademicYearId("");
       setDepartmentId("");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message);
     } finally {
       setIsSubmitting(false);

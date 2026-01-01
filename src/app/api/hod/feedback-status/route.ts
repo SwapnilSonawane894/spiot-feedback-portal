@@ -18,7 +18,7 @@ export async function GET() {
 
   return NextResponse.json({ isFeedbackActive: department.isFeedbackActive });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch status" }, { status: 500 });
   }
 }
@@ -40,7 +40,7 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json({ success: true, isFeedbackActive: updated.isFeedbackActive });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to update status" }, { status: 500 });
   }
 }

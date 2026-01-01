@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, promoted: result.count });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to promote students" }, { status: 500 });
   }
 }

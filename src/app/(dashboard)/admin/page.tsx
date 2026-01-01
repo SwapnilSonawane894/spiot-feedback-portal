@@ -36,7 +36,7 @@ export default function AdminHomePage(): React.ReactElement {
           feedbackCount: Array.isArray(feedback) ? feedback.length : 0
         });
       } catch (error) {
-        console.error("Failed to fetch stats:", error);
+        // console.error("Failed to fetch stats:", error);
       } finally {
         setLoading(false);
       }

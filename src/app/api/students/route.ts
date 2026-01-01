@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, id: created.id });
   } catch (error: any) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: error?.message || "Failed to create student" }, { status: 500 });
   }
 }
@@ -73,7 +73,7 @@ export async function GET() {
 
     return NextResponse.json(students);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch students" }, { status: 500 });
   }
 }

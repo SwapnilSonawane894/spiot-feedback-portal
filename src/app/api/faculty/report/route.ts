@@ -20,10 +20,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
     }
 
-  console.log('📊 [Faculty Report] Starting report generation');
-  console.log('📊 [Faculty Report] Staff ID:', staff.id);
-  console.log('📊 [Faculty Report] Staff Department ID:', staff.departmentId);
-  console.log('📊 [Faculty Report] User Role:', session.user?.role);
+  // console.log('📊 [Faculty Report] Starting report generation');
+  // console.log('📊 [Faculty Report] Staff ID:', staff.id);
+  // console.log('📊 [Faculty Report] Staff Department ID:', staff.departmentId);
+  // console.log('📊 [Faculty Report] User Role:', session.user?.role);
 
   // Check for optional query params
   const url = new URL(req.url);
@@ -39,19 +39,6 @@ export async function GET(req: Request) {
     const { normalizeSemester } = await import('@/lib/mongodb-services');
     const targetSemester = normalizeSemester(filterSemester);
     allAssignments = allAssignments.filter((a: any) => normalizeSemester(a.semester || '') === targetSemester);
-    console.log('📊 [Faculty Report] Filtered by semester:', filterSemester, '- Assignments:', allAssignments.length);
-  }
-  
-  console.log('📊 [Faculty Report] Total assignments found:', allAssignments.length);
-  
-  if (allAssignments.length > 0) {
-    console.log('📊 [Faculty Report] Sample assignment:', {
-      id: allAssignments[0].id,
-      staffId: allAssignments[0].staffId,
-      departmentId: allAssignments[0].departmentId,
-      subjectId: allAssignments[0].subjectId,
-      semester: allAssignments[0].semester,
-    });
   }
 
   // Debug info
@@ -88,7 +75,7 @@ export async function GET(req: Request) {
     assignmentsByDept.get(deptId)!.push(a);
   }
   
-  console.log('📊 [Faculty Report] Departments with assignments:', Array.from(assignmentsByDept.keys()));
+  // console.log('📊 [Faculty Report] Departments with assignments:', Array.from(assignmentsByDept.keys()));
 
   // If filtering by specific department, only keep that one
   if (filterDeptId) {
@@ -140,29 +127,29 @@ export async function GET(req: Request) {
     // Build reports grouped by department
     const departmentReports: any[] = [];
     
-    console.log('📊 [Faculty Report] Processing departments:', assignmentsByDept.size);
+    // console.log('📊 [Faculty Report] Processing departments:', assignmentsByDept.size);
     
     for (const [deptId, assignments] of assignmentsByDept.entries()) {
       const dept = deptMap.get(deptId);
       const deptReports: any[] = [];
       
-      console.log(`📊 [Faculty Report] Department ${deptId} (${dept?.name || 'unknown'}): ${assignments.length} assignments`);
+      // console.log(`📊 [Faculty Report] Department ${deptId} (${dept?.name || 'unknown'}): ${assignments.length} assignments`);
       
       for (const a of assignments) {
         const allFbForAssignment = feedbackMap.get(a.id) || [];
         let fb = [...allFbForAssignment];
         
-        console.log(`📊 [Faculty Report] Assignment ${a.id}: ${allFbForAssignment.length} total feedbacks`);
+        // console.log(`📊 [Faculty Report] Assignment ${a.id}: ${allFbForAssignment.length} total feedbacks`);
         
         // If the viewer is not an HOD, only include feedbacks that have been released by HOD
         const viewerIsHod = session.user?.role === 'HOD';
         if (!viewerIsHod) {
           fb = fb.filter((f: any) => f.isReleased === true);
-          console.log(`📊 [Faculty Report] Assignment ${a.id}: ${fb.length} released feedbacks (after filter)`);
+          // console.log(`📊 [Faculty Report] Assignment ${a.id}: ${fb.length} released feedbacks (after filter)`);
         }
 
         if (!fb || fb.length === 0) {
-          console.log(`📊 [Faculty Report] Assignment ${a.id}: SKIPPED - no released feedbacks`);
+          // console.log(`📊 [Faculty Report] Assignment ${a.id}: SKIPPED - no released feedbacks`);
           continue;
         }
 
@@ -179,10 +166,10 @@ export async function GET(req: Request) {
         const overallPercentage = parseFloat(((total / (params.length * 5)) * 100).toFixed(2));
 
         deptReports.push({ assignmentId: a.id, subject: subjectMap.get(a.subjectId), semester: a.semester, averages: avg, totalResponses: fb.length, overallPercentage });
-        console.log(`📊 [Faculty Report] Assignment ${a.id}: ADDED to report with ${fb.length} responses`);
+        // console.log(`📊 [Faculty Report] Assignment ${a.id}: ADDED to report with ${fb.length} responses`);
       }
 
-      console.log(`📊 [Faculty Report] Department ${deptId}: ${deptReports.length} reports generated`);
+      // console.log(`📊 [Faculty Report] Department ${deptId}: ${deptReports.length} reports generated`);
 
       // Get HOD suggestion for this department (if any)
       const semester = deptReports?.[0]?.semester || '';
@@ -212,8 +199,8 @@ export async function GET(req: Request) {
   const flatReports = homeDeptReports?.reports || departmentReports[0]?.reports || [];
   const hodSuggestion = homeDeptReports?.hodSuggestion || departmentReports[0]?.hodSuggestion || '';
 
-  // Return both grouped and flat structure
-  return NextResponse.json({ 
+  // Return both grouped and flat structure with no-cache headers
+  const response = NextResponse.json({ 
     facultyName, 
     academicYear, 
     reports: flatReports, // backward compatibility
@@ -222,8 +209,14 @@ export async function GET(req: Request) {
     hodSuggestion,
     homeDepartmentId: staff.departmentId, // staff's home department
   });
+  
+  // Prevent caching to ensure fresh data
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  
+  return response;
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch faculty report" }, { status: 500 });
   }
 }

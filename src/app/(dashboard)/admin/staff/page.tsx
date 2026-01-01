@@ -52,7 +52,7 @@ export default function ManageStaffPage(): React.ReactElement {
       const data = await res.json();
       setStaff(data);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setDepartments(data);
       if (data.length > 0) setDepartmentId(data[0].id);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -78,7 +78,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setStaff((prev) => prev.filter((s) => s.id !== id));
       toast.success("Staff member deleted successfully");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Delete failed");
     }
   }, []);
@@ -125,7 +125,7 @@ export default function ManageStaffPage(): React.ReactElement {
       setEmail("");
       setPassword("");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Save failed");
     } finally {
       setIsSubmitting(false);

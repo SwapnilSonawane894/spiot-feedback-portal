@@ -20,8 +20,8 @@ function createClientPromise(): Promise<MongoClient> {
     if (!globalWithMongo._mongoClientPromise) {
       const client = new MongoClient(uri, options);
       globalWithMongo._mongoClientPromise = client.connect().catch((err) => {
-        console.error('Failed to connect to MongoDB. Check MONGODB_URI/MONGO_URI, network/DNS and Atlas IP access list. Error:');
-        console.error(err);
+        // console.error('Failed to connect to MongoDB. Check MONGODB_URI/MONGO_URI, network/DNS and Atlas IP access list. Error:');
+        // console.error(err);
         throw err;
       });
     }
@@ -30,8 +30,8 @@ function createClientPromise(): Promise<MongoClient> {
 
   const client = new MongoClient(uri, options);
   return client.connect().catch((err) => {
-    console.error('Failed to connect to MongoDB. Check MONGODB_URI/MONGO_URI, network/DNS and Atlas IP access list. Error:');
-    console.error(err);
+    // console.error('Failed to connect to MongoDB. Check MONGODB_URI/MONGO_URI, network/DNS and Atlas IP access list. Error:');
+    // console.error(err);
     throw err;
   });
 }

@@ -10,7 +10,7 @@ export async function validateDepartmentExists(departmentId: string): Promise<bo
     });
     return !!department;
   } catch (error) {
-    console.error('Error validating department:', error);
+    // console.error('Error validating department:', error);
     return false;
   }
 }
@@ -23,7 +23,7 @@ export async function validateUserExists(userId: string): Promise<boolean> {
     });
     return !!user;
   } catch (error) {
-    console.error('Error validating user:', error);
+    // console.error('Error validating user:', error);
     return false;
   }
 }
@@ -43,7 +43,7 @@ export async function validateEmailUnique(email: string, excludeUserId?: string)
     const existingUser = await db.collection(COLLECTIONS.USERS).findOne(query);
     return !existingUser;
   } catch (error) {
-    console.error('Error validating email uniqueness:', error);
+    // console.error('Error validating email uniqueness:', error);
     return false;
   }
 }
@@ -57,7 +57,7 @@ export async function validateStaffAssignments(staffId: string): Promise<boolean
     
     return assignments.length > 0;
   } catch (error) {
-    console.error('Error validating staff assignments:', error);
+    // console.error('Error validating staff assignments:', error);
     return false;
   }
 }

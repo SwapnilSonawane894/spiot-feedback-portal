@@ -31,7 +31,7 @@ export default function ProfilePage(): React.ReactElement {
         setName(data.name || "");
         setEmail(data.email || "");
       } catch (err) {
-        console.error(err);
+        // console.error(err);
         toast.error("Failed to load profile");
       }
     }
@@ -88,7 +88,7 @@ export default function ProfilePage(): React.ReactElement {
       setCurrentPassword("");
       setNewPassword("");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setGeneralError((err as Error).message || "Update failed");
       toast.error("Failed to update profile");
     } finally {

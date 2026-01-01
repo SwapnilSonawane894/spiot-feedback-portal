@@ -49,7 +49,7 @@ export default function ManageHodsPage(): React.ReactElement {
       const data = await res.json();
       setHods(data);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -61,7 +61,7 @@ export default function ManageHodsPage(): React.ReactElement {
       setDepartments(data);
       if (data.length > 0) setDepartmentId(data[0].id);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -85,7 +85,7 @@ export default function ManageHodsPage(): React.ReactElement {
       toast.success("HOD account deleted successfully");
       closeDeleteConfirm();
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Delete failed");
     } finally {
       setIsDeleting(false);
@@ -133,7 +133,7 @@ export default function ManageHodsPage(): React.ReactElement {
       setPassword("");
       if (departments.length > 0) setDepartmentId(departments[0].id);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message);
     } finally {
       setIsSubmitting(false);

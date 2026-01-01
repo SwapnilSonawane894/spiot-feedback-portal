@@ -36,6 +36,7 @@ export async function GET(request: Request) {
       const year = academicYears.find(y => y.id === s.academicYearId);
       
       return {
+        id: s.id,
         name: s.name,
         email: s.email,
         year: year?.abbreviation || year?.name || '',
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
     });
 
   } catch (error) {
-    console.error("HOD Submission Status Error:", error);
+    // console.error("HOD Submission Status Error:", error);
     return NextResponse.json({ error: 'Failed to fetch submission status' }, { status: 500 });
   }
 }

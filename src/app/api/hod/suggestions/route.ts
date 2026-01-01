@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json({ suggestion });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: 'Failed to fetch suggestion' }, { status: 500 });
   }
 }
@@ -43,21 +43,15 @@ export async function POST(req: Request) {
     const { staffId, semester, content } = body;
     if (!staffId || !semester) return NextResponse.json({ error: 'staffId and semester required' }, { status: 400 });
 
-    // Delete existing suggestion from THIS HOD for this staff/semester
-    const existing = await hodSuggestionService.findUnique({ 
-      hodId_staffId_semester: { hodId: hodProfile.id, staffId, semester } 
-    });
-    
-    let suggestion;
-    if (existing) {
-      await hodSuggestionService.deleteMany({ hodId: hodProfile.id, staffId, semester });
-    }
-    // Include hodId when creating the suggestion
-    suggestion = await hodSuggestionService.create({ hodId: hodProfile.id, staffId, semester, content });
+    // Use upsert to avoid duplicate key errors
+    const suggestion = await hodSuggestionService.upsert(
+      { hodId: hodProfile.id, staffId, semester },
+      { content }
+    );
 
     return NextResponse.json({ suggestion });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: 'Failed to save suggestion' }, { status: 500 });
   }
 }
@@ -72,7 +66,7 @@ export async function DELETE(req: Request) {
     const deleted = await hodSuggestionService.deleteMany({});
     return NextResponse.json({ deleted: deleted.count || 0 });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: 'Failed to clear suggestions' }, { status: 500 });
   }
 }

@@ -446,7 +446,7 @@ export async function GET(req: Request, ctx: { params?: any }) {
   if (contentLength) headers['Content-Length'] = contentLength;
   return new Response(arrayBuffer, { status: 200, headers });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
   }
 }

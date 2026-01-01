@@ -40,7 +40,7 @@ export const authOptions: any = {
         clearRateLimit(email);
 
         const { hashedPassword, ...userWithoutPassword } = user;
-        console.log('[Authorize] Returning user:', { id: userWithoutPassword.id, role: userWithoutPassword.role, email: userWithoutPassword.email });
+        // console.log('[Authorize] Returning user:', { id: userWithoutPassword.id, role: userWithoutPassword.role, email: userWithoutPassword.email });
         return userWithoutPassword as any;
       },
     }),

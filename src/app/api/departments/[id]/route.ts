@@ -48,7 +48,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await departmentService.delete({ id });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to delete department" }, { status: 500 });
   }
 }

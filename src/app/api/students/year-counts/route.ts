@@ -46,7 +46,7 @@ export async function GET() {
 
     return NextResponse.json(yearCounts);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch year counts" }, { status: 500 });
   }
 }

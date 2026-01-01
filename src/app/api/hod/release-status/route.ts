@@ -25,7 +25,7 @@ export async function GET() {
     const isReleased = firstFeedback ? firstFeedback.isReleased : false;
     return NextResponse.json({ isReleased });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch release status" }, { status: 500 });
   }
 }
@@ -60,7 +60,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true, updated, isReleased: shouldBeReleased });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to update release status" }, { status: 500 });
   }
 }

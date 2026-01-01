@@ -76,7 +76,7 @@ export async function GET() {
       currentSemester: normalizedCurrentSemester 
     });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to fetch semesters" }, { status: 500 });
   }
 }

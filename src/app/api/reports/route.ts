@@ -124,7 +124,7 @@ export async function GET() {
 
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to compute reports" }, { status: 500 });
   }
 }

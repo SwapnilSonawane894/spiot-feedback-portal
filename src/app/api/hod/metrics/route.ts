@@ -58,7 +58,7 @@ export async function GET() {
       totalFeedbackSubmissions,
     });
   } catch (error) {
-    console.error("Error fetching HOD metrics:", error);
+    // console.error("Error fetching HOD metrics:", error);
     return NextResponse.json({ error: "Failed to fetch metrics" }, { status: 500 });
   }
 }

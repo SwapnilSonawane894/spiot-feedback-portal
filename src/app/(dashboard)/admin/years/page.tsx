@@ -38,7 +38,7 @@ export default function ManageYearsPage(): React.ReactElement {
       const data = await res.json();
       setYears(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function ManageYearsPage(): React.ReactElement {
       const data = await res.json();
       setDepartments(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -70,7 +70,7 @@ export default function ManageYearsPage(): React.ReactElement {
       fetchYears();
       toast.success("Academic year created successfully");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Create failed");
     }
   }, [name, abbrev, departmentId]);
@@ -94,7 +94,7 @@ export default function ManageYearsPage(): React.ReactElement {
       fetchYears();
       toast.success("Academic year updated successfully");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Update failed");
     }
   }, [name, abbrev, departmentId, editingYear]);
@@ -121,7 +121,7 @@ export default function ManageYearsPage(): React.ReactElement {
       toast.success("Academic year deleted successfully");
       closeDeleteConfirm();
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Delete failed");
     } finally {
       setIsDeleting(false);

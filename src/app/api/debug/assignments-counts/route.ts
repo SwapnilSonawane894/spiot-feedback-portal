@@ -92,7 +92,7 @@ export async function GET() {
 
     return NextResponse.json({ departmentId, totalSubjects: subjects.length, totalAssignments: deptAssignments.length, byYear: human });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: 'Debug failed' }, { status: 500 });
   }
 }

@@ -48,7 +48,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const updated = await subjectService.update({ id }, updateData);
   return NextResponse.json(updated);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to update subject" }, { status: 500 });
   }
 }
@@ -92,7 +92,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
           }
         }
       } catch (e) {
-        console.warn('Error checking for junction:', e);
+        // console.warn('Error checking for junction:', e);
       }
 
       if (junctionRow) {
@@ -159,20 +159,20 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
           $or: [ { subjectId: { $in: junctionIds } }, { subjectId: String(id) } ]
         });
       } catch (e) {
-        console.warn('Failed to delete faculty assignments for subject unlink', id, e);
+        // console.warn('Failed to delete faculty assignments for subject unlink', id, e);
       }
 
       // Remove the departmentSubjects rows for this department & subject
       await db.collection('departmentSubjects').deleteMany({ departmentId: String(hodDeptId), subjectId: String(id) });
 
-      console.info(`✅ Unlinked subject ${id} from department ${hodDeptId}. Removed junctions: ${junctionIds.join(',')}`);
+      // console.info(`✅ Unlinked subject ${id} from department ${hodDeptId}. Removed junctions: ${junctionIds.join(',')}`);
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       return NextResponse.json({ error: "Failed to delete subject for department" }, { status: 500 });
     }
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to delete subject" }, { status: 500 });
   }
 }

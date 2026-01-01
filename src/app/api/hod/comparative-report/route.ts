@@ -172,7 +172,7 @@ export async function GET(req: Request) {
         }
       }
       a.averages = averages;
-      console.log(`Assignment ${a.assignmentId} (${a.subject.name}) averages:`, averages);
+      // console.log(`Assignment ${a.assignmentId} (${a.subject.name}) averages:`, averages);
     }
 
     // Add 16 parameter rows starting at row 3
@@ -203,7 +203,7 @@ export async function GET(req: Request) {
       marks25.push(parseFloat(marksOut.toFixed(2)));
       avgParams.push(parseFloat(avgParam.toFixed(2)));
 
-      console.log(`Assignment ${a.assignmentId} totals: total=${total.toFixed(2)}, marks25=${marksOut.toFixed(2)}, avgParam=${avgParam.toFixed(2)}`);
+      // console.log(`Assignment ${a.assignmentId} totals: total=${total.toFixed(2)}, marks25=${marksOut.toFixed(2)}, avgParam=${avgParam.toFixed(2)}`);
     }
 
     const totalRow = ["TOTAL MARKS (out of 80)", ...totals];
@@ -266,7 +266,7 @@ export async function GET(req: Request) {
     if (contentLength) headers['Content-Length'] = contentLength;
     return new Response(buffer, { status: 200, headers });
   } catch (error) {
-    console.error('comparative-report error', error);
+    // console.error('comparative-report error', error);
     return NextResponse.json({ error: 'Failed to generate report' }, { status: 500 });
   }
 }

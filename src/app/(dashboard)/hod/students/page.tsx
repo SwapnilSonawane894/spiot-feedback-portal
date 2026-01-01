@@ -48,7 +48,7 @@ export default function StudentsPage(): React.ReactElement {
       const data = await res.json();
       setStudents(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -59,7 +59,7 @@ export default function StudentsPage(): React.ReactElement {
       const data = await res.json();
       setYears(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -70,7 +70,7 @@ export default function StudentsPage(): React.ReactElement {
       const data = await res.json();
       setYearCounts(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     }
   }
 
@@ -95,7 +95,7 @@ export default function StudentsPage(): React.ReactElement {
       if (input) input.value = "";
       fetchStudents();
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Upload failed");
     } finally {
       setIsUploading(false);
@@ -116,7 +116,7 @@ export default function StudentsPage(): React.ReactElement {
       setStudents((prev) => prev.filter((s) => s.id !== id));
       toast.success("Student deleted");
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Delete failed");
     } finally {
       setConfirmOpen(false);
@@ -145,7 +145,7 @@ export default function StudentsPage(): React.ReactElement {
       setNewStudentYear('');
       fetchStudents();
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || 'Add failed');
     } finally {
       setIsAddingStudent(false);
@@ -181,7 +181,7 @@ export default function StudentsPage(): React.ReactElement {
       fetchStudents();
       fetchYearCounts();
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Promote failed");
     } finally {
       setIsPromoting(false);
@@ -209,7 +209,7 @@ export default function StudentsPage(): React.ReactElement {
       fetchStudents();
       fetchYearCounts();
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error((err as Error).message || "Remove failed");
     } finally {
       setIsRemoving(false);

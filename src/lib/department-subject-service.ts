@@ -28,7 +28,7 @@ async function generateNextSubjectCode(db: any, departmentId: string, name: stri
     
     // If found, use the same code
     if (existingSubject && existingSubject.subjectCode) {
-      console.log(`Found existing subject "${name}" with code ${existingSubject.subjectCode}`);
+      // console.log(`Found existing subject "${name}" with code ${existingSubject.subjectCode}`);
       return existingSubject.subjectCode;
     }
     
@@ -41,10 +41,10 @@ async function generateNextSubjectCode(db: any, departmentId: string, name: stri
     // Return next number as string
     const maxCode = codes.length > 0 ? Math.max(...codes) : 0;
     const newCode = String(maxCode + 1);
-    console.log(`Generated new code ${newCode} for subject "${name}"`);
+    // console.log(`Generated new code ${newCode} for subject "${name}"`);
     return newCode;
   } catch (error) {
-    console.error('Error generating subject code:', error);
+    // console.error('Error generating subject code:', error);
     throw error;
   }
 }
@@ -74,7 +74,7 @@ export const deptSubjectService = {
       const result = await db.collection('subjects').insertOne(subject);
       return { id: result.insertedId.toString(), ...subject };
     } catch (error) {
-      console.error('Error in deptSubjectService.create:', error);
+      // console.error('Error in deptSubjectService.create:', error);
       throw error;
     }
   },
@@ -87,7 +87,7 @@ export const deptSubjectService = {
         .toArray();
       return results.map(docWithId);
     } catch (error) {
-      console.error('Error in deptSubjectService.findByDepartment:', error);
+      // console.error('Error in deptSubjectService.findByDepartment:', error);
       throw error;
     }
   },
@@ -101,7 +101,7 @@ export const deptSubjectService = {
       });
       return docWithId(subject);
     } catch (error) {
-      console.error('Error in deptSubjectService.findByDepartmentAndCode:', error);
+      // console.error('Error in deptSubjectService.findByDepartmentAndCode:', error);
       throw error;
     }
   },
@@ -115,7 +115,7 @@ export const deptSubjectService = {
       );
       return { success: result.modifiedCount > 0 };
     } catch (error) {
-      console.error('Error in deptSubjectService.update:', error);
+      // console.error('Error in deptSubjectService.update:', error);
       throw error;
     }
   }

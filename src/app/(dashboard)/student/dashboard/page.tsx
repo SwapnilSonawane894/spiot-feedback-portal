@@ -38,7 +38,7 @@ export default function StudentDashboard(): React.ReactElement {
         setStudentYear(data.academicYearStr);
       }
     } catch (err) {
-      console.error("Failed to fetch student year:", err);
+      // console.error("Failed to fetch student year:", err);
     }
   }
 
@@ -50,7 +50,7 @@ export default function StudentDashboard(): React.ReactElement {
         setCurrentSemester(data.semesterString || "Semester 2025-26");
       }
     } catch (err) {
-      console.error("Failed to fetch semester:", err);
+      // console.error("Failed to fetch semester:", err);
     }
   }
 
@@ -65,7 +65,7 @@ export default function StudentDashboard(): React.ReactElement {
       }
       setTasks(data || []);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setError((err as Error).message || "Failed to fetch tasks");
     } finally {
       setLoading(false);

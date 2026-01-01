@@ -34,7 +34,7 @@ export default function SemesterSettingsPage() {
       setSemesterString(data.semesterString || "");
       setSemesterHistory(data.semesterHistory || []);
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       toast.error("Failed to load semester settings");
     } finally {
       setLoading(false);
@@ -72,7 +72,7 @@ export default function SemesterSettingsPage() {
       setSemesterHistory(data.semesterHistory || []);
       toast.success("Semester settings updated successfully!");
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       toast.error((error as Error).message || "Failed to update settings");
     } finally {
       setSaving(false);

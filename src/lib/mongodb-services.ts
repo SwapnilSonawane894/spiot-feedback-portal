@@ -75,7 +75,7 @@ export const userService = {
       const doc = await db.collection(COLLECTIONS.USERS).findOne(query);
       return docWithId(doc);
     } catch (error) {
-      console.error('Error in userService.findUnique:', error);
+      // console.error('Error in userService.findUnique:', error);
       throw error;
     }
   },
@@ -124,7 +124,7 @@ export const userService = {
 
       return results;
     } catch (error) {
-      console.error('Error in userService.findMany:', error);
+      // console.error('Error in userService.findMany:', error);
       throw error;
     }
   },
@@ -139,7 +139,7 @@ export const userService = {
       });
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
-      console.error('Error in userService.create:', error);
+      // console.error('Error in userService.create:', error);
       throw error;
     }
   },
@@ -154,7 +154,7 @@ export const userService = {
       );
       return { id: where.id, ...rest };
     } catch (error) {
-      console.error('Error in userService.update:', error);
+      // console.error('Error in userService.update:', error);
       throw error;
     }
   },
@@ -171,7 +171,7 @@ export const userService = {
       const result = await db.collection(COLLECTIONS.USERS).updateMany(query, { $set: data });
       return { count: result.modifiedCount };
     } catch (error) {
-      console.error('Error in userService.updateMany:', error);
+      // console.error('Error in userService.updateMany:', error);
       throw error;
     }
   },
@@ -182,7 +182,7 @@ export const userService = {
       await db.collection(COLLECTIONS.USERS).deleteOne({ _id: new ObjectId(where.id) });
       return { success: true };
     } catch (error) {
-      console.error('Error in userService.delete:', error);
+      // console.error('Error in userService.delete:', error);
       throw error;
     }
   },
@@ -199,7 +199,7 @@ export const userService = {
       const result = await db.collection(COLLECTIONS.USERS).deleteMany(query);
       return { count: result.deletedCount };
     } catch (error) {
-      console.error('Error in userService.deleteMany:', error);
+      // console.error('Error in userService.deleteMany:', error);
       throw error;
     }
   },
@@ -210,7 +210,7 @@ export const userService = {
       const query: any = where || {};
       return await db.collection(COLLECTIONS.USERS).countDocuments(query);
     } catch (error) {
-      console.error('Error in userService.count:', error);
+      // console.error('Error in userService.count:', error);
       throw error;
     }
   },
@@ -246,7 +246,7 @@ export const departmentService = {
       const results = await cursor.toArray();
       return results.map(docWithId) as Department[];
     } catch (error) {
-      console.error('Error in departmentService.findMany:', error);
+      // console.error('Error in departmentService.findMany:', error);
       throw error;
     }
   },
@@ -265,7 +265,7 @@ export const departmentService = {
       const doc = await db.collection<Department>(COLLECTIONS.DEPARTMENTS).findOne(query);
       return docWithId(doc) as Department | null;
     } catch (error) {
-      console.error('Error in departmentService.findUnique:', error);
+      // console.error('Error in departmentService.findUnique:', error);
       throw error;
     }
   },
@@ -281,7 +281,7 @@ export const departmentService = {
       });
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
-      console.error('Error in departmentService.create:', error);
+      // console.error('Error in departmentService.create:', error);
       throw error;
     }
   },
@@ -296,7 +296,7 @@ export const departmentService = {
       );
       return { id: where.id, ...rest };
     } catch (error) {
-      console.error('Error in departmentService.update:', error);
+      // console.error('Error in departmentService.update:', error);
       throw error;
     }
   },
@@ -307,7 +307,7 @@ export const departmentService = {
       await db.collection(COLLECTIONS.DEPARTMENTS).deleteOne({ _id: new ObjectId(where.id) });
       return { success: true };
     } catch (error) {
-      console.error('Error in departmentService.delete:', error);
+      // console.error('Error in departmentService.delete:', error);
       throw error;
     }
   },
@@ -372,7 +372,7 @@ export const staffService = {
 
       return results;
     } catch (error) {
-      console.error('Error in staffService.findMany:', error);
+      // console.error('Error in staffService.findMany:', error);
       throw error;
     }
   },
@@ -420,7 +420,7 @@ export const staffService = {
 
       return staff;
     } catch (error) {
-      console.error('Error in staffService.findUnique:', error);
+      // console.error('Error in staffService.findUnique:', error);
       throw error;
     }
   },
@@ -439,7 +439,7 @@ export const staffService = {
       });
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
-      console.error('Error in staffService.create:', error);
+      // console.error('Error in staffService.create:', error);
       throw error;
     }
   },
@@ -454,7 +454,7 @@ export const staffService = {
       );
       return { id: where.id, ...rest };
     } catch (error) {
-      console.error('Error in staffService.update:', error);
+      // console.error('Error in staffService.update:', error);
       throw error;
     }
   },
@@ -473,7 +473,7 @@ export const staffService = {
       const result = await db.collection(COLLECTIONS.STAFF).updateMany(query, { $set: data });
       return { count: result.modifiedCount };
     } catch (error) {
-      console.error('Error in staffService.updateMany:', error);
+      // console.error('Error in staffService.updateMany:', error);
       throw error;
     }
   },
@@ -492,7 +492,7 @@ export const staffService = {
       const result = await db.collection(COLLECTIONS.STAFF).deleteMany(query);
       return { count: result.deletedCount };
     } catch (error) {
-      console.error('Error in staffService.deleteMany:', error);
+      // console.error('Error in staffService.deleteMany:', error);
       throw error;
     }
   },
@@ -503,7 +503,7 @@ export const staffService = {
       const query: any = where || {};
       return await db.collection(COLLECTIONS.STAFF).countDocuments(query);
     } catch (error) {
-      console.error('Error in staffService.count:', error);
+      // console.error('Error in staffService.count:', error);
       throw error;
     }
   },
@@ -530,7 +530,7 @@ export const academicYearService = {
       const results = await cursor.toArray();
       return results.map(docWithId);
     } catch (error) {
-      console.error('Error in academicYearService.findMany:', error);
+      // console.error('Error in academicYearService.findMany:', error);
       throw error;
     }
   },
@@ -541,7 +541,7 @@ export const academicYearService = {
       const doc = await db.collection(COLLECTIONS.ACADEMIC_YEARS).findOne({ _id: new ObjectId(where.id) });
       return docWithId(doc);
     } catch (error) {
-      console.error('Error in academicYearService.findUnique:', error);
+      // console.error('Error in academicYearService.findUnique:', error);
       throw error;
     }
   },
@@ -556,7 +556,7 @@ export const academicYearService = {
       });
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
-      console.error('Error in academicYearService.create:', error);
+      // console.error('Error in academicYearService.create:', error);
       throw error;
     }
   },
@@ -571,7 +571,7 @@ export const academicYearService = {
       );
       return { id: where.id, ...rest };
     } catch (error) {
-      console.error('Error in academicYearService.update:', error);
+      // console.error('Error in academicYearService.update:', error);
       throw error;
     }
   },
@@ -582,7 +582,7 @@ export const academicYearService = {
       await db.collection(COLLECTIONS.ACADEMIC_YEARS).deleteOne({ _id: new ObjectId(where.id) });
       return { success: true };
     } catch (error) {
-      console.error('Error in academicYearService.delete:', error);
+      // console.error('Error in academicYearService.delete:', error);
       throw error;
     }
   },
@@ -651,7 +651,7 @@ export const subjectService = {
 
       return results;
     } catch (error) {
-      console.error('Error in subjectService.findMany:', error);
+      // console.error('Error in subjectService.findMany:', error);
       throw error;
     }
   },
@@ -662,7 +662,7 @@ export const subjectService = {
       const doc = await db.collection(COLLECTIONS.SUBJECTS).findOne({ _id: new ObjectId(where.id) });
       return docWithId(doc);
     } catch (error) {
-      console.error('Error in subjectService.findUnique:', error);
+      // console.error('Error in subjectService.findUnique:', error);
       throw error;
     }
   },
@@ -672,7 +672,7 @@ export const subjectService = {
       const doc = await db.collection(COLLECTIONS.SUBJECTS).findOne({ subjectCode });
       return docWithId(doc);
     } catch (error) {
-      console.error('Error in subjectService.findUniqueByCode:', error);
+      // console.error('Error in subjectService.findUniqueByCode:', error);
       throw error;
     }
   },
@@ -687,7 +687,7 @@ export const subjectService = {
       const result = await db.collection(COLLECTIONS.SUBJECTS).insertOne(toInsert);
       return { id: result.insertedId.toString(), ...toInsert };
     } catch (error) {
-      console.error('Error in subjectService.create:', error);
+      // console.error('Error in subjectService.create:', error);
       throw error;
     }
   },
@@ -701,7 +701,7 @@ export const subjectService = {
       await db.collection(COLLECTIONS.SUBJECTS).updateOne({ _id: new ObjectId(where.id) }, { $set: toSet });
       return { id: where.id, ...toSet };
     } catch (error) {
-      console.error('Error in subjectService.update:', error);
+      // console.error('Error in subjectService.update:', error);
       throw error;
     }
   },
@@ -715,7 +715,7 @@ export const departmentSubjectsService = {
       if (!departmentId) return [];
       const depIdStr = String(departmentId);
 
-      console.log('🔍 [departmentSubjectsService] Finding subjects for department:', depIdStr);
+      // console.log('🔍 [departmentSubjectsService] Finding subjects for department:', depIdStr);
 
       // Find subjects that have this department in their departments array
       const subjects = await db.collection(COLLECTIONS.SUBJECTS)
@@ -728,7 +728,7 @@ export const departmentSubjectsService = {
         }).toArray();
 
       if (!subjects || subjects.length === 0) {
-        console.log('❌ [departmentSubjectsService] No subjects found for department');
+        // console.log('❌ [departmentSubjectsService] No subjects found for department');
         return [];
       }
 
@@ -779,7 +779,7 @@ export const departmentSubjectsService = {
       }));
 
     } catch (error) {
-      console.error('Error in departmentSubjectsService.findSubjectsForDepartment:', error);
+      // console.error('Error in departmentSubjectsService.findSubjectsForDepartment:', error);
       throw error;
     }
   },
@@ -827,7 +827,7 @@ export const departmentSubjectsService = {
         upsertedId: null 
       };
     } catch (error) {
-      console.error('Error in departmentSubjectsService.linkSubjectToDepartment:', error);
+      // console.error('Error in departmentSubjectsService.linkSubjectToDepartment:', error);
       throw error;
     }
   },
@@ -848,7 +848,7 @@ export const departmentSubjectsService = {
       );
       return { deletedCount: result.modifiedCount };
     } catch (error) {
-      console.error('Error in departmentSubjectsService.unlinkSubjectFromDepartment:', error);
+      // console.error('Error in departmentSubjectsService.unlinkSubjectFromDepartment:', error);
       throw error;
     }
   },
@@ -863,7 +863,7 @@ export const departmentSubjectsService = {
       });
       return !!subject;
     } catch (error) {
-      console.error('Error in departmentSubjectsService.linkExists:', error);
+      // console.error('Error in departmentSubjectsService.linkExists:', error);
       throw error;
     }
   },
@@ -876,7 +876,7 @@ export const departmentSubjectsService = {
         'departments.id': String(departmentId)
       });
     } catch (error) {
-      console.error('Error in departmentSubjectsService.countSubjectsForDepartment:', error);
+      // console.error('Error in departmentSubjectsService.countSubjectsForDepartment:', error);
       throw error;
     }
   },
@@ -889,7 +889,7 @@ export const departmentSubjectsService = {
       if (!subject || !subject.departments) return [];
       return subject.departments.map((d: any) => String(d.id));
     } catch (error) {
-      console.error('Error in departmentSubjectsService.findDepartmentsForSubject:', error);
+      // console.error('Error in departmentSubjectsService.findDepartmentsForSubject:', error);
       throw error;
     }
   }
@@ -925,7 +925,7 @@ export const assignmentService = {
       const result = await db.collection(COLLECTIONS.FACULTY_ASSIGNMENTS).insertMany(docs);
       return { count: Object.keys(result.insertedIds).length };
     } catch (error) {
-      console.error('Error in assignmentService.createMany:', error);
+      // console.error('Error in assignmentService.createMany:', error);
       throw error;
     }
   },
@@ -978,7 +978,7 @@ export const assignmentService = {
 
       return assignments;
     } catch (error) {
-      console.error('Error in assignmentService.findMany:', error);
+      // console.error('Error in assignmentService.findMany:', error);
       throw error;
     }
   },
@@ -997,7 +997,7 @@ export const assignmentService = {
       const result = await db.collection(COLLECTIONS.FACULTY_ASSIGNMENTS).deleteMany(query);
       return { count: result.deletedCount };
     } catch (error) {
-      console.error('Error in assignmentService.deleteMany:', error);
+      // console.error('Error in assignmentService.deleteMany:', error);
       throw error;
     }
   },
@@ -1016,7 +1016,7 @@ export const feedbackService = {
       });
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
-      console.error('Error in feedbackService.create:', error);
+      // console.error('Error in feedbackService.create:', error);
       throw error;
     }
   },
@@ -1027,7 +1027,7 @@ export const feedbackService = {
       const doc = await db.collection(COLLECTIONS.FEEDBACK).findOne(where);
       return docWithId(doc);
     } catch (error) {
-      console.error('Error in feedbackService.findFirst:', error);
+      // console.error('Error in feedbackService.findFirst:', error);
       throw error;
     }
   },
@@ -1069,7 +1069,7 @@ export const feedbackService = {
 
       return results;
     } catch (error) {
-      console.error('Error in feedbackService.findMany:', error);
+      // console.error('Error in feedbackService.findMany:', error);
       throw error;
     }
   },
@@ -1079,7 +1079,7 @@ export const feedbackService = {
       const db = await getDatabase();
       return await db.collection(COLLECTIONS.FEEDBACK).countDocuments(where || {});
     } catch (error) {
-      console.error('Error in feedbackService.count:', error);
+      // console.error('Error in feedbackService.count:', error);
       throw error;
     }
   },
@@ -1098,7 +1098,7 @@ export const feedbackService = {
       const result = await db.collection(COLLECTIONS.FEEDBACK).updateMany(query, { $set: data });
       return { count: result.modifiedCount };
     } catch (error) {
-      console.error('Error in feedbackService.updateMany:', error);
+      // console.error('Error in feedbackService.updateMany:', error);
       throw error;
     }
   },
@@ -1117,7 +1117,7 @@ export const hodSuggestionService = {
       });
       return { id: result.insertedId.toString(), ...rest };
     } catch (error) {
-      console.error('Error in hodSuggestionService.create:', error);
+      // console.error('Error in hodSuggestionService.create:', error);
       throw error;
     }
   },
@@ -1130,7 +1130,7 @@ export const hodSuggestionService = {
       const results = await db.collection(COLLECTIONS.HOD_SUGGESTIONS).find(query).toArray();
       return results.map(docWithId);
     } catch (error) {
-      console.error('Error in hodSuggestionService.findMany:', error);
+      // console.error('Error in hodSuggestionService.findMany:', error);
       throw error;
     }
   },
@@ -1153,7 +1153,7 @@ export const hodSuggestionService = {
       const doc = await db.collection(COLLECTIONS.HOD_SUGGESTIONS).findOne(query);
       return docWithId(doc);
     } catch (error) {
-      console.error('Error in hodSuggestionService.findUnique:', error);
+      // console.error('Error in hodSuggestionService.findUnique:', error);
       throw error;
     }
   },
@@ -1172,7 +1172,34 @@ export const hodSuggestionService = {
       const result = await db.collection(COLLECTIONS.HOD_SUGGESTIONS).deleteMany(query);
       return { count: result.deletedCount };
     } catch (error) {
-      console.error('Error in hodSuggestionService.deleteMany:', error);
+      // // console.error('Error in hodSuggestionService.deleteMany:', error);
+      throw error;
+    }
+  },
+
+  async upsert(where: { hodId: string; staffId: string; semester: string }, data: any) {
+    try {
+      const db = await getDatabase();
+      const { hodId, staffId, semester } = where;
+      
+      const result = await db.collection(COLLECTIONS.HOD_SUGGESTIONS).findOneAndUpdate(
+        { hodId, staffId, semester },
+        { 
+          $set: { 
+            ...data,
+            hodId,
+            staffId,
+            semester,
+            updatedAt: new Date() 
+          },
+          $setOnInsert: { createdAt: new Date() }
+        },
+        { upsert: true, returnDocument: 'after' }
+      );
+      
+      return docWithId(result);
+    } catch (error) {
+      // // console.error('Error in hodSuggestionService.upsert:', error);
       throw error;
     }
   },
@@ -1197,7 +1224,7 @@ export const semesterSettingsService = {
       }
       return docWithId(doc);
     } catch (error) {
-      console.error('Error in semesterSettingsService.get:', error);
+      // console.error('Error in semesterSettingsService.get:', error);
       throw error;
     }
   },
@@ -1240,7 +1267,7 @@ export const semesterSettingsService = {
       );
       return this.get();
     } catch (error) {
-      console.error('Error in semesterSettingsService.update:', error);
+      // console.error('Error in semesterSettingsService.update:', error);
       throw error;
     }
   },
@@ -1258,7 +1285,7 @@ export const semesterSettingsService = {
       const settings = await this.get();
       return settings.semesterHistory || [];
     } catch (error) {
-      console.error('Error in semesterSettingsService.getSemesterHistory:', error);
+      // console.error('Error in semesterSettingsService.getSemesterHistory:', error);
       return [];
     }
   },
@@ -1279,7 +1306,7 @@ async function _fetchStudentTasksOld(userId: string, options?: { groupBySubject?
     const student = await db.collection('users').findOne({ _id: new ObjectId(userId) });
 
     if (!student || !student.departmentId || !student.academicYearId) {
-      console.error(`getStudentTasksFromDb: Student ${userId} lacks required fields.`);
+      // console.error(`getStudentTasksFromDb: Student ${userId} lacks required fields.`);
       return [];
     }
     
@@ -1293,7 +1320,7 @@ async function _fetchStudentTasksOld(userId: string, options?: { groupBySubject?
     const deptRows = await departmentSubjectsService.findSubjectsForDepartment(studentDepartmentIdStr, { include: { academicYear: true } });
 
     if (!deptRows || deptRows.length === 0) {
-      console.log(`No department-subject junction rows found for department ${studentDepartmentIdStr}`);
+      // console.log(`No department-subject junction rows found for department ${studentDepartmentIdStr}`);
       return [];
     }
 
@@ -1334,29 +1361,19 @@ async function _fetchStudentTasksOld(userId: string, options?: { groupBySubject?
     ];
 
     // Debugging: log deptRows and subject id info to diagnose mismatches
-    console.log(`--- [API LOG] deptRows count: ${deptRows.length}`);
-    // deptRows entries are enriched subject results (one-per junction row) — show junction ids and resolved subject ids
-    console.log(`--- [API LOG] deptRows sample (first 10):`, deptRows.slice(0, 10).map((r: any) => ({
-      subjectId: r.id,
-      subjectName: r.name,
-      junctionId: r._junctionId,
-      junctionSubjectId: r.junctionSubjectId,
-      junctionAcademicYearId: r.junctionAcademicYearId,
-      resolvedAcademicYearId: r.academicYear?.id || null,
-    })));
-    console.log(`--- [API LOG] subjectIdsForYear: ${subjectIdsForYear.length}`, subjectIdsForYear.slice(0, 40));
-    console.log(`--- [API LOG] subjectIdsAll: ${subjectIdsAll.length}`, subjectIdsAll.slice(0, 40));
+    // subjectIdsForYear: ${subjectIdsForYear.length}
+    // subjectIdsAll: ${subjectIdsAll.length}
 
     // Find all assignments matching both department's subject list and department ID
     const assignmentsMatchingSubjectOnly = await db.collection('facultyAssignments').find({ 
       subjectId: { $in: subjectIdQueryValuesAll },
       departmentId: studentDepartmentIdStr
     }).toArray();
-    console.log(`--- [API LOG] assignments matching subjectIds (no year filter): ${assignmentsMatchingSubjectOnly.length}`);
+    // console.log(`--- [API LOG] assignments matching subjectIds (no year filter): ${assignmentsMatchingSubjectOnly.length}`);
 
     // Also find assignments matching the student's academic year (regardless of subject) to compare.
     const assignmentsMatchingYearOnly = await db.collection('facultyAssignments').find({ academicYearId: { $in: academicYearIdQueryValues } }).toArray();
-    console.log(`--- [API LOG] assignments matching academicYear (no subject filter): ${assignmentsMatchingYearOnly.length}`);
+    // console.log(`--- [API LOG] assignments matching academicYear (no subject filter): ${assignmentsMatchingYearOnly.length}`);
 
     // Now find assignments that match both subject and academicYear (the strict behavior)
     let assignmentsStrict: any[] = [];
@@ -1371,7 +1388,7 @@ async function _fetchStudentTasksOld(userId: string, options?: { groupBySubject?
       assignmentsStrict = [];
     }
 
-    console.log(`--- [API LOG] assignments after subject+year (strict) filter: ${assignmentsStrict.length}`);
+    // console.log(`--- [API LOG] assignments after subject+year (strict) filter: ${assignmentsStrict.length}`);
 
     // For diagnostics: what assignments were excluded because of academicYear mismatch?
     // If there were no year-matching subject rows, then the entire subject-matching set
@@ -1387,7 +1404,7 @@ async function _fetchStudentTasksOld(userId: string, options?: { groupBySubject?
       });
     }
     if (excludedByYear.length) {
-      console.log(`--- [API LOG] assignments excluded by academicYear (count=${excludedByYear.length}) sample:`, excludedByYear.slice(0, 10).map((a: any) => ({ _id: String(a._id), subjectId: a.subjectId, academicYearId: a.academicYearId })));
+      // console.log(`--- [API LOG] assignments excluded by academicYear (count=${excludedByYear.length}) sample:`, excludedByYear.slice(0, 10).map((a: any) => ({ _id: String(a._id), subjectId: a.subjectId, academicYearId: a.academicYearId })));
     }
 
     // If both strict assignments and excludedByYear are empty, nothing to return
@@ -1513,7 +1530,7 @@ async function _fetchStudentTasksOld(userId: string, options?: { groupBySubject?
 
     return resultTasks;
   } catch (error) {
-    console.error("Error in getStudentTasksFromDb:", error);
+    // console.error("Error in getStudentTasksFromDb:", error);
     return [];
   }
 }

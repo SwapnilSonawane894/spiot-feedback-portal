@@ -98,7 +98,7 @@ export async function PATCH(request: Request, context: any) {
 
       return NextResponse.json(updatedStaff);
     } catch (error: any) {
-      console.error('Transaction error:', error);
+      // console.error('Transaction error:', error);
       return NextResponse.json({ 
         error: error.message || "Failed to update staff" 
       }, { status: 400 });
@@ -106,7 +106,7 @@ export async function PATCH(request: Request, context: any) {
       await session_db.endSession();
     }
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to update staff" }, { status: 500 });
   }
 }
@@ -151,7 +151,7 @@ export async function DELETE(request: Request, context: any) {
 
       return NextResponse.json({ success: true });
     } catch (error: any) {
-      console.error('Transaction error:', error);
+      // console.error('Transaction error:', error);
       return NextResponse.json({ 
         error: error.message || "Failed to delete staff" 
       }, { status: 400 });
@@ -159,7 +159,7 @@ export async function DELETE(request: Request, context: any) {
       await session_db.endSession();
     }
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({ error: "Failed to delete staff" }, { status: 500 });
   }
 }

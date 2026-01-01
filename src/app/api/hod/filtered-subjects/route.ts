@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(subjects);
   } catch (error) {
-    console.error("Error fetching subjects:", error);
+    // console.error("Error fetching subjects:", error);
     return NextResponse.json({ error: "Failed to fetch subjects" }, { status: 500 });
   }
 }
