@@ -73,15 +73,6 @@ export async function GET(request: Request) {
       .find(query)
       .toArray();
 
-    // console.log('Found subjects:', subjects.length);
-    // console.log('Subject details:', JSON.stringify(subjects.map(s => ({
-      id: s._id,
-      name: s.name,
-      departmentIds: s.departmentIds,
-      departments: s.departments,
-      academicYearId: s.academicYearId
-    })), null, 2));
-
     // Get assignments for these subjects
     const subjectIds = subjects.map(s => String(s._id));
     
@@ -244,14 +235,6 @@ export async function POST(request: Request) {
     // console.log('Query used:', JSON.stringify(query, null, 2));
     // console.log('Subjects found:', subjects.length);
     
-    // console.log('Department subject query result:', JSON.stringify(subjects, null, 2));
-    
-    // console.log(`Found ${subjects.length} subjects for department:`, subjects.map(s => ({ 
-      id: s._id, 
-      name: s.name,
-      academicYearId: s.academicYearId 
-    })));
-    
     // Get both _id and id from subjects since either might be used
     const deptSubjectIds = new Set();
     subjects.forEach(s => {
@@ -279,10 +262,6 @@ export async function POST(request: Request) {
     const filteredAssignments = Array.isArray(assignments)
       ? assignments.filter((a: any) => {
           const valid = deptSubjectIds.has(String(a.subjectId));
-          if (!valid) {
-            // console.log('Invalid assignment:', JSON.stringify(a, null, 2), 
-                      '\nValid subject IDs:', Array.from(deptSubjectIds));
-          }
           return valid;
         })
       : [];

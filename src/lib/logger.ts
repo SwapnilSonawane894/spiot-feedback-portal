@@ -9,43 +9,24 @@ interface LogOptions {
 
 export const logger = {
   info: (message: string, options?: LogOptions) => {
-    if (!isDev) return;
-    // console.log(
-      `ℹ️ [${options?.context || 'APP'}] ${message}`,
-      options?.data || ''
-    );
+    // Logging disabled
   },
 
   warn: (message: string, options?: LogOptions) => {
-    if (!isDev) return;
-    // console.warn(
-      `⚠️ [${options?.context || 'APP'}] ${message}`,
-      options?.data || ''
-    );
+    // Logging disabled
   },
 
   error: (message: string, error?: any, options?: LogOptions) => {
-    // Always log errors, even in production
-    // console.error(
-      `❌ [${options?.context || 'APP'}] ${message}`,
-      error || '',
-      options?.data || ''
-    );
+    // Logging disabled
   },
 
   debug: (message: string, options?: LogOptions) => {
-    if (!isDev) return;
-    // console.debug(
-      `🔍 [${options?.context || 'APP'}] ${message}`,
-      options?.data || ''
-    );
+    // Logging disabled
   },
 
   // Special method for logging API requests in development
   api: (method: string, path: string, statusCode: number, durationMs: number) => {
-    if (!isDev) return;
-    const emoji = statusCode >= 400 ? '❌' : statusCode >= 300 ? '⚠️' : '✅';
-    // console.log(`${emoji} ${method} ${path} ${statusCode} (${durationMs}ms)`);
+    // Logging disabled
   }
 };
 
