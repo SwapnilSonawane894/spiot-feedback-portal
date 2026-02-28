@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SkeletonPulse, SkeletonReportCard } from "@/components/skeletons";
-import { Download, Building2, Calendar } from "lucide-react";
+import { Download, Building2, Calendar, Info, MessageSquare, Send } from "lucide-react";
 import { CustomSelect } from "@/components/custom-select";
+import toast from "react-hot-toast";
 
 const PARAM_LABELS: Record<string, string> = {
   coverage_of_syllabus: "Coverage of syllabus",
@@ -155,9 +156,65 @@ export default function FacultyReportPage() {
           semester={selectedSemester}
           isHomeDepartment={deptData.departmentId === data?.homeDepartmentId}
           showDepartmentLabel={hasMultipleDepartments}
+          onResponseSaved={() => fetchData(selectedSemester)}
         />
       ))}
+
+      {/* Rating Scale Legend - at the end */}
+      <RatingScaleLegend />
     </main>
+  );
+}
+
+// Rating Scale Legend Component
+function RatingScaleLegend() {
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  const ratingScale = [
+    { range: '95-100%', rating: 'Outstanding', color: 'var(--success)' },
+    { range: '90-95%', rating: 'Excellent', color: 'var(--success)' },
+    { range: '80-90%', rating: 'Very Good', color: 'var(--primary)' },
+    { range: '70-80%', rating: 'Good', color: 'var(--primary)' },
+    { range: '50-70%', rating: 'Satisfactory', color: '#FFA500' },
+    { range: '<50%', rating: 'Needs Improvement', color: 'var(--danger)' },
+  ];
+
+  return (
+    <div className="card mb-6">
+      <div 
+        className="card-body cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <Info size={18} style={{ color: "var(--primary)" }} />
+          <h3 className="font-medium" style={{ color: "var(--text-primary)" }}>
+            Overall Rating Scale
+          </h3>
+          <span className="text-xs ml-auto" style={{ color: "var(--text-muted)" }}>
+            {isExpanded ? 'Click to collapse' : 'Click to expand'}
+          </span>
+        </div>
+        
+        {isExpanded && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-3">
+            {ratingScale.map((item) => (
+              <div 
+                key={item.range} 
+                className="p-2 rounded-lg text-center"
+                style={{ backgroundColor: "var(--hover-overlay)" }}
+              >
+                <div className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                  {item.range}
+                </div>
+                <div className="text-sm font-bold mt-1" style={{ color: item.color }}>
+                  {item.rating}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -166,15 +223,56 @@ function DepartmentReportSection({
   staffId, 
   semester,
   isHomeDepartment,
-  showDepartmentLabel 
+  showDepartmentLabel,
+  onResponseSaved
 }: { 
   deptData: any; 
   staffId?: string;
   semester?: string;
   isHomeDepartment: boolean;
   showDepartmentLabel: boolean;
+  onResponseSaved?: () => void;
 }) {
   const reports = deptData.reports || [];
+  const [facultyResponse, setFacultyResponse] = useState(deptData.facultyResponse || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Update state when deptData changes
+  useEffect(() => {
+    setFacultyResponse(deptData.facultyResponse || '');
+  }, [deptData.facultyResponse]);
+
+  const saveFacultyResponse = async () => {
+    if (!semester) {
+      toast.error('Please select a semester first');
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/faculty/response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          semester,
+          facultyResponse,
+          suggestionId: deptData.suggestionId
+        })
+      });
+      
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save response');
+      }
+      
+      toast.success('Response saved successfully');
+      onResponseSaved?.();
+    } catch (error) {
+      toast.error((error as Error).message || 'Failed to save response');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="mb-8">
@@ -231,13 +329,75 @@ function DepartmentReportSection({
       {/* Report Card */}
       <div className="card">
         <div className="card-body">
-          {/* HOD suggestion (if present) */}
-          {deptData.hodSuggestion ? (
-            <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "var(--hover-overlay)", borderLeft: "4px solid var(--primary)" }}>
-              <h3 className="font-medium mb-1" style={{ color: "var(--text-primary)" }}>HOD Suggestions</h3>
-              <div className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-secondary)" }}>{deptData.hodSuggestion}</div>
+          {/* HOD Suggestions Section */}
+          <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "var(--hover-overlay)", borderLeft: "4px solid var(--primary)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare size={18} style={{ color: "var(--primary)" }} />
+              <h3 className="font-medium" style={{ color: "var(--text-primary)" }}>HOD Suggestions</h3>
             </div>
-          ) : null}
+            {deptData.hodSuggestion ? (
+              <ol className="list-decimal list-inside space-y-1">
+                {deptData.hodSuggestion.split('\n').filter((line: string) => line.trim()).map((point: string, idx: number) => (
+                  <li key={idx} className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                    {point.trim()}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div className="text-sm italic" style={{ color: "var(--text-muted)" }}>
+                No suggestion from HOD yet.
+              </div>
+            )}
+          </div>
+
+          {/* Faculty Response Section */}
+          <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "var(--hover-overlay)", borderLeft: "4px solid var(--success)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Send size={18} style={{ color: "var(--success)" }} />
+              <h3 className="font-medium" style={{ color: "var(--text-primary)" }}>Your Response to HOD Suggestions</h3>
+            </div>
+            <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+              Clarify your comments or action plan based on the HOD suggestions above. Enter each point on a new line - they will be automatically numbered.
+            </p>
+            <textarea
+              value={facultyResponse}
+              onChange={(e) => setFacultyResponse(e.target.value)}
+              placeholder={deptData.hodSuggestion ? "Enter your response (one point per line)..." : "No HOD suggestion to respond to yet."}
+              disabled={!deptData.hodSuggestion}
+              className="w-full p-3 rounded-lg border text-sm resize-none h-24"
+              style={{ 
+                backgroundColor: deptData.hodSuggestion ? "var(--card-bg)" : "var(--hover-overlay)",
+                borderColor: "var(--card-border)",
+                color: "var(--text-primary)"
+              }}
+            />
+            {/* Preview numbered points */}
+            {facultyResponse && facultyResponse.split('\n').filter((line: string) => line.trim()).length > 0 && (
+              <div className="mt-3 p-3 rounded-lg" style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)" }}>
+                <p className="text-xs font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Preview (as numbered points):</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  {facultyResponse.split('\n').filter((line: string) => line.trim()).map((point: string, idx: number) => (
+                    <li key={idx} className="text-sm" style={{ color: "var(--text-primary)" }}>
+                      {point.trim()}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {deptData.hodSuggestion && (
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={saveFacultyResponse}
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded text-sm transition-colors"
+                  style={{ backgroundColor: "var(--success)", color: "white", opacity: isSaving ? 0.7 : 1 }}
+                >
+                  <Send size={14} />
+                  {isSaving ? 'Saving...' : 'Save Response'}
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Subjects list */}
           <div className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>

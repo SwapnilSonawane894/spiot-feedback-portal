@@ -435,6 +435,66 @@ export async function GET(req: Request, ctx: { params?: any }) {
       }
     } else {
       page.drawText('No suggestions from HOD yet.', { x: tableX + 6, y, size: 9, font: times });
+      y -= 14;
+    }
+
+    // Faculty Response Section
+    y -= 10;
+    if (y < 100) {
+      page = pdfDoc.addPage([595.28, 841.89]);
+      y = page.getHeight() - 40;
+    }
+    page.drawText('Faculty Response:', { x: tableX, y, size: 11, font: times });
+    y -= 14;
+    
+    if (hs && hs.facultyResponse) {
+      // Split faculty response by newlines and create numbered points (like HOD suggestions)
+      const responseLines = (hs.facultyResponse || '').split(/\n/).filter((line: string) => line.trim());
+      
+      if (responseLines.length > 0) {
+        for (let i = 0; i < responseLines.length; i++) {
+          const pointText = `${i + 1}. ${responseLines[i].trim()}`;
+          const wrapped = wrapPdfText(pointText, pageWidth - 100, times, 10);
+          for (let j = 0; j < wrapped.length; j++) {
+            // First line has number, subsequent lines are indented
+            const xPos = j === 0 ? tableX + 6 : tableX + 20;
+            page.drawText(wrapped[j], { x: xPos, y, size: 10, font: times });
+            y -= 14;
+            if (y < 60) {
+              page = pdfDoc.addPage([595.28, 841.89]);
+              y = page.getHeight() - 40;
+            }
+          }
+        }
+      } else {
+        page.drawText('No response from faculty.', { x: tableX + 6, y, size: 9, font: times });
+        y -= 14;
+      }
+    } else {
+      page.drawText('No response from faculty.', { x: tableX + 6, y, size: 9, font: times });
+      y -= 14;
+    }
+
+    // Rating Scale Note at the bottom (italic)
+    y -= 20;
+    if (y < 80) {
+      page = pdfDoc.addPage([595.28, 841.89]);
+      y = page.getHeight() - 40;
+    }
+    
+    // Embed italic font for the note
+    const timesItalic = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+    
+    // Draw the rating scale note
+    const ratingNote = 'Note: 95-100% = Outstanding, 90-95% = Excellent, 80-90% = Very Good, 70-80% = Good, 50-70% = Satisfactory, <50% = Needs Improvement';
+    const noteWrapped = wrapPdfText(ratingNote, pageWidth - 80, timesItalic, 9);
+    for (const line of noteWrapped) {
+      page.drawText(line, { x: tableX, y, size: 9, font: timesItalic, color: rgb(0.3, 0.3, 0.3) });
+      y -= 12;
+      if (y < 40) {
+        page = pdfDoc.addPage([595.28, 841.89]);
+        y = page.getHeight() - 40;
+      }
     }
 
   // serialize

@@ -174,9 +174,15 @@ export async function GET(req: Request) {
       // Get HOD suggestion for this department (if any)
       const semester = deptReports?.[0]?.semester || '';
       let hodSuggestion = '';
+      let facultyResponse = '';
+      let suggestionId = '';
       if (staff?.id && semester) {
         const rows = await hodSuggestionService.findMany({ where: { staffId: staff.id, semester } });
-        hodSuggestion = rows && rows.length > 0 ? rows[0].content || '' : '';
+        if (rows && rows.length > 0) {
+          hodSuggestion = rows[0].content || '';
+          facultyResponse = rows[0].facultyResponse || '';
+          suggestionId = rows[0].id || '';
+        }
       }
 
       if (deptReports.length > 0) {
@@ -186,6 +192,8 @@ export async function GET(req: Request) {
           departmentAbbreviation: dept?.abbreviation || '',
           reports: deptReports,
           hodSuggestion,
+          facultyResponse,
+          suggestionId,
           semester,
         });
       }
