@@ -52,6 +52,9 @@ export async function GET(request: Request) {
     
     // console.log('Using semester:', semesterNormalized);
 
+    // Determine semester parity (Odd semester → subjects 1,3,5,7; Even → 2,4,6,8)
+    const isOddSemester = settings.currentSemester % 2 === 1;
+
     // Get subjects using the same query structure that works in the POST handler
     let departmentIdObj;
     try {
@@ -69,9 +72,18 @@ export async function GET(request: Request) {
 
     // console.log('Subject query:', JSON.stringify(query, null, 2));
     
-    const subjects = await database.collection("subjects")
+    const allDeptSubjects = await database.collection("subjects")
       .find(query)
       .toArray();
+
+    // Filter subjects to only those matching the current semester parity.
+    // This prevents even-semester subjects appearing in the odd-semester assignment
+    // view (and vice versa), which avoids spurious deletes of valid assignments.
+    const subjects = allDeptSubjects.filter(s => {
+      const subjectSem = Number(s.semester);
+      if (!s.semester || isNaN(subjectSem)) return true; // no semester field → keep
+      return isOddSemester ? (subjectSem % 2 === 1) : (subjectSem % 2 === 0);
+    });
 
     // Get assignments for these subjects
     const subjectIds = subjects.map(s => String(s._id));
@@ -162,17 +174,19 @@ export async function POST(request: Request) {
     
     // Get current semester from settings if not provided in body
     let semester;
+    const postSettings = await database.collection('settings').findOne({ type: 'semester' });
     if (body?.semester) {
       semester = body.semester;
     } else {
-      const settings = await database.collection('settings').findOne({ type: 'semester' });
-      if (!settings) {
+      if (!postSettings) {
         return NextResponse.json({ error: "Semester settings not found" }, { status: 404 });
       }
-      const isOdd = settings.currentSemester % 2 === 1;
+      const isOdd = postSettings.currentSemester % 2 === 1;
       const semesterType = isOdd ? 'Odd' : 'Even';
-      semester = `${semesterType} ${settings.academicYear}`;
+      semester = `${semesterType} ${postSettings.academicYear}`;
     }
+    // Determine parity from semester string to filter subjects correctly
+    const isOddSemester = semester.toLowerCase().includes('odd');
     
     const assignments = Array.isArray(body?.assignments) ? body.assignments : [];
     // console.log(`Processing ${assignments.length} assignments for semester ${semester}`);
@@ -234,10 +248,19 @@ export async function POST(request: Request) {
     
     // console.log('Query used:', JSON.stringify(query, null, 2));
     // console.log('Subjects found:', subjects.length);
+
+    // Filter subjects to only those matching the current semester parity.
+    // This prevents even-semester subjects interfering with odd-semester assignments and vice versa.
+    const subjectsForSemester = subjects.filter(s => {
+      const subjectSem = Number(s.semester);
+      if (!s.semester || isNaN(subjectSem)) return true; // no semester field → keep
+      return isOddSemester ? (subjectSem % 2 === 1) : (subjectSem % 2 === 0);
+    });
+    // console.log(`Filtered subjects to ${subjectsForSemester.length} matching semester parity`);
     
     // Get both _id and id from subjects since either might be used
     const deptSubjectIds = new Set();
-    subjects.forEach(s => {
+    subjectsForSemester.forEach(s => {
       // Add various forms of the ID to catch all possibilities
       if (s._id) {
         deptSubjectIds.add(String(s._id));
@@ -268,7 +291,7 @@ export async function POST(request: Request) {
     // console.log(`Filtered ${assignments.length} assignments down to ${filteredAssignments.length} valid ones`);
 
     // Create map of subject details including academicYearId
-    const subjectDetailsMap = new Map(subjects.map(s => [
+    const subjectDetailsMap = new Map(subjectsForSemester.map(s => [
       String(s._id),
       { 
         academicYearId: s.academicYearId,

@@ -2,9 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { staffService, assignmentService, userService } from "@/lib/mongodb-services";
-
-const CURRENT_SEMESTER = "Odd 2025-26";
+import { staffService, assignmentService, userService, semesterSettingsService } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
@@ -16,6 +14,13 @@ export async function GET() {
     const hodUserId = session.user.id as string;
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
+
+    // Resolve current semester dynamically from settings
+    const settings = await semesterSettingsService.get();
+    const CURRENT_SEMESTER = semesterSettingsService.getCurrentSemesterString(
+      settings.currentSemester,
+      settings.academicYear
+    );
 
     // Fetch all staff from all departments to allow cross-departmental assignments
     const staff = await staffService.findMany({});
@@ -56,7 +61,6 @@ export async function POST(request: Request) {
 
     const staffId = body?.staffId as string | undefined;
     const subjectIds = Array.isArray(body?.subjectIds) ? body.subjectIds : [];
-    const semester = body?.semester ?? CURRENT_SEMESTER;
 
     if (!staffId) {
       return NextResponse.json({ error: "Invalid payload: staffId required" }, { status: 400 });
@@ -67,6 +71,14 @@ export async function POST(request: Request) {
     const hodUserId = session.user.id as string;
     const hodProfile = await staffService.findUnique({ where: { userId: hodUserId } });
     if (!hodProfile) return NextResponse.json({ error: "HOD profile not found" }, { status: 404 });
+
+    // Resolve current semester dynamically from settings (fall back to body value if provided)
+    const settings = await semesterSettingsService.get();
+    const dynamicSemester = semesterSettingsService.getCurrentSemesterString(
+      settings.currentSemester,
+      settings.academicYear
+    );
+    const semester = body?.semester ?? dynamicSemester;
 
     const staffRecord = await staffService.findUnique({ where: { id: staffId } });
     if (!staffRecord) return NextResponse.json({ error: "Staff not found" }, { status: 404 });

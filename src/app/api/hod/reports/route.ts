@@ -39,7 +39,16 @@ export async function GET(req: Request) {
       ]
     };
 
-    const deptSubjects = await db.collection("subjects").find(query).toArray();
+    const allDeptSubjects = await db.collection("subjects").find(query).toArray();
+
+    // Filter subjects to only those matching the requested semester parity.
+    // This prevents even-semester subjects from appearing in odd-semester reports and vice versa.
+    const isOddRequestedSemester = (semester || '').toLowerCase().includes('odd');
+    const deptSubjects = (allDeptSubjects || []).filter(s => {
+      const subjectSem = Number(s.semester);
+      if (!s.semester || isNaN(subjectSem)) return true; // keep if no semester field on subject
+      return isOddRequestedSemester ? (subjectSem % 2 === 1) : (subjectSem % 2 === 0);
+    });
 
     const deptSubjectIds = new Set<string>();
     // Include all ID variants: subject._id and subject.id

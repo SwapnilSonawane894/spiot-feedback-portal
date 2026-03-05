@@ -2,14 +2,19 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { staffService, assignmentService, subjectService, departmentSubjectsService } from "@/lib/mongodb-services";
-
-const CURRENT_SEMESTER = "Odd 2025-26";
+import { staffService, assignmentService, subjectService, departmentSubjectsService, semesterSettingsService } from "@/lib/mongodb-services";
 
 export async function GET() {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Resolve current semester dynamically from settings
+    const settings = await semesterSettingsService.get();
+    const CURRENT_SEMESTER = semesterSettingsService.getCurrentSemesterString(
+      settings.currentSemester,
+      settings.academicYear
+    );
 
     const role = session.user?.role;
 
