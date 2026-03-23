@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui-controls";
 import { CustomSelect } from "@/components/custom-select";
 import { Download, TrendingUp, Users, BookOpen, BarChart3 } from "lucide-react";
+import { DepartmentReportSection, RatingScaleLegend } from "@/components/faculty-report-preview";
 
 const parameterGroups = {
   "Course Content & Delivery": [
@@ -283,6 +284,8 @@ export default function HodReportsPage() {
           <FacultyReportView staff={selected} />
           <StudentSuggestionsCard suggestions={selected?.studentSuggestions || []} staffName={selected?.staffName || ''} />
           <HODSuggestionCard staffId={selectedStaff} semester={selected?.reports?.[0]?.semester || ''} />
+            <StaffReportPreviewContainer staffId={selectedStaff} semester={selectedSemester || selected?.reports?.[0]?.semester || ""} />
+
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
@@ -636,3 +639,49 @@ function HODSuggestionCard({ staffId, semester: initialSemester }: { staffId: st
     </div>
   );
 }
+
+function StaffReportPreviewContainer({ staffId, semester }: { staffId: string; semester: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!staffId || !semester) return;
+    setLoading(true);
+    fetch(`/api/faculty/report?staffId=${staffId}&semester=${encodeURIComponent(semester)}`)
+      .then(r => r.json())
+      .then(d => setData(d))
+      .catch()
+      .finally(() => setLoading(false));
+  }, [staffId, semester]);
+
+  if (loading) return <div className="mt-8 text-center text-sm" style={{color: "var(--text-secondary)"}}>Loading staff report preview...</div>;
+  if (!data?.departmentReports?.length) return null;
+
+  const hasMultiple = data.departmentReports.length > 1;
+
+  return (
+    <div className="mt-8">
+      <h3 className="section-title mb-4">Staff Report View & Download</h3>
+      <div className="p-4 sm:p-6 rounded-lg border bg-opacity-50" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--card-bg)" }}>
+          <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
+            This is a preview of the actual report available on this faculty member's dashboard.
+          </p>
+          {data.departmentReports.map((deptData: any) => (
+             <DepartmentReportSection 
+               key={deptData.departmentId} 
+               deptData={deptData} 
+               staffId={data.staffId}
+               semester={semester}
+               isHomeDepartment={deptData.departmentId === data.homeDepartmentId}
+               showDepartmentLabel={hasMultiple}
+               isHodMode={true}
+             />
+          ))}
+          <div className="mt-6">
+            <RatingScaleLegend />
+          </div>
+      </div>
+    </div>
+  );
+}
+

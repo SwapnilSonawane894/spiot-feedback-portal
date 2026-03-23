@@ -6,9 +6,9 @@ import { staffService, assignmentService, hodSuggestionService, subjectService, 
 export async function GET(req: Request) {
   try {
     const session = (await getServerSession(authOptions as any)) as any;
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // Accept both STAFF and FACULTY roles (some accounts use FACULTY string)
-  if (session.user?.role !== "STAFF" && session.user?.role !== "HOD" && session.user?.role !== "FACULTY") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Accept both STAFF and FACULTY roles (some accounts use FACULTY string)
+    if (session.user?.role !== "STAFF" && session.user?.role !== "HOD" && session.user?.role !== "FACULTY") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const staff = await staffService.findFirst({ where: { userId: session.user.id } });
     if (!staff) {
@@ -20,74 +20,89 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
     }
 
-  // console.log('📊 [Faculty Report] Starting report generation');
-  // console.log('📊 [Faculty Report] Staff ID:', staff.id);
-  // console.log('📊 [Faculty Report] Staff Department ID:', staff.departmentId);
-  // console.log('📊 [Faculty Report] User Role:', session.user?.role);
+    // console.log('📊 [Faculty Report] Starting report generation');
+    // console.log('📊 [Faculty Report] Staff ID:', staff.id);
+    // console.log('📊 [Faculty Report] Staff Department ID:', staff.departmentId);
+    // console.log('📊 [Faculty Report] User Role:', session.user?.role);
 
-  // Check for optional query params
-  const url = new URL(req.url);
-  const filterDeptId = url.searchParams.get('departmentId');
-  const filterSemester = url.searchParams.get('semester'); // New: semester filter
-  const debugMode = url.searchParams.get('debug') === '1';
+    // Check for optional query params
+    const url = new URL(req.url);
+    const filterDeptId = url.searchParams.get('departmentId');
+    const filterSemester = url.searchParams.get('semester'); // New: semester filter
+    const requestedStaffId = url.searchParams.get('staffId');
+    const debugMode = url.searchParams.get('debug') === '1';
 
-  // Fetch ALL assignments for this staff (across all departments)
-  let allAssignments = await assignmentService.findMany({ where: { staffId: staff.id } });
-  
-  // Filter by semester if provided
-  if (filterSemester) {
-    const { normalizeSemester } = await import('@/lib/mongodb-services');
-    const targetSemester = normalizeSemester(filterSemester);
-    allAssignments = allAssignments.filter((a: any) => normalizeSemester(a.semester || '') === targetSemester);
-  }
+    let targetStaff = staff;
+    let hodDeptId: string | null = null;
+    if (requestedStaffId && session.user?.role === "HOD" && requestedStaffId !== staff.id) {
+      const ts = await staffService.findFirst({ where: { id: requestedStaffId } });
+      if (!ts) return NextResponse.json({ error: "Target staff not found" }, { status: 404 });
+      targetStaff = ts;
+      hodDeptId = staff.departmentId || null;
+    }
 
-  // Debug info
-  if (debugMode) {
-    const allFeedbacksDebug: any[] = [];
-    for (const a of allAssignments) {
-      const fbs = await feedbackService.findMany({ where: { assignmentId: a.id } });
-      allFeedbacksDebug.push({
-        assignmentId: a.id,
-        departmentId: a.departmentId,
-        subjectId: a.subjectId,
-        semester: a.semester,
-        feedbackCount: fbs.length,
-        releasedCount: fbs.filter((f: any) => f.isReleased === true).length,
-        sampleFeedback: fbs[0] ? { isReleased: fbs[0].isReleased, studentId: fbs[0].studentId } : null,
+    // Fetch ALL assignments for this staff (across all departments)
+    let allAssignments = await assignmentService.findMany({ where: { staffId: targetStaff.id } });
+
+    // If HOD is viewing another staff's report, only show assignments from the HOD's department
+    if (hodDeptId && filterDeptId !== 'all') {
+      allAssignments = allAssignments.filter((a: any) => a.departmentId === hodDeptId);
+    }
+
+    // Filter by semester if provided
+    if (filterSemester) {
+      const { normalizeSemester } = await import('@/lib/mongodb-services');
+      const targetSemester = normalizeSemester(filterSemester);
+      allAssignments = allAssignments.filter((a: any) => normalizeSemester(a.semester || '') === targetSemester);
+    }
+
+    // Debug info
+    if (debugMode) {
+      const allFeedbacksDebug: any[] = [];
+      for (const a of allAssignments) {
+        const fbs = await feedbackService.findMany({ where: { assignmentId: a.id } });
+        allFeedbacksDebug.push({
+          assignmentId: a.id,
+          departmentId: a.departmentId,
+          subjectId: a.subjectId,
+          semester: a.semester,
+          feedbackCount: fbs.length,
+          releasedCount: fbs.filter((f: any) => f.isReleased === true).length,
+          sampleFeedback: fbs[0] ? { isReleased: fbs[0].isReleased, studentId: fbs[0].studentId } : null,
+        });
+      }
+      return NextResponse.json({
+        debug: true,
+        staffId: staff.id,
+        staffDepartmentId: staff.departmentId,
+        userId: session.user.id,
+        role: session.user?.role,
+        assignmentsCount: allAssignments.length,
+        assignments: allFeedbacksDebug,
       });
     }
-    return NextResponse.json({
-      debug: true,
-      staffId: staff.id,
-      staffDepartmentId: staff.departmentId,
-      userId: session.user.id,
-      role: session.user?.role,
-      assignmentsCount: allAssignments.length,
-      assignments: allFeedbacksDebug,
-    });
-  }
 
-  // Group assignments by departmentId
-  const assignmentsByDept = new Map<string, any[]>();
-  for (const a of allAssignments) {
-    const deptId = a.departmentId || 'unknown';
-    if (!assignmentsByDept.has(deptId)) assignmentsByDept.set(deptId, []);
-    assignmentsByDept.get(deptId)!.push(a);
-  }
-  
-  // console.log('📊 [Faculty Report] Departments with assignments:', Array.from(assignmentsByDept.keys()));
+    // Group assignments by departmentId
+    const assignmentsByDept = new Map<string, any[]>();
+    for (const a of allAssignments) {
+      const deptId = a.departmentId || 'unknown';
+      if (!assignmentsByDept.has(deptId)) assignmentsByDept.set(deptId, []);
+      assignmentsByDept.get(deptId)!.push(a);
+    }
 
-  // If filtering by specific department, only keep that one
-  if (filterDeptId) {
-    const filtered = assignmentsByDept.get(filterDeptId);
-    assignmentsByDept.clear();
-    if (filtered) assignmentsByDept.set(filterDeptId, filtered);
-  }
+    // console.log('📊 [Faculty Report] Departments with assignments:', Array.from(assignmentsByDept.keys()));
 
-  // Fetch all department details
-  const deptIds = Array.from(assignmentsByDept.keys());
-  const departments = await Promise.all(deptIds.map(id => departmentService.findUnique({ id })));
-  const deptMap = new Map(departments.filter(Boolean).map((d: any) => [d.id, d]));
+    // If filtering by specific department, only keep that one
+    if (filterDeptId) {
+      const filtered = assignmentsByDept.get(filterDeptId);
+      assignmentsByDept.clear();
+      if (filtered) assignmentsByDept.set(filterDeptId, filtered);
+    }
+
+    // Fetch all department details
+    const deptIds = Array.from(assignmentsByDept.keys());
+    const departments = await Promise.all(deptIds.map(id => departmentService.findUnique({ id })));
+    const deptMap = new Map(departments.filter(Boolean).map((d: any) => [d.id, d]));
 
     // Batch fetch subjects and feedbacks for all assignments
     const assignmentIds = allAssignments.map((a: any) => a.id);
@@ -126,21 +141,21 @@ export async function GET(req: Request) {
 
     // Build reports grouped by department
     const departmentReports: any[] = [];
-    
+
     // console.log('📊 [Faculty Report] Processing departments:', assignmentsByDept.size);
-    
+
     for (const [deptId, assignments] of assignmentsByDept.entries()) {
       const dept = deptMap.get(deptId);
       const deptReports: any[] = [];
-      
+
       // console.log(`📊 [Faculty Report] Department ${deptId} (${dept?.name || 'unknown'}): ${assignments.length} assignments`);
-      
+
       for (const a of assignments) {
         const allFbForAssignment = feedbackMap.get(a.id) || [];
         let fb = [...allFbForAssignment];
-        
+
         // console.log(`📊 [Faculty Report] Assignment ${a.id}: ${allFbForAssignment.length} total feedbacks`);
-        
+
         // If the viewer is not an HOD, only include feedbacks that have been released by HOD
         const viewerIsHod = session.user?.role === 'HOD';
         if (!viewerIsHod) {
@@ -176,55 +191,73 @@ export async function GET(req: Request) {
       let hodSuggestion = '';
       let facultyResponse = '';
       let suggestionId = '';
-      if (staff?.id && semester) {
-        const rows = await hodSuggestionService.findMany({ where: { staffId: staff.id, semester } });
+      if (targetStaff?.id && semester) {
+        const rows = await hodSuggestionService.findMany({ where: { staffId: targetStaff.id, semester } });
         if (rows && rows.length > 0) {
-          hodSuggestion = rows[0].content || '';
-          facultyResponse = rows[0].facultyResponse || '';
-          suggestionId = rows[0].id || '';
+          let deptSuggestion = null;
+
+          for (const row of rows) {
+            if (row.hodId) {
+              const hodProfile = await staffService.findUnique({ where: { id: row.hodId } });
+              if (hodProfile && hodProfile.departmentId === deptId) {
+                deptSuggestion = row;
+                break;
+              }
+            }
+          }
+
+          if (!deptSuggestion && rows.some((r: any) => !r.hodId)) {
+            deptSuggestion = rows.find((r: any) => !r.hodId);
+          }
+
+          if (deptSuggestion) {
+            hodSuggestion = deptSuggestion.content || '';
+            facultyResponse = deptSuggestion.facultyResponse || '';
+            suggestionId = deptSuggestion.id || '';
+          }
+        }
+        }
+
+        if (deptReports.length > 0) {
+          departmentReports.push({
+            departmentId: deptId,
+            departmentName: dept?.name || 'Unknown Department',
+            departmentAbbreviation: dept?.abbreviation || '',
+            reports: deptReports,
+            hodSuggestion,
+            facultyResponse,
+            suggestionId,
+            semester,
+          });
         }
       }
 
-      if (deptReports.length > 0) {
-        departmentReports.push({
-          departmentId: deptId,
-          departmentName: dept?.name || 'Unknown Department',
-          departmentAbbreviation: dept?.abbreviation || '',
-          reports: deptReports,
-          hodSuggestion,
-          facultyResponse,
-          suggestionId,
-          semester,
-        });
-      }
+      // include staffId so client can request the PDF
+      const staffProfile = targetStaff;
+
+      // For backward compatibility, also include a flat reports array (from home department or first available)
+      const homeDeptReports = departmentReports.find(d => d.departmentId === targetStaff.departmentId);
+      const flatReports = homeDeptReports?.reports || departmentReports[0]?.reports || [];
+      const hodSuggestion = homeDeptReports?.hodSuggestion || departmentReports[0]?.hodSuggestion || '';
+
+      // Return both grouped and flat structure with no-cache headers
+      const response = NextResponse.json({
+        facultyName,
+        academicYear,
+        reports: flatReports, // backward compatibility
+        departmentReports, // new grouped structure
+        staffId: targetStaff?.id,
+        hodSuggestion,
+        homeDepartmentId: staff.departmentId, // staff's home department
+      });
+
+      // Prevent caching to ensure fresh data
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      response.headers.set('Pragma', 'no-cache');
+
+      return response;
+    } catch (error) {
+      // console.error(error);
+      return NextResponse.json({ error: "Failed to fetch faculty report" }, { status: 500 });
     }
-
-  // include staffId (inferred from session) so client can request the PDF
-  const staffProfile = await staffService.findFirst({ where: { userId: session.user.id } });
-
-  // For backward compatibility, also include a flat reports array (from home department or first available)
-  const homeDeptReports = departmentReports.find(d => d.departmentId === staff.departmentId);
-  const flatReports = homeDeptReports?.reports || departmentReports[0]?.reports || [];
-  const hodSuggestion = homeDeptReports?.hodSuggestion || departmentReports[0]?.hodSuggestion || '';
-
-  // Return both grouped and flat structure with no-cache headers
-  const response = NextResponse.json({ 
-    facultyName, 
-    academicYear, 
-    reports: flatReports, // backward compatibility
-    departmentReports, // new grouped structure
-    staffId: staffProfile?.id, 
-    hodSuggestion,
-    homeDepartmentId: staff.departmentId, // staff's home department
-  });
-  
-  // Prevent caching to ensure fresh data
-  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-  response.headers.set('Pragma', 'no-cache');
-  
-  return response;
-  } catch (error) {
-    // console.error(error);
-    return NextResponse.json({ error: "Failed to fetch faculty report" }, { status: 500 });
   }
-}

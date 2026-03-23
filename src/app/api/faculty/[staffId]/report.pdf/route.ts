@@ -128,10 +128,10 @@ export async function GET(req: Request, ctx: { params?: any }) {
   } else {
     // For faculty viewing their own report, find the HOD of the target department
     const { staffService: staffSvc } = await import('@/lib/mongodb-services');
-    const allStaff = await staffSvc.findMany({});
+    const allStaff = await staffSvc.findMany({ include: { user: true } });
     // Get HOD of this department - staff with HOD role in the target department
     const departmentHods = allStaff.filter((s: any) => 
-      s.departmentId === targetDeptId && s.role === 'HOD'
+      s.departmentId === targetDeptId && s.user?.role === 'HOD'
     );
     // Try each HOD to find if they left a suggestion
     for (const hod of departmentHods) {

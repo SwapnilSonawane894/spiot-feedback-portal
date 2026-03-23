@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { staffService, assignmentService, subjectService, feedbackService } from "@/lib/mongodb-services";
+import { staffService, assignmentService, subjectService, feedbackService, normalizeSemester } from "@/lib/mongodb-services";
 import ExcelJS from "exceljs";
 
 const PARAM_KEYS = [
@@ -51,7 +51,10 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const yearId = url.searchParams.get("year");
+    const rawSemester = url.searchParams.get("semester");
     if (!yearId) return NextResponse.json({ error: "Missing academicYearId (year) query param" }, { status: 400 });
+
+    const targetSemester = rawSemester ? normalizeSemester(rawSemester) : null;
 
     // find department for HOD
     const hodStaff = await staffService.findUnique({ where: { userId: session.user.id } });
@@ -59,13 +62,29 @@ export async function GET(req: Request) {
     const departmentId = hodStaff.departmentId;
 
     // fetch subjects for this department + year
-    const deptSubjects = await subjectService.findMany({ where: { departmentId, academicYearId: yearId } });
+    let deptSubjects = await subjectService.findMany({ where: { departmentId, academicYearId: yearId } });
+
+    // Filter subjects to only those matching the requested semester parity.
+    // This prevents even-semester subjects from appearing in odd-semester reports and vice versa.
+    if (rawSemester) {
+      const isOddRequestedSemester = rawSemester.toLowerCase().includes('odd');
+      deptSubjects = (deptSubjects || []).filter((s: any) => {
+        const subjectSem = Number(s.semester);
+        if (!s.semester || isNaN(subjectSem)) return true; // keep if no semester field on subject
+        return isOddRequestedSemester ? (subjectSem % 2 === 1) : (subjectSem % 2 === 0);
+      });
+    }
+
     const subjectIds = deptSubjects.map((s: any) => String(s.id));
 
     // fetch all assignments for these subjects and attach subject and feedbacks
     const allAssignments = await assignmentService.findMany({ include: { subject: true } });
     // Only keep assignments for our subjects, and dedupe by staffId+subjectId+semester to avoid duplicate columns
-    const rawFiltered = (allAssignments || []).filter((a: any) => a.subjectId && subjectIds.includes(String(a.subjectId)));
+    const rawFiltered = (allAssignments || []).filter((a: any) => {
+      if (!a.subjectId || !subjectIds.includes(String(a.subjectId))) return false;
+      if (targetSemester && normalizeSemester(a.semester || '') !== targetSemester) return false;
+      return true;
+    });
     const seenAssign = new Set<string>();
     const filteredAssignments: any[] = [];
     for (const a of rawFiltered) {
