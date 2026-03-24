@@ -1,7 +1,8 @@
 const { MongoClient } = require('mongodb');
 
 async function test() {
-  const client = await MongoClient.connect("mongodb+srv://admin:admin@first.4ztdw.mongodb.net/FeedbackPortal2?retryWrites=true&w=majority&appName=First");
+  const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/FeedbackPortal2";
+  const client = await MongoClient.connect(uri);
   const db = client.db();
   
   const staff = await db.collection("staff").find({}).limit(5).toArray();

@@ -64,14 +64,18 @@ export async function GET(req: Request) {
     // fetch subjects for this department + year
     let deptSubjects = await subjectService.findMany({ where: { departmentId, academicYearId: yearId } });
 
-    // Filter subjects to only those matching the requested semester parity.
-    // This prevents even-semester subjects from appearing in odd-semester reports and vice versa.
+    // Filter subjects based on the requested semester's parity (odd/even)
     if (rawSemester) {
-      const isOddRequestedSemester = rawSemester.toLowerCase().includes('odd');
+      const isOddRequested = rawSemester.toLowerCase().includes('odd');
+      const isEvenRequested = rawSemester.toLowerCase().includes('even');
+      
       deptSubjects = (deptSubjects || []).filter((s: any) => {
         const subjectSem = Number(s.semester);
-        if (!s.semester || isNaN(subjectSem)) return true; // keep if no semester field on subject
-        return isOddRequestedSemester ? (subjectSem % 2 === 1) : (subjectSem % 2 === 0);
+        if (!s.semester || isNaN(subjectSem)) return true; // Keep if no semester field on subject
+        
+        if (isOddRequested) return subjectSem % 2 !== 0;
+        if (isEvenRequested) return subjectSem % 2 === 0;
+        return true;
       });
     }
 
@@ -259,21 +263,6 @@ export async function GET(req: Request) {
 
     // Freeze top 2 rows and first column
     ws.views = [{ state: 'frozen', ySplit: 2, xSplit: 1 }];
-
-    // Add a second worksheet for qualitative suggestions/comments
-    const commentsSheet = workbook.addWorksheet('Suggestions');
-    commentsSheet.addRow(['Faculty Name', 'Subject', 'Suggestion']);
-    for (const s of matrixStaffs) {
-      for (const a of s.assignments) {
-        const feedbacks = a.feedbacks || [];
-        for (const f of feedbacks) {
-          const text = (f as any).any_suggestion;
-          if (text && typeof text === 'string' && text.trim().length > 0) {
-            commentsSheet.addRow([s.staffName, a.subject.name, text.trim()]);
-          }
-        }
-      }
-    }
 
     const buffer = await workbook.xlsx.writeBuffer();
     const contentLength = (buffer && (buffer as any).byteLength) ? String((buffer as any).byteLength) : undefined;

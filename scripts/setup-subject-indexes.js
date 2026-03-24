@@ -1,7 +1,7 @@
 // @ts-check
 import { MongoClient } from 'mongodb';
 
-const uri = "mongodb+srv://swapnilsonawane:TVDFjnMt9C97ieJO@cluster0.wqnku0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/FeedbackPortal2";
 const dbName = 'FeedbackPortal2';
 
 async function setupSubjectIndexes() {

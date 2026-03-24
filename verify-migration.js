@@ -9,7 +9,7 @@
 
 const { MongoClient } = require('mongodb');
 
-const DEFAULT_URI = process.env.MONGO_URI || 'mongodb+srv://swapnilsonawane:TVDFjnMt9C97ieJO@cluster0.wqnku0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const DEFAULT_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/FeedbackPortal2';
 const DB_NAME = process.env.DB_NAME || 'feedbackPortal';
 
 async function main() {

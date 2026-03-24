@@ -118,15 +118,19 @@ export default function HodReportsPage() {
       toast.error('Select a year');
       return;
     }
+    if (!selectedSemester) {
+      toast.error('Select a semester first to correctly filter the comparative report');
+      return;
+    }
     // Open the comparative report in a new tab to avoid navigating away from the HOD page
-    const url = `/api/hod/comparative-report?year=${selectedYear}`;
+    const url = `/api/hod/comparative-report?year=${selectedYear}&semester=${encodeURIComponent(selectedSemester)}`;
     try {
       window.open(url, '_blank');
     } catch (err) {
       // fallback to location change if window.open is blocked
       window.location.href = url;
     }
-  }, [selectedYear]);
+  }, [selectedYear, selectedSemester]);
 
   const staffOptions = useMemo(() => {
     const seen = new Map();
