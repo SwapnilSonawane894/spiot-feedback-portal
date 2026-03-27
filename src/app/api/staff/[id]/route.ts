@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth-options";
 import { staffService, userService, hodSuggestionService, assignmentService } from "@/lib/mongodb-services";
 import { validateDepartmentExists, validateEmailUnique } from "@/lib/data-validation";
 import { getDatabase } from '@/lib/mongodb';
+import bcrypt from "bcrypt";
 
 export async function PATCH(request: Request, context: any) {
   try {
@@ -34,7 +35,7 @@ export async function PATCH(request: Request, context: any) {
     }
 
     const body = await request.json();
-    const { name, email, departmentId } = body;
+    const { name, email, departmentId, password } = body;
 
     // Validate data before making any changes
     if (departmentId) {
@@ -51,7 +52,7 @@ export async function PATCH(request: Request, context: any) {
     try {
       await session_db.withTransaction(async () => {
         // Update user data if provided
-        if (name || email) {
+        if (name || email || password) {
           const updateData: any = {};
           if (name) updateData.name = name;
           if (email) {
@@ -65,6 +66,9 @@ export async function PATCH(request: Request, context: any) {
               throw new Error("Email already exists");
             }
             updateData.email = email;
+          }
+          ifconst bcrypt = require('bcrypt');
+            updateData.hashedPassword = await bcrypt.hash(password, 10);
           }
           await userService.update({ id: staffProfile.userId }, updateData);
         }

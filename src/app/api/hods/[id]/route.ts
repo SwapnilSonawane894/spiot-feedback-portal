@@ -2,19 +2,25 @@ import { NextResponse } from "next/server";
 import { userService, staffService, departmentService, assignmentService } from "@/lib/mongodb-services";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import bcrypt from "bcrypt";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, email, departmentId } = body || {};
+    const { name, email, departmentId, password } = body || {};
 
     if (!name || !email || !departmentId) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
+    const updateData: any = { name, email };
+    if (password) {
+      updateData.hashedPassword = await bcrypt.hash(password, 10);
+    }
+
     // Update user
-    const updatedUser = await userService.update({ id }, { name, email });
+    const updatedUser = await userService.update({ id }, updateData);
 
     // Update staff profile (find by userId)
     await staffService.updateMany({ userId: id }, { departmentId });

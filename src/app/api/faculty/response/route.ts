@@ -87,14 +87,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No HOD suggestion found for this semester' }, { status: 404 });
     }
 
+    // Prioritize the specific suggestionId if provided, otherwise fallback to the first one
+    let targetSuggestion = null;
+    if (suggestionId) {
+      targetSuggestion = suggestions.find((s: any) => s.id === suggestionId || s._id?.toString() === suggestionId);
+    }
+    
+    if (!targetSuggestion) {
+      targetSuggestion = suggestions[0];
+    }
+
+    if (!targetSuggestion) {
+      return NextResponse.json({ error: 'Target HOD suggestion could not be found' }, { status: 404 });
+    }
+
     // Update the suggestion with faculty response
-    const suggestion = suggestions[0];
     const { getDatabase } = await import('@/lib/mongodb');
     const db = await getDatabase();
     const { ObjectId } = await import('mongodb');
     
     await db.collection('hodSuggestions').updateOne(
-      { _id: new ObjectId(suggestion.id) },
+      { _id: new ObjectId(targetSuggestion.id || targetSuggestion._id) },
       { 
         $set: { 
           facultyResponse: facultyResponse || '',
