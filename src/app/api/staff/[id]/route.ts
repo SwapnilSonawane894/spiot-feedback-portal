@@ -67,7 +67,7 @@ export async function PATCH(request: Request, context: any) {
             }
             updateData.email = email;
           }
-          ifconst bcrypt = require('bcrypt');
+          if (password) {
             updateData.hashedPassword = await bcrypt.hash(password, 10);
           }
           await userService.update({ id: staffProfile.userId }, updateData);
