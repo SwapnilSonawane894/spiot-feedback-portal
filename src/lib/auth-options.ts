@@ -72,5 +72,5 @@ export const authOptions: any = {
     maxAge: 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: false,
+  debug: true,
 };

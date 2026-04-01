@@ -101,7 +101,7 @@ export default function ManageHodsPage(): React.ReactElement {
         const res = await fetch(`/api/hods/${editingHOD.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, departmentId }),
+          body: JSON.stringify({ name, email, departmentId, ...(password ? { password } : {}) }),
         });
         if (!res.ok) {
           const err = await res.json();

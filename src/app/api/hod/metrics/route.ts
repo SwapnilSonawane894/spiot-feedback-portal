@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
-import { staffService, subjectService, userService, assignmentService, feedbackService, departmentSubjectsService } from "@/lib/mongodb-services";
+import { staffService, subjectService, userService, assignmentService, feedbackService, departmentSubjectsService, semesterSettingsService, normalizeSemester } from "@/lib/mongodb-services";
 
 export async function GET() {
   // authOptions is an untyped object in our codebase; cast to any to satisfy TypeScript's getServerSession signature
@@ -21,7 +21,13 @@ export async function GET() {
     }
 
     const departmentId = staffProfile.departmentId;
-    const semester = "Odd 2025-26";
+
+    // Fetch the active semester dynamically from DB instead of hardcoding
+    const settings = await semesterSettingsService.get();
+    const isOdd = settings.currentSemester % 2 === 1;
+    const semesterType = isOdd ? 'Odd' : 'Even';
+    const activeSemesterStr = `${semesterType} ${settings.academicYear}`;
+    const semester = normalizeSemester(activeSemesterStr) || "Odd 2025-26";
 
     // Get all staff in department to filter assignments and feedback
     const deptStaff = await staffService.findMany({ where: { departmentId } });

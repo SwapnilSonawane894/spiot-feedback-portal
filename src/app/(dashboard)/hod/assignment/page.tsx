@@ -28,17 +28,28 @@ export default function AssignmentPage(): React.ReactElement {
   async function fetchData() {
     try {
       // Fetch semester settings
+      let semString = "Semester 2025-26";
       const semesterRes = await fetch("/api/admin/semester-settings");
       if (semesterRes.ok) {
         const semesterData = await semesterRes.json();
-        setCurrentSemester(semesterData.semesterString || "Semester 2025-26");
+        if (semesterData.semesterString) {
+          semString = semesterData.semesterString;
+        }
+        setCurrentSemester(semString);
       }
 
       // Fetch subjects
       const subjectsRes = await fetch("/api/subjects");
       if (!subjectsRes.ok) throw new Error("Failed to fetch subjects");
       const subjectsData = await subjectsRes.json();
-      setSubjects(subjectsData || []);
+      
+      const isOdd = semString.toLowerCase().includes('odd');
+      const filteredSubjects = (subjectsData || []).filter((s: any) => {
+        const semNum = Number(s.semester);
+        if (!s.semester || isNaN(semNum)) return true; // keep if no numeric semester
+        return isOdd ? semNum % 2 === 1 : semNum % 2 === 0;
+      });
+      setSubjects(filteredSubjects);
 
       // Fetch all staff
       const staffRes = await fetch("/api/staff");

@@ -97,7 +97,8 @@ export default function ManageStaffPage(): React.ReactElement {
         const res = await fetch(`/api/staff/${editingStaff.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, departmentId }),
+          // Include password in the update body if it was filled out
+          body: JSON.stringify({ name, email, departmentId, ...(password ? { password } : {}) }),
         });
         if (!res.ok) {
           const err = await res.json();
