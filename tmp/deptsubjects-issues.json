@@ -1,0 +1,168 @@
+{
+  "missingDepartmentId": [],
+  "missingSubjectId": [],
+  "subjectNotFound": [],
+  "suspiciousJunctionIds": [],
+  "sampleRows": [
+    {
+      "_id": "68fdb65fbcb948af2ad8fc41",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86752f16d44023c9ba5d9",
+      "academicYearId": "68f63980dc335227e2601fe1",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:55.426Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc42",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86778f16d44023c9ba5df",
+      "academicYearId": "68f63980dc335227e2601fe1",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:55.745Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc47",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f8676cf16d44023c9ba5dd",
+      "academicYearId": "68f63980dc335227e2601fe1",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:56.569Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc49",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86740f16d44023c9ba5d7",
+      "academicYearId": "68f63980dc335227e2601fe1",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:56.803Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc4b",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f8689cf16d44023c9ba5e3",
+      "academicYearId": "68f63990dc335227e2601fe2",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:57.218Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc4d",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f868daf16d44023c9ba5eb",
+      "academicYearId": "68f63990dc335227e2601fe2",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:57.441Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc4f",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f868adf16d44023c9ba5e5",
+      "academicYearId": "68f63990dc335227e2601fe2",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:57.760Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc50",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86676f16d44023c9ba5cf",
+      "academicYearId": "68f63976dc335227e2601fe0",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:57.880Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc51",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc924ecbfd18ab7d26ea74",
+      "academicYearId": "68fc86d399ba276515402d23",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:58.067Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc52",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc955739f4fd3479b1b273",
+      "academicYearId": "68fc86d399ba276515402d23",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:58.284Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc53",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc920acbfd18ab7d26ea71",
+      "academicYearId": "68fc86be99ba276515402d22",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:58.440Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc54",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc91e7cbfd18ab7d26ea6f",
+      "academicYearId": "68fc86be99ba276515402d22",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:58.559Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc55",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc923ecbfd18ab7d26ea73",
+      "academicYearId": "68fc86be99ba276515402d22",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:58.700Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc56",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc91fccbfd18ab7d26ea70",
+      "academicYearId": "68fc86be99ba276515402d22",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:58.848Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc59",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc9219cbfd18ab7d26ea72",
+      "academicYearId": "68fc86be99ba276515402d22",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:59.000Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc5b",
+      "departmentId": "68f6390b641c7bcb2781b39d",
+      "subjectId": "68fc9263cbfd18ab7d26ea75",
+      "academicYearId": "68fc86d399ba276515402d23",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T08:01:59.120Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc5c",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86640f16d44023c9ba5c9",
+      "academicYearId": "68f63976dc335227e2601fe0",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T05:49:19.336Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc5d",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86655f16d44023c9ba5cb",
+      "academicYearId": "68f63976dc335227e2601fe0",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T05:49:19.336Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc5e",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86666f16d44023c9ba5cd",
+      "academicYearId": "68f63976dc335227e2601fe0",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T05:49:19.336Z"
+    },
+    {
+      "_id": "68fdb65fbcb948af2ad8fc60",
+      "departmentId": "68f6390b641c7bcb2781b39c",
+      "subjectId": "68f86688f16d44023c9ba5d1",
+      "academicYearId": "68f63976dc335227e2601fe0",
+      "createdAt": "2025-10-26T05:49:19.336Z",
+      "updatedAt": "2025-10-26T05:49:19.336Z"
+    }
+  ]
+}

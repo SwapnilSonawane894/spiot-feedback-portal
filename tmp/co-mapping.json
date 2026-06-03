@@ -1,0 +1,177 @@
+[
+  {
+    "orphanId": "690723c178529e9646b0c915",
+    "staffId": "6906f6e678529e9646b0c5f4",
+    "subjectId": "6907140a78529e9646b0c633",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 50
+  },
+  {
+    "orphanId": "690723c178529e9646b0c916",
+    "staffId": "6906f6fc78529e9646b0c5f6",
+    "subjectId": "6907140a78529e9646b0c633",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 52
+  },
+  {
+    "orphanId": "690723c178529e9646b0c917",
+    "staffId": "6906fcda78529e9646b0c602",
+    "subjectId": "6907140a78529e9646b0c633",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 33
+  },
+  {
+    "orphanId": "690723c178529e9646b0c918",
+    "staffId": "6906f6af78529e9646b0c5ee",
+    "subjectId": "690714dd78529e9646b0c63c",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 49
+  },
+  {
+    "orphanId": "690723c178529e9646b0c919",
+    "staffId": "6906f6c078529e9646b0c5f0",
+    "subjectId": "690714dd78529e9646b0c63c",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 47
+  },
+  {
+    "orphanId": "690723c178529e9646b0c91a",
+    "staffId": "6906f6d378529e9646b0c5f2",
+    "subjectId": "690714dd78529e9646b0c63c",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 44
+  },
+  {
+    "orphanId": "690723c178529e9646b0c91b",
+    "staffId": "6906f71178529e9646b0c5f8",
+    "subjectId": "6907146f78529e9646b0c638",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 52
+  },
+  {
+    "orphanId": "690723c178529e9646b0c91c",
+    "staffId": "6906f72678529e9646b0c5fa",
+    "subjectId": "6907146f78529e9646b0c638",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 44
+  },
+  {
+    "orphanId": "690723c178529e9646b0c91d",
+    "staffId": "6906f73978529e9646b0c5fc",
+    "subjectId": "6907146f78529e9646b0c638",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 32
+  },
+  {
+    "orphanId": "690723c178529e9646b0c922",
+    "staffId": "6906f67178529e9646b0c5ec",
+    "subjectId": "6907168778529e9646b0c648",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 49
+  },
+  {
+    "orphanId": "690723c178529e9646b0c923",
+    "staffId": "6906f75078529e9646b0c5fe",
+    "subjectId": "6907168778529e9646b0c648",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 24
+  },
+  {
+    "orphanId": "690723c178529e9646b0c924",
+    "staffId": "6906f76a78529e9646b0c600",
+    "subjectId": "6907173e78529e9646b0c64c",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 39
+  },
+  {
+    "orphanId": "690723c178529e9646b0c927",
+    "staffId": "6906f43578529e9646b0c5c4",
+    "subjectId": "6907156778529e9646b0c640",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 51
+  },
+  {
+    "orphanId": "690723c178529e9646b0c92c",
+    "staffId": "6906f59078529e9646b0c5da",
+    "subjectId": "690715b778529e9646b0c644",
+    "academicYearId": "6906ec87b1773184f4f56bb2",
+    "fbCount": 38
+  },
+  {
+    "orphanId": "690723c178529e9646b0c91e",
+    "staffId": "6906f44c78529e9646b0c5c6",
+    "subjectId": "69070a8078529e9646b0c607",
+    "academicYearId": "6906ec98b1773184f4f56bb3",
+    "fbCount": 57
+  },
+  {
+    "orphanId": "690723c178529e9646b0c91f",
+    "staffId": "6906f43578529e9646b0c5c4",
+    "subjectId": "69070a3d78529e9646b0c603",
+    "academicYearId": "6906ec98b1773184f4f56bb3",
+    "fbCount": 58
+  },
+  {
+    "orphanId": "690723c178529e9646b0c920",
+    "staffId": "6906f3e478529e9646b0c5c0",
+    "subjectId": "69070a4c78529e9646b0c604",
+    "academicYearId": "6906ec98b1773184f4f56bb3",
+    "fbCount": 58
+  },
+  {
+    "orphanId": "690723c178529e9646b0c921",
+    "staffId": "6906f40478529e9646b0c5c2",
+    "subjectId": "69070a5b78529e9646b0c605",
+    "academicYearId": "6906ec98b1773184f4f56bb3",
+    "fbCount": 59
+  },
+  {
+    "orphanId": "690723c178529e9646b0c926",
+    "staffId": "6906f44c78529e9646b0c5c6",
+    "subjectId": "69070a9278529e9646b0c608",
+    "academicYearId": "6906ec98b1773184f4f56bb3",
+    "fbCount": 57
+  },
+  {
+    "orphanId": "690723c178529e9646b0c928",
+    "staffId": "6906ee7ecb07e65fea9e82f2",
+    "subjectId": "69070a6b78529e9646b0c606",
+    "academicYearId": "6906ec98b1773184f4f56bb3",
+    "fbCount": 59
+  },
+  {
+    "orphanId": "690723c178529e9646b0c914",
+    "staffId": "6906f46378529e9646b0c5c8",
+    "subjectId": "69070ae778529e9646b0c60d",
+    "academicYearId": "6906ecacb1773184f4f56bb4",
+    "fbCount": 61
+  },
+  {
+    "orphanId": "690723c178529e9646b0c925",
+    "staffId": "6906f46378529e9646b0c5c8",
+    "subjectId": "69070ac778529e9646b0c60b",
+    "academicYearId": "6906ecacb1773184f4f56bb4",
+    "fbCount": 59
+  },
+  {
+    "orphanId": "690723c178529e9646b0c929",
+    "staffId": "6906f44c78529e9646b0c5c6",
+    "subjectId": "69070aa778529e9646b0c609",
+    "academicYearId": "6906ecacb1773184f4f56bb4",
+    "fbCount": 59
+  },
+  {
+    "orphanId": "690723c178529e9646b0c92a",
+    "staffId": "6906f3e478529e9646b0c5c0",
+    "subjectId": "69070ad678529e9646b0c60c",
+    "academicYearId": "6906ecacb1773184f4f56bb4",
+    "fbCount": 59
+  },
+  {
+    "orphanId": "690723c178529e9646b0c92b",
+    "staffId": "6906f47978529e9646b0c5ca",
+    "subjectId": "69070ab578529e9646b0c60a",
+    "academicYearId": "6906ecacb1773184f4f56bb4",
+    "fbCount": 59
+  }
+]

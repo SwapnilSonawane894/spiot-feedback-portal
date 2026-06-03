@@ -1,0 +1,33 @@
+diff --git a/src/lib/mongodb-services.ts b/src/lib/mongodb-services.ts
+index 43c5e0c..412e9b2 100644
+--- a/src/lib/mongodb-services.ts
++++ b/src/lib/mongodb-services.ts
+@@ -47,7 +47,7 @@ async function _fetchStudentTasks(userId: string, options?: { groupBySubject?: bool
+     // - subjectIdsAll: all subjects for the department (used as fallback)
+     let assignmentsStrict: any[] = [];
+     if (subjectIdQueryValuesForYear.length > 0) {
+       assignmentsStrict = await db.collection('facultyAssignments').find({
+         subjectId: { $in: subjectIdQueryValuesForYear },
+-        academicYearId: { $in: academicYearIdQueryValues },
++        $or: [
++          { academicYearId: { $in: academicYearIdQueryValues } },
++          { academicYearId: { $exists: false } },  // Consider missing academicYearId as matching
++          { academicYearId: null }                 // Consider null academicYearId as matching
++        ]
+       }).toArray();
+     }
+ 
+@@ -57,7 +57,9 @@ async function _fetchStudentTasks(userId: string, options?: { groupBySubject?: bool
+     if (assignmentsMatchingSubjectOnly.length) {
+       const yearStrings = academicYearIdQueryValues.map(String);
+       excludedByYear = assignmentsMatchingSubjectOnly.filter((a: any) => {
++        // If no academicYearId, treat as matching (not excluded)
++        if (!a.academicYearId) return false;
+         const aid = String(a.academicYearId);
+-        // exclude those that already match the student's year
+-        if (aid && yearStrings.includes(aid)) return false;
+-        return true;
++        // Only exclude if there's a mismatch with a non-null academicYearId
++        return !yearStrings.includes(aid);
+       });
+     }

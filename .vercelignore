@@ -1,0 +1,10 @@
+.git
+.github
+.vscode
+.env
+.env.*
+.local
+node_modules
+/.next/cache
+/*.log
+README.md

@@ -1,0 +1,328 @@
+"use client";
+
+import React, { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { Trash2, Pencil, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui-controls";
+import { SkeletonTable } from "@/components/skeletons";
+import { CustomSelect } from "@/components/custom-select";
+import toast from "react-hot-toast";
+
+type Department = {
+  id: string;
+  name: string;
+  abbreviation?: string;
+};
+
+type Staff = {
+  id: string;
+  user?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+  } | null;
+  department?: Department | null;
+};
+
+export default function ManageStaffPage(): React.ReactElement {
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: session, status } = useSession();
+  const role = (session as any)?.user?.role;
+
+  useEffect(() => {
+    fetchStaff();
+    fetchDepartments();
+  }, []);
+
+  async function fetchStaff() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/staff");
+      if (!res.ok) throw new Error("Failed to fetch staff");
+      const data = await res.json();
+      setStaff(data);
+    } catch (err) {
+      // console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchDepartments() {
+    try {
+      const res = await fetch("/api/departments");
+      if (!res.ok) throw new Error("Failed to fetch departments");
+      const data = await res.json();
+      setDepartments(data);
+      if (data.length > 0) setDepartmentId(data[0].id);
+    } catch (err) {
+      // console.error(err);
+    }
+  }
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!confirm("Delete this staff member?")) return;
+    try {
+      const res = await fetch(`/api/staff/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setStaff((prev) => prev.filter((s) => s.id !== id));
+      toast.success("Staff member deleted successfully");
+    } catch (err) {
+      // console.error(err);
+      toast.error((err as Error).message || "Delete failed");
+    }
+  }, []);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !departmentId) return;
+    if (!editingStaff && !password) {
+      toast.error("Password is required for new staff");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (editingStaff) {
+        const res = await fetch(`/api/staff/${editingStaff.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          // Include password in the update body if it was filled out
+          body: JSON.stringify({ name, email, departmentId, ...(password ? { password } : {}) }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err?.error || "Failed to update staff");
+        }
+        await fetchStaff();
+        toast.success("Staff member updated successfully");
+        setEditingStaff(null);
+      } else {
+        const res = await fetch("/api/staff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password, departmentId }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err?.error || "Failed to create staff");
+        }
+        await fetchStaff();
+        toast.success("Staff member created successfully");
+      }
+
+      setIsModalOpen(false);
+      setName("");
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      // console.error(err);
+      toast.error((err as Error).message || "Save failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [name, email, password, departmentId, editingStaff]);
+
+  const openCreateModal = useCallback(() => {
+    setEditingStaff(null);
+    setName("");
+    setEmail("");
+    setPassword("");
+    if (departments.length > 0) setDepartmentId(departments[0].id);
+    setIsModalOpen(true);
+  }, [departments]);
+
+  const openEditModal = useCallback((staffMember: Staff) => {
+    setEditingStaff(staffMember);
+    setName(staffMember.user?.name || "");
+    setEmail(staffMember.user?.email || "");
+    setPassword("");
+    setDepartmentId(staffMember.department?.id || (departments.length > 0 ? departments[0].id : ""));
+    setIsModalOpen(true);
+  }, [departments]);
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setEditingStaff(null);
+    setName("");
+    setEmail("");
+    setPassword("");
+  }, []);
+
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+          Staff Management
+        </h1>
+        <Button onClick={openCreateModal}>
+          <Plus size={16} className="mr-2" />
+          Add Staff
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="table-wrapper">
+          <SkeletonTable rows={6} columns={6} />
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staff.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="text-center py-8" style={{ color: "var(--text-muted)" }}>
+                    No staff members found
+                  </td>
+                </tr>
+              ) : (
+                staff.map((s) => (
+                <tr key={s.id}>
+                  <td>{s.user?.name || "—"}</td>
+                  <td>{s.user?.email || "—"}</td>
+                  <td>{s.department?.name || "—"}</td>
+                  <td className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => openEditModal(s)}
+                        className="btn-icon"
+                        title="Edit"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s.id)}
+                        className="btn-icon"
+                        title="Delete"
+                        style={{ color: "var(--danger)" }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div 
+            className="modal-content max-w-md w-full mx-4 p-6" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {editingStaff ? "Edit Staff" : "Add Staff"}
+                </h2>
+                <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+                  {editingStaff ? "Update staff member information" : "Add a new staff member to the system"}
+                </p>
+              </div>
+              <button 
+                onClick={closeModal} 
+                className="p-2 rounded-lg hover:bg-[var(--hover-overlay)] transition-colors"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="form-label">
+                  Name <span style={{ color: "var(--danger)" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label">
+                  Email <span style={{ color: "var(--danger)" }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-field"
+                  required
+                  // allow editing existing staff email only to ADMIN
+                  // allow editing existing staff email for ADMIN; while session is loading
+                  disabled={!!editingStaff && !(role === "ADMIN" || status === "loading")}
+                />
+              </div>
+
+              <div>
+                <label className="form-label">
+                  Password {!editingStaff && <span style={{ color: "var(--danger)" }}>*</span>}
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field"
+                  required={!editingStaff}
+                  placeholder={editingStaff ? "Leave blank to keep current password" : ""}
+                />
+              </div>
+
+              <div>
+                <CustomSelect
+                  label={
+                    <span>
+                      Department <span style={{ color: "var(--danger)" }}>*</span>
+                    </span>
+                  }
+                  options={departments.map((dept) => ({
+                    value: dept.id,
+                    label: `${dept.name} (${dept.abbreviation})`
+                  }))}
+                  value={departmentId}
+                  onChange={(val) => setDepartmentId(String(val))}
+                  placeholder="Select department"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-6">
+                <button type="button" onClick={closeModal} className="btn-outline">
+                  Cancel
+                </button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (editingStaff ? "Saving..." : "Creating...") : (editingStaff ? "Save Changes" : "Create Staff")}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

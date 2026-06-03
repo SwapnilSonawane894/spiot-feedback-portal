@@ -1,0 +1,177 @@
+[
+  {
+    "_id": "6900c62e41367cf57074169e",
+    "subjectId": "68f868daf16d44023c9ba5eb",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "staffId": "68f850ff465f951796151e3f"
+  },
+  {
+    "_id": "6900c62e41367cf57074169f",
+    "subjectId": "68f86640f16d44023c9ba5c9",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e49"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a0",
+    "subjectId": "68f86640f16d44023c9ba5c9",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e4b"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a1",
+    "subjectId": "68f86640f16d44023c9ba5c9",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "6900772d8d282bf32274b9ec"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a2",
+    "subjectId": "68f86666f16d44023c9ba5cd",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e43"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a3",
+    "subjectId": "68f86666f16d44023c9ba5cd",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e45"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a4",
+    "subjectId": "68f86666f16d44023c9ba5cd",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e47"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a5",
+    "subjectId": "68f86655f16d44023c9ba5cb",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e4d"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a6",
+    "subjectId": "68f86655f16d44023c9ba5cb",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e4f"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a7",
+    "subjectId": "68f86655f16d44023c9ba5cb",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e51"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a8",
+    "subjectId": "68f86778f16d44023c9ba5df",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "staffId": "68f850ff465f951796151e3d"
+  },
+  {
+    "_id": "6900c62e41367cf5707416a9",
+    "subjectId": "68f86740f16d44023c9ba5d7",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "staffId": "68f850ff465f951796151e3b"
+  },
+  {
+    "_id": "6900c62e41367cf5707416aa",
+    "subjectId": "68f86752f16d44023c9ba5d9",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "staffId": "68f850fe465f951796151e37"
+  },
+  {
+    "_id": "6900c62e41367cf5707416ab",
+    "subjectId": "68f86760f16d44023c9ba5db",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "staffId": "68f850fe465f951796151e39"
+  },
+  {
+    "_id": "6900c62e41367cf5707416ac",
+    "subjectId": "68f866a3f16d44023c9ba5d5",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f85100465f951796151e53"
+  },
+  {
+    "_id": "6900c62e41367cf5707416ad",
+    "subjectId": "68f866a3f16d44023c9ba5d5",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f85100465f951796151e55"
+  },
+  {
+    "_id": "6900c62e41367cf5707416ae",
+    "subjectId": "68f86688f16d44023c9ba5d1",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f85100465f951796151e57"
+  },
+  {
+    "_id": "6900c62e41367cf5707416af",
+    "subjectId": "68fc94da39f4fd3479b1b272",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "staffId": "68f850ff465f951796151e3f"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b0",
+    "subjectId": "68fc8f10b44e19f366e3be27",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "staffId": "68f850ff465f951796151e3d"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b1",
+    "subjectId": "68f86676f16d44023c9ba5cf",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f850ff465f951796151e3b"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b2",
+    "subjectId": "68f8676cf16d44023c9ba5dd",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63980dc335227e2601fe1",
+    "staffId": "68f855b5a0b65ff2d48f1982"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b3",
+    "subjectId": "68f8689cf16d44023c9ba5e3",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "staffId": "68f850ff465f951796151e3d"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b4",
+    "subjectId": "68f868c9f16d44023c9ba5e9",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "staffId": "68f850fe465f951796151e37"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b5",
+    "subjectId": "68f868adf16d44023c9ba5e5",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63990dc335227e2601fe2",
+    "staffId": "68f850ff465f951796151e41"
+  },
+  {
+    "_id": "6900c62e41367cf5707416b6",
+    "subjectId": "68f86696f16d44023c9ba5d3",
+    "departmentId": "68f6390b641c7bcb2781b39c",
+    "academicYearId": "68f63976dc335227e2601fe0",
+    "staffId": "68f85100465f951796151e59"
+  }
+]
